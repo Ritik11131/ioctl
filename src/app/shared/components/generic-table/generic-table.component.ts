@@ -36,6 +36,11 @@ import { ToolbarModule } from 'primeng/toolbar';
             [value]="tableData"
             [dataKey]="tableConfig.dataKey"
             [rowHover]="true"
+            [stripedRows]="true"
+            [paginator]="true"
+            [rows]="10"
+            [rowsPerPageOptions]="[10, 20, 50]"
+            [showCurrentPageReport]="true"
             [showGridlines]="true"
             responsiveLayout="scroll"
             [tableStyle]="{ 'min-width': '75rem' }"
@@ -45,12 +50,12 @@ import { ToolbarModule } from 'primeng/toolbar';
                 <div class="flex items-center justify-between">
                     <h5 class="m-0">{{ tableConfig?.title }}</h5>
                     <div class="flex align-items-center gap-2">
-                        <p-iconfield>
+                        <p-iconfield iconPosition="left" class="ml-auto">
                             <p-inputicon styleClass="pi pi-search" />
                             <input pInputText type="text" (input)="onSearch(dt, $event)" placeholder="Search..." />
                         </p-iconfield>
 
-                        <button pButton label="Clear" class="p-button-outlined mb-2" icon="pi pi-filter-slash" (click)="clearFilter(dt)"></button>
+                        <p-button label="Clear" outlined icon="pi pi-filter-slash" (click)="clearFilter(dt)"></p-button>
                     </div>
                 </div>
             </ng-template>
@@ -77,7 +82,20 @@ import { ToolbarModule } from 'primeng/toolbar';
                 </tr>
             </ng-template>
         </p-table>
-    `
+    `,
+    styles: [
+        `
+            ::ng-deep .p-datatable .p-datatable-thead > tr > th {
+                background-color: var(--p-primary-color);
+                color: var(--p-primary-contrast-color);
+                font-weight: 600;
+
+                button {
+                    color: var(--p-primary-contrast-color);
+                }
+            }   
+        `
+    ]
 })
 export class GenericTableComponent {
     @Input() toolBarStartActions: any[] = [];

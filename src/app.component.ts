@@ -1,14 +1,19 @@
 import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { ToastModule } from 'primeng/toast';
+import { GenericLoaderComponent } from "./app/shared/components/generic-loader/generic-loader.component";
+import { UiService } from './app/layout/service/ui.service';
 
 
 @Component({
     selector: 'app-root',
     standalone: true,
-    imports: [RouterModule, ToastModule],
+    imports: [RouterModule, ToastModule, GenericLoaderComponent],
     template: `
     <router-outlet></router-outlet>
+    @if(uiService.isLoading()) {
+        <app-generic-loader></app-generic-loader>
+    }
     <p-toast [life]="2000" [breakpoints]="{
     '920px': { width: '50%' },
     '768px': { width: '60%' },
@@ -22,4 +27,6 @@ import { ToastModule } from 'primeng/toast';
 />
     `
 })
-export class AppComponent {}
+export class AppComponent {
+    constructor( public uiService: UiService) {}
+}
