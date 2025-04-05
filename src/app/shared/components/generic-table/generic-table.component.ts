@@ -66,7 +66,7 @@ import { ToolbarModule } from 'primeng/toolbar';
                         <th [style.min-width]="col.minWidth || '10rem'">
                             <div class="flex items-center">
                                 {{ col.header }}
-                                <p-columnFilter type="text" [field]="col.field" display="menu" />
+                                <p-columnFilter type="text"  [field]="col.subfield ? col.field + '.' + col.subfield : col.field" display="menu" />
                             </div>
                         </th>
                     }
@@ -76,7 +76,7 @@ import { ToolbarModule } from 'primeng/toolbar';
                 <tr>
                     @for (col of columns; track $index) {
                         <td>
-                            {{ rowData[col.field] || '--' }}
+                            {{ col.subfield ? (rowData[col.field]?.[col.subfield] || '--') :  rowData[col.field] || '--' }}
                         </td>
                     }
                 </tr>

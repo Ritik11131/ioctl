@@ -50,112 +50,27 @@ export class AddressComponent implements OnInit {
             { field: 'address2', header: 'Address Line 2', minWidth: '12rem' },
             { field: 'address3', header: 'Address Line 3', minWidth: '12rem' },
             { field: 'city', header: 'City', minWidth: '8rem' },
-            { field: 'stateName', header: 'State', minWidth: '10rem' },
-            { field: 'countryName', header: 'Country', minWidth: '10rem' },
-            { field: 'geofenceName', header: 'Geofence Name', minWidth: '12rem' },
+            { field: 'state', header: 'State', minWidth: '10rem', subfield:'name' },
+            { field: 'country', header: 'Country', minWidth: '10rem', subfield:'name' },
+            { field: 'name', header: 'Geofence Name', minWidth: '12rem' },
             { field: 'zipCode', header: 'Zip Code', minWidth: '10rem' },
-            { field: 'geofenceColor', header: 'Geofence Color', minWidth: '12rem' },
-            { field: 'geofenceCode', header: 'Geofence Code', minWidth: '12rem' },
+            // { field: 'geofenceColor', header: 'Geofence Color', minWidth: '12rem' },
+            // { field: 'geofenceCode', header: 'Geofence Code', minWidth: '12rem' },
             // { field: 'addressUses', header: 'Address Uses', minWidth: '10rem' },
-            { field: 'formattedCity', header: 'Formatted City', minWidth: '12rem' },
-            { field: 'addressStatus', header: 'Status', minWidth: '10rem' },
-            { field: 'geofenceImage', header: 'Geofence Image', minWidth: '12rem' },
-            { field: 'latitude', header: 'Latitude', minWidth: '12rem' },
-            { field: 'longitude', header: 'Longitude', minWidth: '12rem' },
-            { field: 'geofenceRadius', header: 'Radius', minWidth: '10rem' },
-            { field: 'geofenceCenterLatitude', header: 'Geofence Latitude', minWidth: '15rem' },
-            { field: 'geofenceCenterLongitude', header: 'Geofence Longitude', minWidth: '15rem' }
+            // { field: 'formattedCity', header: 'Formatted City', minWidth: '12rem' },
+            // { field: 'addressStatus', header: 'Status', minWidth: '10rem' },
+            // { field: 'geofenceImage', header: 'Geofence Image', minWidth: '12rem' },
+            // { field: 'latitude', header: 'Latitude', minWidth: '12rem' },
+            // { field: 'longitude', header: 'Longitude', minWidth: '12rem' },
+            // { field: 'geofenceRadius', header: 'Radius', minWidth: '10rem' },
+            // { field: 'geofenceCenterLatitude', header: 'Geofence Latitude', minWidth: '15rem' },
+            // { field: 'geofenceCenterLongitude', header: 'Geofence Longitude', minWidth: '15rem' }
         ],
-        globalFilterFields: ['address1', 'address2', 'address3', 'city', 'stateName', 'countryName', 'geofenceName', 'zipCode'],
+        globalFilterFields: ['address1', 'address2', 'address3', 'city', 'geofenceName', 'zipCode'],
         dataKey: 'addressId'
     };
 
-    tableData = [
-        {
-            addressId: 582570,
-            address1: 'Indian Oil Corporation Limited  Plot. No.1, Sector',
-            address2: 'Industrial Growth Centre, Maneri  Tehsil. Niwas',
-            address3: null,
-            city: 'Mandla',
-            stateName: 'Madhya Pradesh',
-            countryName: 'India',
-            geofenceName: 'Jabalpur BP(3385)',
-            geofenceTypeId: 596705,
-            zipCode: '481885',
-            geofenceOpacity: 0.5,
-            geofenceBorderColor: '#000000',
-            geofenceColor: '#5d27b0',
-            geofenceCode: 'CIRCLE',
-            addressUses: 1,
-            formattedCity: 'Mandla',
-            formattedStateName: 'Madhya Pradesh',
-            formattedCountryName: 'India',
-            formattedGeofenceType: 'Circle',
-            formattedGeofenceOpacity: 50,
-            addressStatus: 'Active',
-            formattedColorCode: '#5d27b0',
-            formattedGeofenceBorderColor: '#000000',
-            stateId: 68,
-            countryId: 100000,
-            geofenceId: 1565100,
-            geofenceArea: null,
-            geofenceBorderWidth: 2,
-            geofenceBorderOpacity: 0.0035,
-            geofenceImage: null,
-            formattedGeofenceBorderOpacity: 0,
-            latitude: '23.113582567386135',
-            longitude: '80.21701417843536',
-            companyId: 14904564,
-            geofenceRadius: '100',
-            geofenceCenterLatitude: '23.113582567386135',
-            geofenceCenterLongitude: '80.21701417843536',
-            sapCode: '3385',
-            addressUsage: null,
-            formattedCityStateZipDetails: 'Mandla, Madhya Pradesh, India 481885'
-        },
-        {
-            addressId: 582571,
-            address1: 'Bharat Petroleum Depot',
-            address2: 'Gondia Industrial Area',
-            address3: 'Near NH-6',
-            city: 'Gondia',
-            stateName: 'Maharashtra',
-            countryName: 'India',
-            geofenceName: 'Gondia Depot',
-            geofenceTypeId: 596706,
-            zipCode: '441601',
-            geofenceOpacity: 0.7,
-            geofenceBorderColor: '#FF0000',
-            geofenceColor: '#FF5733',
-            geofenceCode: 'POLYGON',
-            addressUses: 2,
-            formattedCity: 'Gondia',
-            formattedStateName: 'Maharashtra',
-            formattedCountryName: 'India',
-            formattedGeofenceType: 'Polygon',
-            formattedGeofenceOpacity: 70,
-            addressStatus: 'Inactive',
-            formattedColorCode: '#FF5733',
-            formattedGeofenceBorderColor: '#FF0000',
-            stateId: 69,
-            countryId: 100000,
-            geofenceId: 1565101,
-            geofenceArea: 200,
-            geofenceBorderWidth: 3,
-            geofenceBorderOpacity: 0.005,
-            geofenceImage: null,
-            formattedGeofenceBorderOpacity: 1,
-            latitude: '21.454545',
-            longitude: '80.198765',
-            companyId: 14904565,
-            geofenceRadius: '200',
-            geofenceCenterLatitude: '21.454545',
-            geofenceCenterLongitude: '80.198765',
-            sapCode: '4416',
-            addressUsage: 3,
-            formattedCityStateZipDetails: 'Gondia, Maharashtra, India 441601'
-        }
-    ];
+    tableData = [];
 
     formSteps: StepConfig[] = [
         {
@@ -221,8 +136,15 @@ export class AddressComponent implements OnInit {
                   label: 'Select State',
                   required: true,
                   placeholder: 'Select a State',
-                  dependsOn: 'country'
+                  dependsOn: 'country',
+                  autoFetch: true
                 },
+                {
+                  fieldId: 'city',
+                  type: 'text',
+                  label: 'Enter City',
+                  required: true
+              },
             ]
         }
     ];
@@ -246,8 +168,8 @@ export class AddressComponent implements OnInit {
         this.uiService.toggleLoader(true);
         try {
             const response: any = await this.http.get('geortd/address/list');
-            this.tableData = response.data; // Assuming the response has a 'data' property containing the list of addresses
             console.log(response, 'response');
+            this.tableData = response.data; // Assuming the response has a 'data' property containing the list of addresses
             // Handle the response data as needed
         } catch (error) {
             console.error('Error fetching address list:', error);
@@ -260,9 +182,32 @@ export class AddressComponent implements OnInit {
     async onFormSubmit(formData: any): Promise<void> {
         console.log('Form submitted with data:', formData);
         this.uiService.toggleLoader(true);
+        const  { city, country, geofenceName, state, zipCode, locationPlace3, locationPlace2, locationPlace1 } = formData;
+        const payload = {
+            searchBy: 'map',
+            name: geofenceName,
+            address1: locationPlace1.address,
+            address2: locationPlace2,
+            address3: locationPlace3,
+            city,
+            stateId: state?.id,
+            countryId: country?.id,
+            zipcode: zipCode,
+            exCode: null,
+            attributes: JSON.stringify({
+                geofencetype: 'circle',
+                geojson: {
+                    type: 'FeatureCollection',
+                    features: [{ type: 'Feature', geometry: { type: 'Point', coordinates: [locationPlace1.lng, locationPlace1.lng] }, properties: {} }]
+                }
+            })
+        };
         try {
-            const response = await this.http.post('geortd/address/create', formData);
+            const response = await this.http.post('geortd/address/create', payload);
             console.log(response, 'response');
+            this.uiService.showToast('success', 'Success', 'Address created successfully');
+            this.uiService.closeDrawer(); // Close the drawer after submission
+            await this.fetchAddressList(); // Refresh the address list after successful submission
         } catch (error) {
             console.error('Error submitting form:', error);
             this.uiService.showToast('error', 'Error', 'Failed to submit form');

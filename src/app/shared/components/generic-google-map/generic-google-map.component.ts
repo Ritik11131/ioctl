@@ -76,7 +76,7 @@ export class GenericGoogleMapComponent {
       const loader = new Loader({
         apiKey: this.apiKey,
         version: "weekly",
-        libraries: ['places', 'maps', 'marker', 'drawing']
+        libraries: ['places', 'maps', 'marker', 'drawing', 'routes']
       });
 
       await loader.load();

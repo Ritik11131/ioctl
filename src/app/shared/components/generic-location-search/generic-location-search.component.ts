@@ -69,7 +69,7 @@ export class GenericLocationSearchComponent {
   private autoCompleteToken!: google.maps.places.AutocompleteSessionToken;
   private debounceTimer: any;
   
-  searchText: string = '';
+  @Input() searchText: string = '';
   suggestions: any[] = [];
   loading: boolean = false;
 
