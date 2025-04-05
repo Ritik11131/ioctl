@@ -283,7 +283,8 @@ export class AddressComponent implements OnInit {
 
 
     openNew() {
-        this.uiService.openDrawer(this.createUpdateUserContent, 'Address Management');
+      this.selectedRowItems = []; // Reset selected items when opening new form
+      this.uiService.openDrawer(this.createUpdateUserContent, 'Address Management');
     }
 
     handleRowSelectionChange(event: any): void {

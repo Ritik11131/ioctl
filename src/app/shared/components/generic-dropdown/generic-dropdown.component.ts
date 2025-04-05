@@ -36,6 +36,7 @@ export class GenericDropdownComponent implements OnChanges {
   @Input() id: any = null;
   @Input() type!: any;
   @Input() params: Record<string, any> = {};
+  @Input() editMode = false; // 👈 For edit mode
   @Input() placeholder: any = 'Select';
   @Input() autoFetch: any = false;
   @Input() selectedValue: any = null; // 👈 For edit

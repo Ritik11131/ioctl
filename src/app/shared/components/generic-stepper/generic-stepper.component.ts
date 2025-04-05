@@ -80,6 +80,7 @@ export interface StepConfig {
                                                 [params]="dropdownParams[field.fieldId]"
                                                 [placeholder]="field.placeholder"
                                                 [autoFetch]="field.autoFetch"
+                                                [editMode]="editMode"
                                                 [selectedValue]="formGroup.get(field.fieldId)?.value"
                                                 (selected)="onDropdownSelect($event, field.fieldId)"
                                             />
