@@ -192,8 +192,37 @@ export class AddressComponent implements OnInit {
     async onFormSubmit(formData: any): Promise<void> {
         console.log('Form submitted with data:', formData);
         if(this.isEditMode) {
-          // this.uiService.toggleLoader(true);
-
+          this.uiService.toggleLoader(true);
+          try {
+            const { city, country, geofenceName, state, zipCode, locationPlace3, locationPlace2, locationPlace1 } = formData;
+            const payload = {
+              id: this.selectedRowItems[0].id,
+              searchBy: 'map',
+              userAttributes: null,
+              name: geofenceName,
+              address1: locationPlace1.address,
+              address2: locationPlace2,
+              address3: locationPlace3,
+              city,
+              stateId: formData.state.id,
+              countryId: formData.country.id,
+              zipcode: zipCode,
+              state: state,
+              country: country,
+              exCode: null,
+              attributes: JSON.stringify(locationPlace1)
+            };
+            const response = await this.http.put('geortd/address/Modify', this.selectedRowItems[0].id, payload);
+            console.log(response, 'response');
+            this.uiService.showToast('success', 'Success', 'Address updated successfully');
+            this.uiService.closeDrawer(); // Close the drawer after submission
+            await this.fetchAddressList(); // Refresh the address list after successful submission
+          } catch (error) {
+            console.error('Error submitting form:', error);
+            this.uiService.showToast('error', 'Error', 'Failed to submit form');
+          } finally {
+            this.uiService.toggleLoader(false);
+          }
         } else {
           this.uiService.toggleLoader(true);
           const  { city, country, geofenceName, state, zipCode, locationPlace3, locationPlace2, locationPlace1 } = formData;
@@ -204,8 +233,8 @@ export class AddressComponent implements OnInit {
             address2: locationPlace2,
             address3: locationPlace3,
             city,
-            stateId: state?.id,
-            countryId: country?.id,
+            stateId: state?.value,
+            countryId: country?.value,
             zipcode: zipCode,
             exCode: null,
             attributes: JSON.stringify(locationPlace1)

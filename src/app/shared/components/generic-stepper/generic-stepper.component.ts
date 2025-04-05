@@ -79,10 +79,11 @@ export interface StepConfig {
                                                 [id]="field.fieldId"
                                                 [type]="field.apiType"
                                                 [params]="dropdownParams[field.fieldId]"
-                                                [placeholder]="field.placeholder"
+                                                [placeholder]="field.placeholder || 'Select'"
                                                 [autoFetch]="field.autoFetch"
                                                 [editMode]="editMode"
                                                 [selectedValue]="formGroup.get(field.fieldId)?.value"
+                                                [staticOptions]="field.options || []"
                                                 (selected)="onDropdownSelect($event, field.fieldId)"
                                             />
                                         }
@@ -96,8 +97,8 @@ export interface StepConfig {
                                             />
                                         }
 
-                                        @case('textarea') {
-                                            <textarea pTextarea [id]="field.fieldId" [formControlName]="field.fieldId" [placeholder]="field.placeholder || 'Enter text'" rows="5" cols="30"  class="w-full p-2"></textarea>
+                                        @case ('textarea') {
+                                            <textarea pTextarea [id]="field.fieldId" [formControlName]="field.fieldId" [placeholder]="field.placeholder || 'Enter text'" rows="5" cols="30" class="w-full p-2"></textarea>
                                         }
                                     }
                                 </div>
@@ -106,9 +107,7 @@ export interface StepConfig {
                     </div>
 
                     <div class="flex justify-between mt-6">
-                   
                         <button pButton type="button" label="Previous" [disabled]="activeIndex === 0" (click)="prevStep()" class="p-button-outlined"></button>
-                    
 
                         <button pButton type="submit" [label]="isLastStep ? 'Submit' : 'Next'" [disabled]="!isStepValid()" class="p-button-primary"></button>
                     </div>
@@ -491,30 +490,48 @@ export class GenericStepperComponent implements OnInit, OnChanges {
     }
 
     onDropdownSelect(selectedValue: any, fieldId: string) {
-        // Set form value
-        this.formGroup.get(fieldId)?.setValue(selectedValue || {});
-
-        // Handle dependent dropdowns
-        this.clearDependentFields(fieldId, selectedValue);
-    }
-
-    clearDependentFields(fieldId: string, selectedValue: any) {
-        const paramValue = selectedValue?.id ?? null;
-
-        this.steps.forEach((step) => {
-            step.fields.forEach((f) => {
-                if (f.dependsOn === fieldId) {
-                    // Reset the dependent form control
-                    this.formGroup.get(f.fieldId)?.reset();
-
-                    // Set API params for the dependent dropdown
-                    const paramKey = `${fieldId}Id`;
-                    this.dropdownParams[f.fieldId] = paramValue ? { [paramKey]: paramValue } : {};
-
-                    // Clear any nested dependents
-                    this.clearDependentFields(f.fieldId, null);
-                }
-            });
-        });
-    }
+      // Set form value - store the complete selected object
+      this.formGroup.get(fieldId)?.setValue(selectedValue);
+  
+      // Handle dependent dropdowns
+      this.updateDependentFields(fieldId, selectedValue);
+  }
+  
+  updateDependentFields(fieldId: string, selectedValue: any) {
+      // Extract the ID from the selected value
+      console.log(selectedValue, fieldId);
+      
+      let paramValue: any = null;
+      
+      if (selectedValue) {
+          // Handle different object structures
+          if (typeof selectedValue === 'object') {
+              paramValue = selectedValue.id || selectedValue.value;
+          } else {
+              paramValue = selectedValue;
+          }
+      }
+  
+      // Find fields that depend on this field
+      this.steps.forEach((step) => {
+          step.fields.forEach((f) => {
+              if (f.dependsOn === fieldId) {
+                  // Reset the dependent form control
+                  this.formGroup.get(f.fieldId)?.reset();
+  
+                  // Set API params for the dependent dropdown
+                  if (paramValue) {
+                      // Use the original fieldId as parameter name
+                      this.dropdownParams[f.fieldId] = { [fieldId]: paramValue };
+                  } else {
+                      // Clear params when parent value is cleared
+                      this.dropdownParams[f.fieldId] = {};
+                  }
+  
+                  // Clear any nested dependents recursively
+                  this.updateDependentFields(f.fieldId, null);
+              }
+          });
+      });
+  }
 }
