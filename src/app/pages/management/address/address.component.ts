@@ -22,6 +22,8 @@ export class AddressComponent implements OnInit {
     googleMapsApiKey = environment.googleMapsApiKey; // Replace with your API key
     initialLat = 40.73061;
     initialLng = -73.935242;
+    isEditMode = false;
+    editData: any = null;
 
     selectedLocation: any = null;
     geofenceRadius = 1000;
@@ -194,13 +196,7 @@ export class AddressComponent implements OnInit {
             countryId: country?.id,
             zipcode: zipCode,
             exCode: null,
-            attributes: JSON.stringify({
-                geofencetype: 'circle',
-                geojson: {
-                    type: 'FeatureCollection',
-                    features: [{ type: 'Feature', geometry: { type: 'Point', coordinates: [locationPlace1.lng, locationPlace1.lng] }, properties: {} }]
-                }
-            })
+            attributes: JSON.stringify(locationPlace1)
         };
         try {
             const response = await this.http.post('geortd/address/create', payload);
@@ -227,6 +223,20 @@ export class AddressComponent implements OnInit {
     }
     openNew() {
         this.uiService.openDrawer(this.createUpdateUserContent, 'Address Management');
+        this.isEditMode = true;
+        this.editData = this.tableData[0]; // For demo purposes, using the first item in the list
+        const { address1, address2, address3, city, state, country, zipCode, name, attributes } = this.tableData[this.tableData.length - 1];
+        this.editData = {
+            city,
+            country,
+            geofenceName: name,
+            state,
+            zipCode,
+            locationPlace3: address3,
+            locationPlace2: address2,
+            locationPlace1: JSON.parse("{\"lat\": 28.651027000000003, \"lng\": 77.1562196, \"name\": \"Shadipur\", \"address\": \"Shadipur, New Delhi, Delhi, India\"}")
+        };
+
         // this.product = {};
         // this.submitted = false;
         // this.productDialog = true;

@@ -31,5 +31,5 @@
             </div>
         } -->
 
-    <app-generic-stepper [steps]="formSteps" [validateFromApi]="false" (stepChange)="onStepChange($event)" (formSubmit)="onFormSubmit($event)"></app-generic-stepper>
+    <app-generic-stepper [steps]="formSteps" [validateFromApi]="false" [editMode]="isEditMode" [editData]="editData" (stepChange)="onStepChange($event)" (formSubmit)="onFormSubmit($event)"></app-generic-stepper>
 </ng-template>

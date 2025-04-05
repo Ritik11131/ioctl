@@ -179,9 +179,9 @@ export class GenericLocationSearchComponent {
         });
         
         // Automatically process the first suggestion
-        if (suggestions.length > 0) {
-          await this.selectSuggestion(suggestions[0]);
-        }
+        // if (suggestions.length > 0) {
+        //   await this.selectSuggestion(suggestions[0]);
+        // }
       }
     } catch (error) {
       console.error("Error fetching autocomplete suggestions:", error);
