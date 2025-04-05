@@ -1,6 +1,6 @@
 <app-generic-table [selectedItems]="selectedRowItems" [toolBarStartActions]="toolBarStartActions" [tableConfig]="tableConfig" [tableData]="tableData" (onToolBarStartAction)="handleToolBarActions($event)" (onSelectionChange)="handleRowSelectionChange($event)" />
 
-<ng-template #createUpdateUserContent>
+<ng-template #createUpdateAddressContent>
     <h3 class="text-xl font-semibold mb-4 text-muted-color-emphasis">{{isEditMode ? 'Update ' : 'Create '}}Address</h3>
     <app-generic-stepper [steps]="formSteps" [validateFromApi]="false" [editMode]="isEditMode" [editData]="editData" (stepChange)="onStepChange($event)" (formSubmit)="onFormSubmit($event)"></app-generic-stepper>
     <!-- Map Component -->

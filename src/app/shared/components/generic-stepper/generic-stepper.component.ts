@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { StepsModule } from 'primeng/steps';
 import { MenuItem } from 'primeng/api';
 import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
 import { GenericGoogleMapComponent } from '../generic-google-map/generic-google-map.component';
@@ -34,7 +35,7 @@ export interface StepConfig {
 @Component({
     selector: 'app-generic-stepper',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, StepsModule, InputTextModule, SelectModule, ButtonModule, GenericGoogleMapComponent, GenericLocationSearchComponent, GenericDropdownComponent],
+    imports: [CommonModule, ReactiveFormsModule, StepsModule, InputTextModule, TextareaModule, SelectModule, ButtonModule, GenericGoogleMapComponent, GenericLocationSearchComponent, GenericDropdownComponent],
     template: `
         <div class="w-full">
             <!-- Only show steps if there are multiple steps -->
@@ -94,6 +95,10 @@ export interface StepConfig {
                                                 [searchText]="placeDisplayValues[field.fieldId]"
                                             />
                                         }
+
+                                        @case('textarea') {
+                                            <textarea pTextarea [id]="field.fieldId" [formControlName]="field.fieldId" [placeholder]="field.placeholder || 'Enter text'" rows="5" cols="30"  class="w-full p-2"></textarea>
+                                        }
                                     }
                                 </div>
                             }
@@ -101,7 +106,9 @@ export interface StepConfig {
                     </div>
 
                     <div class="flex justify-between mt-6">
+                   
                         <button pButton type="button" label="Previous" [disabled]="activeIndex === 0" (click)="prevStep()" class="p-button-outlined"></button>
+                    
 
                         <button pButton type="submit" [label]="isLastStep ? 'Submit' : 'Next'" [disabled]="!isStepValid()" class="p-button-primary"></button>
                     </div>

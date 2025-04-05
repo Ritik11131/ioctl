@@ -1,118 +1,220 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { GenericTableComponent } from '../../../shared/components/generic-table/generic-table.component';
+import { GenericStepperComponent, StepConfig } from '../../../shared/components/generic-stepper/generic-stepper.component';
+import { UiService } from '../../../layout/service/ui.service';
+import { HttpService } from '../../service/http.service';
 
 @Component({
-  selector: 'app-department',
-  imports: [GenericTableComponent],
-  templateUrl: './department.component.html',
-  styleUrl: './department.component.scss'
+    selector: 'app-department',
+    imports: [GenericTableComponent, GenericStepperComponent],
+    templateUrl: './department.component.html',
+    styleUrl: './department.component.scss'
 })
-export class DepartmentComponent {
+export class DepartmentComponent implements OnInit {
+    @ViewChild('createUpdateDepartmentContent') createUpdateDepartmentContent!: TemplateRef<any>;
+    isEditMode = false;
+    editData: any = null;
+    selectedRowItems: any[] = [];
 
+    toolBarStartActions = [
+        {
+            key: 'new',
+            label: 'New',
+            icon: 'pi pi-plus',
+            severity: 'primary',
+            outlined: false
+        },
+        {
+          key: 'edit',
+          label: 'Edit',
+          icon: 'pi pi-pen-to-square',
+          severity: 'secondary',
+          outlined: false
+      },
+        {
+            key: 'delete',
+            label: 'Delete',
+            icon: 'pi pi-trash',
+            severity: 'danger',
+            outlined: true
+        }
+    ];
 
-  toolBarStartActions = [
-    {
-      key: 'new',
-      label: 'New',
-      icon: 'pi pi-plus',
-      severity: 'primary',
-      outlined: false,
-    },
-    {
-      key: 'delete',
-      label: 'Delete',
-      icon: 'pi pi-trash',
-      severity: 'danger',
-      outlined: true,
+    tableConfig = {
+        title: 'Manage Departments',
+        dataKey: 'id',
+        columns: [
+            { field: 'name', header: 'Department Name', minWidth: '12rem' },
+            { field: 'email', header: 'Email', minWidth: '12rem' },
+            { field: 'telephone', header: 'Telephone', minWidth: '12rem' },
+            { field: 'fax', header: 'Fax', minWidth: '12rem' },
+            { field: 'description', header: 'Description', minWidth: '12rem' }
+
+        ],
+        globalFilterFields: ['name', 'email', 'telephone', 'fax']
+    };
+
+    tableData = [];
+
+    formSteps: StepConfig[] = [
+        {
+            stepId: 'basic',
+            title: '',
+            fields: [
+                {
+                    fieldId: 'name',
+                    type: 'text',
+                    label: 'Department Name',
+                    required: true,
+                    placeholder: 'Enter department name'
+                },
+                {
+                    fieldId: 'email',
+                    type: 'text',
+                    label: 'Department Email',
+                    required: true,
+                    placeholder: 'Enter department email'
+                },
+                {
+                    fieldId: 'telephone',
+                    type: 'text',
+                    label: 'Department Telephone',
+                    required: true,
+                    placeholder: 'Enter department telephone'
+                },
+                {
+                    fieldId: 'fax',
+                    type: 'text',
+                    label: 'Department Fax',
+                    required: true,
+                    placeholder: 'Enter department fax'
+                },
+                {
+                  fieldId: 'description',
+                  type: 'textarea',
+                  label: 'Description',
+                  required: true,
+                  placeholder: 'Enter description'
+              }
+            ]
+        }
+    ];
+
+    constructor(
+        private uiService: UiService,
+        private http: HttpService
+    ) {}
+
+    ngOnInit(): void {
+        this.fetchDepartmentList();
     }
-  ];
 
+    onStepChange(event: { stepIndex: number; data: any }) {
+        console.log('Step changed:', event);
+        // Here you could call an API to validate the step if needed
+    }
 
- tableConfig = {
-  title: "Manage Departments",
-  dataKey: "departmentId",
-  columns: [
-      { field: "departmentName", header: "Department Name", minWidth: "15rem" },
-      { field: "departmentEmail", header: "Email", minWidth: "15rem" },
-      { field: "telephoneNumber", header: "Telephone", minWidth: "12rem" },
-      { field: "faxNumber", header: "Fax", minWidth: "12rem" },
-      { field: "status", header: "Status", minWidth: "10rem" },
-      { field: "noOfDrivers", header: "Drivers", minWidth: "8rem" },
-      { field: "noOfVehicles", header: "Vehicles", minWidth: "8rem" },
-      { field: "createdOn", header: "Created On", minWidth: "14rem" },
-      { field: "formattedUserMobileNumber", header: "Contact Number", minWidth: "14rem" },
-  ],
-  globalFilterFields: ["departmentCode", "departmentName", "status", "departmentEmail"],
-    
-  };
+    async onFormSubmit(formData: any): Promise<void> {
+      console.log('Form submitted with data:', formData);
+      if(this.isEditMode) {
+        this.uiService.toggleLoader(true);
+        try {
+          const response = await this.http.put('geortd/department/Modify', this.selectedRowItems[0].id, {...formData, id: this.selectedRowItems[0].id});
+          console.log(response, 'response');
+          this.uiService.showToast('success', 'Success', 'Department updated successfully');
+          this.uiService.closeDrawer(); // Close the drawer after submission
+          await this.fetchDepartmentList(); // Refresh the department list after successful submission
+        } catch (error) {
+          console.error('Error submitting form:', error);
+          this.uiService.showToast('error', 'Error', 'Failed to submit form');
+        } finally {
+          this.uiService.toggleLoader(false);
+        }
 
-  tableData = [
-    {
-      departmentId: 20481526,
-      companyId: 14904564,
-      departmentCode: "MAH",
-      departmentName: "Maharashtra State Office",
-      departmentDescription: "Handles operations in Maharashtra region",
-      departmentEmail: "vkrai@indianoil.in",
-      deptAdminUsername: "mso.iocl.rtd",
-      telephoneNumber: "022-12345678",
-      faxNumber: "022-87654321",
-      status: "Active",
-      noOfDrivers: 357,
-      noOfVehicles: 302,
-      areaCode: 400001,
-      contactIsdCode: "+91",
-      userEmailAddress: "vkrai@indianoil.in",
-      userMobileNumber: "9876543210",
-      createdOn: 1543492516000,
-      countryIsdCode: "+91",
-      userFirstName: "Maharashtra",
-      userMiddleName: "State",
-      userLastName: "Office",
-      userId: 4589246,
-      countryIsdId: 100000,
-      deptCountryIsdId: 0,
-      deptCountryIsdCode: null,
-      formattedDeptAdminName: "Maharashtra State Office",
-      formattedPhoneNumber: "+91-022-12345678",
-      formmatedDepartmentName: "Maharashtra State Office (MAH)",
-      formmatedCreatedOn: "29/11/2018 05:25:16 PM",
-      formattedUserMobileNumber: "+91-9876543210",
-      formattedTelephoneNumber: "022-12345678"
-  },
-  {
-      departmentId: 20481527,
-      companyId: 14904565,
-      departmentCode: "DEL",
-      departmentName: "Delhi Regional Office",
-      departmentDescription: "Handles operations in Delhi region",
-      departmentEmail: "delhi@indianoil.in",
-      deptAdminUsername: "del.iocl.rtd",
-      telephoneNumber: "011-22334455",
-      faxNumber: "011-55443322",
-      status: "Inactive",
-      noOfDrivers: 200,
-      noOfVehicles: 180,
-      areaCode: 110001,
-      contactIsdCode: "+91",
-      userEmailAddress: "delhi@indianoil.in",
-      userMobileNumber: "9876543211",
-      createdOn: 1583492516000,
-      countryIsdCode: "+91",
-      userFirstName: "Delhi",
-      userMiddleName: "Regional",
-      userLastName: "Office",
-      userId: 4589247,
-      countryIsdId: 100000,
-      deptCountryIsdId: 0,
-      deptCountryIsdCode: null,
-      formattedDeptAdminName: "Delhi Regional Office",
-      formattedPhoneNumber: "+91-011-22334455",
-      formmatedDepartmentName: "Delhi Regional Office (DEL)",
-      formmatedCreatedOn: "06/03/2020 03:25:16 PM",
-      formattedUserMobileNumber: "+91-9876543211",
-      formattedTelephoneNumber: "011-22334455"
-  },
-  ];
+      } else {
+        this.uiService.toggleLoader(true);
+        try {
+          const response = await this.http.post('geortd/department/create', formData);
+          console.log(response, 'response');
+          this.uiService.showToast('success', 'Success', 'Department created successfully');
+          this.uiService.closeDrawer(); // Close the drawer after submission
+          await this.fetchDepartmentList(); // Refresh the department list after successful submission
+        } catch (error) {
+          console.error('Error submitting form:', error);
+          this.uiService.showToast('error', 'Error', 'Failed to submit form');
+        } finally {
+          this.uiService.toggleLoader(false);
+        }
+      }
+      // Handle form submission
+  }
 
+    async fetchDepartmentList(): Promise<void> {
+        this.uiService.toggleLoader(true);
+        try {
+            const response: any = await this.http.get('geortd/department/list');
+            console.log(response, 'response');
+            this.tableData = response.data; // Assuming the response has a 'data' property containing the list of departments
+            // Handle the response data as needed
+            this.selectedRowItems = []; // Reset selected items after fetching new data
+        } catch (error) {
+            console.error('Error fetching department list:', error);
+            this.uiService.showToast('error', 'Error', 'Failed to fetch department list');
+        } finally {
+            this.uiService.toggleLoader(false);
+        }
+    }
+
+    handleRowSelectionChange(event: any): void {
+        console.log(event);
+
+        this.selectedRowItems = event;
+    }
+
+    async handleToolBarActions(event: any): Promise<void> {
+        if (event.key === 'new') {
+            this.openNew();
+        } else if (event.key === 'delete') {
+            await this.deleteSelectedDepartment();
+        } else if (event.key === 'edit') {
+            await this.handleEditDepartment();
+        }
+    }
+
+    openNew() {
+        this.selectedRowItems = []; // Reset selected items when opening new form
+        this.uiService.openDrawer(this.createUpdateDepartmentContent, 'department Management');
+    }
+
+    async deleteSelectedDepartment(): Promise<void> {
+        this.uiService.toggleLoader(true);
+        try {
+            const response: any = await this.http.delete('geortd/department/delete', this.selectedRowItems[0].id);
+            console.log(response, 'response');
+            this.uiService.showToast('success', 'Success', 'Department deleted successfully');
+            await this.fetchDepartmentList(); // Refresh the department list after deletion
+        } catch (error) {
+            console.error('Error deleting department:', error);
+            this.uiService.showToast('error', 'Error', 'Failed to delete department');
+        } finally {
+            this.uiService.toggleLoader(false);
+        }
+    }
+
+    async handleEditDepartment(): Promise<void> {
+        console.log(this.selectedRowItems, 'selectedRowItems');
+        this.isEditMode = true;
+        this.uiService.toggleLoader(true);
+        try {
+            const response: any = await this.http.get('geortd/department/GetDepartmentById', {}, this.selectedRowItems[0].id);
+            console.log(response, 'response');
+            this.editData = response.data; // Assuming the response has a 'data' property containing the department details
+            this.uiService.openDrawer(this.createUpdateDepartmentContent, 'Department Management');
+        } catch (error) {
+            console.error('Error fetching department details:', error);
+            this.uiService.showToast('error', 'Error', 'Failed to fetch department details');
+        } finally {
+            this.uiService.toggleLoader(false);
+        }
+    }
 }

@@ -15,7 +15,7 @@ import { HttpService } from '../../service/http.service';
 })
 export class AddressComponent implements OnInit {
     // ViewChild reference to map component for access to its methods
-    @ViewChild('createUpdateUserContent') createUpdateUserContent!: TemplateRef<any>;
+    @ViewChild('createUpdateAddressContent') createUpdateAddressContent!: TemplateRef<any>;
     @ViewChild('mapComponent') mapComponent!: GenericGoogleMapComponent;
     @ViewChild('searchComponent') searchComponent!: GenericLocationSearchComponent;
 
@@ -269,7 +269,7 @@ export class AddressComponent implements OnInit {
           locationPlace2: address2,
           locationPlace1: JSON.parse(attributes)
         };
-        this.uiService.openDrawer(this.createUpdateUserContent, 'Address Management');
+        this.uiService.openDrawer(this.createUpdateAddressContent, 'Address Management');
         console.log(this.editData, 'editData');
         
       } catch (error) {
@@ -284,7 +284,7 @@ export class AddressComponent implements OnInit {
 
     openNew() {
       this.selectedRowItems = []; // Reset selected items when opening new form
-      this.uiService.openDrawer(this.createUpdateUserContent, 'Address Management');
+      this.uiService.openDrawer(this.createUpdateAddressContent, 'Address Management');
     }
 
     handleRowSelectionChange(event: any): void {
