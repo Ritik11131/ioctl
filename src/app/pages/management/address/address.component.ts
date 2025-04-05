@@ -1,14 +1,20 @@
-import { Component } from '@angular/core';
+import { Component, TemplateRef, ViewChild } from '@angular/core';
 import { UiService } from '../../../layout/service/ui.service';
 import { GenericTableComponent } from "../../../shared/components/generic-table/generic-table.component";
+import { GenericLocationSearchComponent } from "../../../shared/components/generic-location-search/generic-location-search.component";
+import { GenericGoogleMapComponent } from '../../../shared/components/generic-google-map/generic-google-map.component';
+import { environment } from '../../../../environments/environment.prod';
 
 @Component({
   selector: 'app-address',
-  imports: [GenericTableComponent],
+  imports: [GenericTableComponent, GenericLocationSearchComponent, GenericGoogleMapComponent],
   templateUrl: './address.component.html',
   styleUrl: './address.component.scss'
 })
 export class AddressComponent {
+
+  @ViewChild("createUpdateUserContent") createUpdateUserContent!: TemplateRef<any>;
+
 
   toolBarStartActions = [
     {
@@ -38,18 +44,18 @@ export class AddressComponent {
       { field: 'stateName', header: 'State', minWidth: '10rem' },
       { field: 'countryName', header: 'Country', minWidth: '10rem' },
       { field: 'geofenceName', header: 'Geofence Name', minWidth: '12rem' },
-      { field: 'zipCode', header: 'Zip Code', minWidth: '8rem' },
-      { field: 'geofenceColor', header: 'Geofence Color', minWidth: '10rem' },
-      { field: 'geofenceCode', header: 'Geofence Code', minWidth: '10rem' },
-      { field: 'addressUses', header: 'Address Uses', minWidth: '8rem' },
-      { field: 'formattedCity', header: 'Formatted City', minWidth: '10rem' },
-      { field: 'addressStatus', header: 'Address Status', minWidth: '10rem' },
+      { field: 'zipCode', header: 'Zip Code', minWidth: '10rem' },
+      { field: 'geofenceColor', header: 'Geofence Color', minWidth: '12rem' },
+      { field: 'geofenceCode', header: 'Geofence Code', minWidth: '12rem' },
+      // { field: 'addressUses', header: 'Address Uses', minWidth: '10rem' },
+      { field: 'formattedCity', header: 'Formatted City', minWidth: '12rem' },
+      { field: 'addressStatus', header: 'Status', minWidth: '10rem' },
       { field: 'geofenceImage', header: 'Geofence Image', minWidth: '12rem' },
       { field: 'latitude', header: 'Latitude', minWidth: '12rem' },
       { field: 'longitude', header: 'Longitude', minWidth: '12rem' },
-      { field: 'geofenceRadius', header: 'Geofence Radius', minWidth: '10rem' },
-      { field: 'geofenceCenterLatitude', header: 'Geofence Center Latitude', minWidth: '12rem' },
-      { field: 'geofenceCenterLongitude', header: 'Geofence Center Longitude', minWidth: '12rem' }
+      { field: 'geofenceRadius', header: 'Radius', minWidth: '10rem' },
+      { field: 'geofenceCenterLatitude', header: 'Geofence Latitude', minWidth: '15rem' },
+      { field: 'geofenceCenterLongitude', header: 'Geofence Longitude', minWidth: '15rem' }
     ],
     globalFilterFields: [
       'address1',
@@ -156,16 +162,94 @@ export class AddressComponent {
   
 
       constructor(private uiService: UiService) {
-
+          setTimeout(()=>{
+            this.uiService.openDrawer(this.createUpdateUserContent, 'Address Management')
+          },100)
       }
 
 
   openNew() {
+    this.uiService.toggleLoader(true);
+    console.log(this.uiService.isLoading());
+    
     // this.product = {};
     // this.submitted = false;
     // this.productDialog = true;
     // this.uiService.showToast('error', 'Error', 'Failed to fetch user list');
 
+}
+
+// ViewChild reference to map component for access to its methods
+@ViewChild('mapComponent') mapComponent!: GenericGoogleMapComponent;
+@ViewChild('searchComponent') searchComponent!: GenericLocationSearchComponent;
+
+googleMapsApiKey = environment.googleMapsApiKey; // Replace with your API key
+initialLat = 40.730610;
+initialLng = -73.935242;
+
+selectedLocation: any = null;
+geofenceRadius = 1000;
+
+onMapReady(map: google.maps.Map) {
+  console.log(map,'map');
+  
+    console.log('sopmething');
+    
+    // Connect the search component to the map
+    if (this.searchComponent) {
+      console.log('if');
+      
+      this.searchComponent.setupSearchFunctionality(map);
+    } else {
+      // If search component isn't ready yet, try again in a tick
+      setTimeout(() => {
+        if (this.searchComponent) {
+          this.searchComponent.setupSearchFunctionality(map);
+        }
+      });
+    }
+
+  }
+
+onPlaceSelected(place: any) {
+  this.selectedLocation = place;
+  
+  // Update the map marker
+  if (this.mapComponent) {
+    this.mapComponent.updateMarkerPosition({
+      lat: place.lat,
+      lng: place.lng
+    });
+  }
+}
+
+onMapClick(coords: google.maps.LatLngLiteral) {
+  // Update selected location when map is clicked
+  this.selectedLocation = {
+    lat: coords.lat,
+    lng: coords.lng,
+    name: 'Custom location',
+    address: ''
+  };
+}
+
+onMarkerMoved(coords: google.maps.LatLngLiteral) {
+  // Update selected location when marker is dragged
+  if (this.selectedLocation) {
+    this.selectedLocation.lat = coords.lat;
+    this.selectedLocation.lng = coords.lng;
+  } else {
+    this.selectedLocation = {
+      lat: coords.lat,
+      lng: coords.lng,
+      name: 'Custom location',
+      address: ''
+    };
+  }
+}
+
+onRadiusChanged(radius: number) {
+  this.geofenceRadius = radius;
 }
 
 }

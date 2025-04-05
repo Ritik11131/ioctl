@@ -33,7 +33,7 @@ export class DepartmentComponent {
   dataKey: "departmentId",
   columns: [
       { field: "departmentName", header: "Department Name", minWidth: "15rem" },
-      { field: "departmentEmail", header: "Email", minWidth: "18rem" },
+      { field: "departmentEmail", header: "Email", minWidth: "15rem" },
       { field: "telephoneNumber", header: "Telephone", minWidth: "12rem" },
       { field: "faxNumber", header: "Fax", minWidth: "12rem" },
       { field: "status", header: "Status", minWidth: "10rem" },

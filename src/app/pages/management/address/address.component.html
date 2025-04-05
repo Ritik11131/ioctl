@@ -1,1 +1,30 @@
 <app-generic-table [toolBarStartActions]="toolBarStartActions" [tableConfig]="tableConfig" [tableData]="tableData" />
+
+<ng-template #createUpdateUserContent>
+    <h3 class="text-xl font-semibold mb-4 text-muted-color-emphasis">Create Address</h3>
+    <!-- Map Component -->
+    <app-generic-google-map
+    #mapComponent
+    [apiKey]="googleMapsApiKey"
+    [height]="400"
+    [initialLatitude]="initialLat"
+    [initialLongitude]="initialLng"
+    [initialZoom]="12"
+    (mapReady)="onMapReady($event)"
+    (mapClick)="onMapClick($event)"
+    (radiusChanged)="onRadiusChanged($event)"
+    (markerMoved)="onMarkerMoved($event)"
+    />
+    <app-generic-location-search #searchComponent [apiKey]="googleMapsApiKey" [placeholder]="'Sewarch'" (placeSelected)="onPlaceSelected($event)" />
+    <!-- Selected Location Info -->
+     @if(selectedLocation) {
+    
+         <div class="location-info">
+             <h3>Selected Location</h3>
+             <p>Name: {{ selectedLocation.name || 'Custom location' }}</p>
+             <p>Address: {{ selectedLocation.address || 'No address available' }}</p>
+             <p>Coordinates: {{ selectedLocation.lat }}, {{ selectedLocation.lng }}</p>
+             <p>Geofence Radius: {{ geofenceRadius }} meters</p>
+            </div>
+        }
+</ng-template>

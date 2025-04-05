@@ -32,15 +32,15 @@ export class UserComponent {
   dataKey: "userId",
   columns: [
       { field: "userName", header: "Username", minWidth: "12rem" },
-      { field: "employeeNumber", header: "Employee Number", minWidth: "12rem" },
+      { field: "employeeNumber", header: "Employee Number", minWidth: "15rem" },
       { field: "emailAddress", header: "Email Address", minWidth: "15rem" },
       { field: "mobileNumber", header: "Mobile Number", minWidth: "12rem" },
       { field: "roles", header: "Role", minWidth: "10rem" },
-      { field: "status", header: "Status", minWidth: "10rem" },
+      // { field: "status", header: "Status", minWidth: "10rem" },
       { field: "userFirstName", header: "First Name", minWidth: "10rem" },
       { field: "userLastName", header: "Last Name", minWidth: "10rem" },
       { field: "formattedDepartmentName", header: "Department", minWidth: "15rem" },
-      { field: "formattedStatus", header: "Formatted Status", minWidth: "12rem" },
+      { field: "formattedStatus", header: "Status", minWidth: "10rem" },
       { field: "formattedVendorName", header: "Vendor Name", minWidth: "12rem" },
   ],
   globalFilterFields: [
