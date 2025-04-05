@@ -18,7 +18,7 @@ import { ToolbarModule } from 'primeng/toolbar';
                         [severity]="toolBarStartAction.severity"
                         [label]="toolBarStartAction.label"
                         class="mr-2"
-                        [disabled]="toolBarStartAction.key === 'edit' ? !(selectedItems.length === 1) : false"
+                        [disabled]="(toolBarStartAction.key === 'edit' || toolBarStartAction.key === 'delete' ) ? !(selectedItems.length === 1) : false"
                         [icon]="toolBarStartAction.icon"
                         [outlined]="toolBarStartAction.outlined"
                         (onClick)="onToolBarStartAction.emit(toolBarStartAction)"

@@ -180,6 +180,7 @@ export class AddressComponent implements OnInit {
             console.log(response, 'response');
             this.tableData = response.data; // Assuming the response has a 'data' property containing the list of addresses
             // Handle the response data as needed
+            this.selectedRowItems = []; // Reset selected items after fetching new data
         } catch (error) {
             console.error('Error fetching address list:', error);
             this.uiService.showToast('error', 'Error', 'Failed to fetch address list');
@@ -220,15 +221,30 @@ export class AddressComponent implements OnInit {
         // Handle form submission
     }
 
-    handleToolBarActions(event: any) {
-        if (event.key === 'new') {
-            this.openNew();
-        } else if (event.key === 'delete') {
-            // this.deleteSelectedUsers();
-        } else if (event.key === 'edit') {
-          this.handleEditAddress()
-        }
+  async handleToolBarActions(event: any): Promise<void> {
+    if (event.key === 'new') {
+      this.openNew();
+    } else if (event.key === 'delete') {
+      await this.deleteSelectedAddress();
+    } else if (event.key === 'edit') {
+      await this.handleEditAddress();
     }
+  }
+
+  async deleteSelectedAddress(): Promise<void> {
+    this.uiService.toggleLoader(true);
+    try {
+      const response: any = await this.http.delete('geortd/address/delete', this.selectedRowItems[0].id);
+      console.log(response, 'response');
+      this.uiService.showToast('success', 'Success', 'Address deleted successfully');
+      await this.fetchAddressList(); // Refresh the address list after deletion
+    } catch (error) {
+      console.error('Error deleting address:', error);
+      this.uiService.showToast('error', 'Error', 'Failed to delete address');
+    } finally {
+      this.uiService.toggleLoader(false);
+    }
+  }
 
     async handleEditAddress(): Promise<void> {
       console.log(this.selectedRowItems, 'selectedRowItems');

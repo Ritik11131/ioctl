@@ -2,6 +2,7 @@
 
 <ng-template #createUpdateUserContent>
     <h3 class="text-xl font-semibold mb-4 text-muted-color-emphasis">{{isEditMode ? 'Update ' : 'Create '}}Address</h3>
+    <app-generic-stepper [steps]="formSteps" [validateFromApi]="false" [editMode]="isEditMode" [editData]="editData" (stepChange)="onStepChange($event)" (formSubmit)="onFormSubmit($event)"></app-generic-stepper>
     <!-- Map Component -->
     <!-- <app-generic-google-map
     #mapComponent
@@ -31,5 +32,4 @@
             </div>
         } -->
 
-    <app-generic-stepper [steps]="formSteps" [validateFromApi]="false" [editMode]="isEditMode" [editData]="editData" (stepChange)="onStepChange($event)" (formSubmit)="onFormSubmit($event)"></app-generic-stepper>
 </ng-template>
