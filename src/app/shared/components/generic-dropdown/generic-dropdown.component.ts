@@ -29,16 +29,16 @@ import { HttpService } from '../../../pages/service/http.service';
       [loading]="loading"
       (onShow)="onDropdownOpen()"
       (onChange)="onChange($event.value)"
-    >
-    </p-select>
+    />
   `,
 })
 export class GenericDropdownComponent implements OnChanges {
   @Input() id: any = null;
   @Input() type!: any;
   @Input() params: Record<string, any> = {};
-  @Input() placeholder: string = 'Select';
-  @Input() autoFetch: boolean = false; // 👈 special case for dependent dropdown
+  @Input() placeholder: any = 'Select';
+  @Input() autoFetch: any = false;
+  @Input() selectedValue: any = null; // 👈 For edit
   @Output() selected = new EventEmitter<any>();
 
   options: any[] = [];
@@ -55,6 +55,11 @@ export class GenericDropdownComponent implements OnChanges {
         this.fetchData();
       }
     }
+
+    if (changes['selectedValue'] && this.selectedValue && !this.dataFetched) {
+      // Trigger fetch for edit mode if selected value is set
+      this.fetchData();
+    }
   }
 
   onDropdownOpen() {
@@ -69,7 +74,6 @@ export class GenericDropdownComponent implements OnChanges {
     const apiMap: Record<string, string> = {
       country: 'geortd/country/list',
       state: `geortd/state/list/${this.params['countryId']}`,
-      // Add more types as needed
     };
 
     const url = apiMap[this.type];
@@ -84,6 +88,15 @@ export class GenericDropdownComponent implements OnChanges {
       const response: any = await this.http.get(url);
       this.options = response?.data || [];
       this.dataFetched = true;
+
+      // Preselect value if in edit mode
+      if (this.selectedValue) {
+        const match = this.options.find((opt) => opt.id === this.selectedValue.id);
+        if (match) {
+          this.selectedItem = match;
+          this.selected.emit(this.selectedItem);
+        }
+      }
     } catch (err) {
       console.error('Error fetching dropdown data:', err);
     } finally {

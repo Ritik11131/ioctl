@@ -74,22 +74,23 @@ export interface StepConfig {
                                             <input pInputText [id]="field.fieldId" [formControlName]="field.fieldId" [placeholder]="field.placeholder || 'Enter text'" class="w-full p-2" />
                                         }
                                         @case ('dropdown') {
-                                          <app-generic-dropdown 
-                                            [id]="field.fieldId" 
-                                            [type]="field.apiType" 
-                                            [placeholder]="field.placeholder || 'Select'" 
-                                            (selected)="onDropdownSelect($event, field.fieldId)" 
-                                            [params]="dropdownParams[field.fieldId]" 
-                                            [autoFetch]="field?.autoFetch || false" 
-                                          />
+                                            <app-generic-dropdown
+                                                [id]="field.fieldId"
+                                                [type]="field.apiType"
+                                                [params]="dropdownParams[field.fieldId]"
+                                                [placeholder]="field.placeholder"
+                                                [autoFetch]="field.autoFetch"
+                                                [selectedValue]="formGroup.get(field.fieldId)?.value"
+                                                (selected)="onDropdownSelect($event, field.fieldId)"
+                                            />
                                         }
                                         @case ('place') {
-                                            <app-generic-location-search 
-                                              #searchComponent 
-                                              [apiKey]="googleMapsApiKey" 
-                                              [placeholder]="'Search'" 
-                                              (placeSelected)="onPlaceSelected($event, field.fieldId)"
-                                              [searchText]="placeDisplayValues[field.fieldId]" 
+                                            <app-generic-location-search
+                                                #searchComponent
+                                                [apiKey]="googleMapsApiKey"
+                                                [placeholder]="'Search'"
+                                                (placeSelected)="onPlaceSelected($event, field.fieldId)"
+                                                [searchText]="placeDisplayValues[field.fieldId]"
                                             />
                                         }
                                     }
@@ -119,21 +120,21 @@ export class GenericStepperComponent implements OnInit, OnChanges {
     @Output() stepChange = new EventEmitter<{ stepIndex: number; data: any }>();
     @Output() formSubmit = new EventEmitter<any>();
 
-    [key:string]: any;
+    [key: string]: any;
 
     activeIndex = 0;
     items: MenuItem[] = [];
     formGroup!: FormGroup;
     isLastStep = false;
     googleMapsApiKey = environment.googleMapsApiKey;
-    
+
     // Location state object to manage location related properties
     locationState = {
         lat: 40.73061,
         lng: -73.935242,
         radius: 50
     };
-    
+
     mapInitialized = false;
     dropdownParams: { [key: string]: any } = {};
     placeDisplayValues: { [key: string]: string } = {};
@@ -146,12 +147,12 @@ export class GenericStepperComponent implements OnInit, OnChanges {
         this.buildMenuItems();
         this.updateStepState();
         this.initializeFieldClasses();
-        
+
         if (this.editMode && this.editData) {
             this.populateFormWithEditData();
         }
     }
-    
+
     ngOnChanges(changes: SimpleChanges) {
         // When editData changes and we're in edit mode
         if (changes['editData'] && this.editMode && this.editData && this.formGroup) {
@@ -180,61 +181,61 @@ export class GenericStepperComponent implements OnInit, OnChanges {
         });
 
         this.formGroup = this.fb.group(formGroupConfig);
-        
+
         // Initialize dropdown params
         this.steps.forEach((step) => {
             step.fields.forEach((field) => {
                 if (field.type === 'dropdown') {
-                   this.dropdownParams[field.fieldId] = {};
+                    this.dropdownParams[field.fieldId] = {};
                 }
-                
+
                 if (field.type === 'place') {
                     this.placeDisplayValues[field.fieldId] = '';
                 }
             });
         });
     }
-    
+
     private initializeFieldClasses() {
         // Pre-compute CSS classes for fields
-        this.steps.forEach(step => {
-            step.fields.forEach(field => {
+        this.steps.forEach((step) => {
+            step.fields.forEach((field) => {
                 this.fieldColumnClasses[field.fieldId] = field.type === 'map' ? 'col-span-2' : 'col-span-1';
             });
         });
     }
-    
+
     getFieldColumnClass(field: StepFieldConfig): string {
         return this.fieldColumnClasses[field.fieldId] || 'col-span-1';
     }
-    
+
     private populateFormWithEditData() {
         if (!this.editData) return;
-        
+
         // Loop through all form fields and set values from editData
-        Object.keys(this.formGroup.controls).forEach(controlName => {
+        Object.keys(this.formGroup.controls).forEach((controlName) => {
             if (this.editData[controlName] !== undefined) {
                 this.formGroup.get(controlName)?.setValue(this.editData[controlName]);
-                
+
                 // Set place display values for place fields
                 if (this.placeDisplayValues.hasOwnProperty(controlName)) {
-                  console.log(controlName, this.editData);
-                  
+                    console.log(controlName, this.editData);
+
                     this.updatePlaceDisplayValue(controlName, this.editData[controlName]);
                 }
             }
         });
-        
+
         // Handle dependent dropdowns
         this.setupDependentDropdowns();
-        
+
         // Handle location data for map
         this.setupLocationData();
     }
-    
+
     private setupDependentDropdowns() {
-        this.steps.forEach(step => {
-            step.fields.forEach(field => {
+        this.steps.forEach((step) => {
+            step.fields.forEach((field) => {
                 if (field.type === 'dropdown' && field.dependsOn) {
                     const parentField = field.dependsOn;
                     if (this.editData[parentField]) {
@@ -246,7 +247,7 @@ export class GenericStepperComponent implements OnInit, OnChanges {
             });
         });
     }
-    
+
     private setupLocationData() {
         const locationData = this.findLocationData();
         if (locationData) {
@@ -255,7 +256,7 @@ export class GenericStepperComponent implements OnInit, OnChanges {
                 lat: locationData.lat,
                 lng: locationData.lng
             };
-            
+
             // Update map if it's already initialized
             if (this.mapComponent && this.mapInitialized) {
                 setTimeout(() => {
@@ -267,23 +268,23 @@ export class GenericStepperComponent implements OnInit, OnChanges {
             }
         }
     }
-    
+
     private updatePlaceDisplayValue(fieldId: string, value: any) {
-      console.log(fieldId, value);
-      
+        console.log(fieldId, value);
+
         if (!value) return;
-        
+
         if (value.address) {
             this.placeDisplayValues[fieldId] = value.address;
         } else if (value.name) {
             this.placeDisplayValues[fieldId] = value.name;
         }
     }
-    
+
     private findLocationData(): any {
         // Look for any field in editData that might contain location information
         if (!this.editData) return null;
-        
+
         // First check for specific location fields
         const locationFields = ['locationPlace1', 'locationMap'];
         for (const field of locationFields) {
@@ -291,7 +292,7 @@ export class GenericStepperComponent implements OnInit, OnChanges {
                 return this.editData[field];
             }
         }
-        
+
         // If no specific field found, look for any object with lat/lng properties
         for (const key in this.editData) {
             const value = this.editData[key];
@@ -299,7 +300,7 @@ export class GenericStepperComponent implements OnInit, OnChanges {
                 return value;
             }
         }
-        
+
         return null;
     }
 
@@ -384,7 +385,7 @@ export class GenericStepperComponent implements OnInit, OnChanges {
 
     onMapReady(map: google.maps.Map) {
         this.mapInitialized = true;
-        
+
         // If we have location data, update the marker
         if (this.locationState.lat && this.locationState.lng) {
             setTimeout(() => {
@@ -394,7 +395,7 @@ export class GenericStepperComponent implements OnInit, OnChanges {
                 });
             });
         }
-        
+
         // Connect the search component to the map
         if (this.searchComponent) {
             this.searchComponent.setupSearchFunctionality(map);
@@ -411,10 +412,10 @@ export class GenericStepperComponent implements OnInit, OnChanges {
     onPlaceSelected(place: any, fieldId: string) {
         // Update form value with place object
         this.formGroup.get(fieldId)?.setValue(place || {});
-        
+
         // Update place display value
         this.updatePlaceDisplayValue(fieldId, place);
-        
+
         // Update location state and map marker
         if (place && place.lat && place.lng) {
             this.locationState = {
@@ -422,7 +423,7 @@ export class GenericStepperComponent implements OnInit, OnChanges {
                 lat: place.lat,
                 lng: place.lng
             };
-            
+
             // Update the map marker
             if (this.mapComponent) {
                 this.mapComponent.updateMarkerPosition({
@@ -441,10 +442,10 @@ export class GenericStepperComponent implements OnInit, OnChanges {
             name: 'Custom location',
             address: ''
         };
-        
+
         // Update form value
         this.formGroup.get(fieldId)?.setValue(location);
-        
+
         // Update location state
         this.locationState = {
             ...this.locationState,
@@ -456,7 +457,7 @@ export class GenericStepperComponent implements OnInit, OnChanges {
     onMarkerMoved(coords: google.maps.LatLngLiteral, fieldId: string) {
         // Get current value or create new object
         const currentValue = this.formGroup.get(fieldId)?.value || {};
-        
+
         // Update with new coordinates
         const updatedLocation = {
             ...currentValue,
@@ -465,10 +466,10 @@ export class GenericStepperComponent implements OnInit, OnChanges {
             name: currentValue.name || 'Custom location',
             address: currentValue.address || ''
         };
-        
+
         // Update form value
         this.formGroup.get(fieldId)?.setValue(updatedLocation);
-        
+
         // Update location state
         this.locationState = {
             ...this.locationState,
@@ -484,24 +485,24 @@ export class GenericStepperComponent implements OnInit, OnChanges {
     onDropdownSelect(selectedValue: any, fieldId: string) {
         // Set form value
         this.formGroup.get(fieldId)?.setValue(selectedValue || {});
-        
+
         // Handle dependent dropdowns
         this.clearDependentFields(fieldId, selectedValue);
     }
-    
+
     clearDependentFields(fieldId: string, selectedValue: any) {
         const paramValue = selectedValue?.id ?? null;
-        
-        this.steps.forEach(step => {
-            step.fields.forEach(f => {
+
+        this.steps.forEach((step) => {
+            step.fields.forEach((f) => {
                 if (f.dependsOn === fieldId) {
                     // Reset the dependent form control
                     this.formGroup.get(f.fieldId)?.reset();
-                    
+
                     // Set API params for the dependent dropdown
                     const paramKey = `${fieldId}Id`;
                     this.dropdownParams[f.fieldId] = paramValue ? { [paramKey]: paramValue } : {};
-                    
+
                     // Clear any nested dependents
                     this.clearDependentFields(f.fieldId, null);
                 }

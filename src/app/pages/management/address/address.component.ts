@@ -191,9 +191,13 @@ export class AddressComponent implements OnInit {
 
     async onFormSubmit(formData: any): Promise<void> {
         console.log('Form submitted with data:', formData);
-        this.uiService.toggleLoader(true);
-        const  { city, country, geofenceName, state, zipCode, locationPlace3, locationPlace2, locationPlace1 } = formData;
-        const payload = {
+        if(this.isEditMode) {
+          // this.uiService.toggleLoader(true);
+
+        } else {
+          this.uiService.toggleLoader(true);
+          const  { city, country, geofenceName, state, zipCode, locationPlace3, locationPlace2, locationPlace1 } = formData;
+          const payload = {
             searchBy: 'map',
             name: geofenceName,
             address1: locationPlace1.address,
@@ -205,18 +209,19 @@ export class AddressComponent implements OnInit {
             zipcode: zipCode,
             exCode: null,
             attributes: JSON.stringify(locationPlace1)
-        };
-        try {
+          };
+          try {
             const response = await this.http.post('geortd/address/create', payload);
             console.log(response, 'response');
             this.uiService.showToast('success', 'Success', 'Address created successfully');
             this.uiService.closeDrawer(); // Close the drawer after submission
             await this.fetchAddressList(); // Refresh the address list after successful submission
-        } catch (error) {
+          } catch (error) {
             console.error('Error submitting form:', error);
             this.uiService.showToast('error', 'Error', 'Failed to submit form');
-        } finally {
+          } finally {
             this.uiService.toggleLoader(false);
+          }
         }
         // Handle form submission
     }
@@ -248,24 +253,23 @@ export class AddressComponent implements OnInit {
 
     async handleEditAddress(): Promise<void> {
       console.log(this.selectedRowItems, 'selectedRowItems');
+      this.isEditMode = true;
       this.uiService.toggleLoader(true);
       try {
         const response: any = await this.http.get('geortd/address/GetAddressById', {}, this.selectedRowItems[0].id);
         console.log(response, 'response');
-        this.uiService.openDrawer(this.createUpdateUserContent, 'Address Management');
-        this.isEditMode = true;
         const { address1, address2, address3, city, state, country, zipCode, name, attributes, id } = response.data;
         this.editData = {
-            city,
-            country,
-            geofenceName: name,
-            state,
-            zipCode,
-            locationPlace3: address3,
-            locationPlace2: address2,
-            locationPlace1: JSON.parse(attributes)
+          city,
+          country,
+          geofenceName: name,
+          state,
+          zipCode,
+          locationPlace3: address3,
+          locationPlace2: address2,
+          locationPlace1: JSON.parse(attributes)
         };
-
+        this.uiService.openDrawer(this.createUpdateUserContent, 'Address Management');
         console.log(this.editData, 'editData');
         
       } catch (error) {
