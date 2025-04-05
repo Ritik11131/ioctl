@@ -233,8 +233,8 @@ export class AddressComponent implements OnInit {
             address2: locationPlace2,
             address3: locationPlace3,
             city,
-            stateId: state?.value,
-            countryId: country?.value,
+            stateId: state?.id,
+            countryId: country?.id,
             zipcode: zipCode,
             exCode: null,
             attributes: JSON.stringify(locationPlace1)
