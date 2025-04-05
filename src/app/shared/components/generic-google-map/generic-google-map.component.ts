@@ -15,7 +15,7 @@ import { Loader } from '@googlemaps/js-api-loader';
         <input
           id="radiusSlider"
           type="range"
-          min="100"
+          min="50"
           max="5000"
           step="100"
           [(ngModel)]="geofenceRadius"
@@ -58,12 +58,12 @@ export class GenericGoogleMapComponent {
   @Output() mapReady = new EventEmitter<google.maps.Map>();
   @Output() mapClick = new EventEmitter<google.maps.LatLngLiteral>();
   @Output() radiusChanged = new EventEmitter<number>();
-  @Output() markerMoved = new EventEmitter<google.maps.LatLngLiteral>();
+  @Output() markerMoved = new EventEmitter<any>();
 
   map!: google.maps.Map;
   private marker!: google.maps.marker.AdvancedMarkerElement;
   private geofence!: google.maps.Circle;
-  geofenceRadius = 1000; // Default 1km radius
+  geofenceRadius = 50; // Default 1km radius
 
   constructor() {}
 
@@ -96,19 +96,19 @@ export class GenericGoogleMapComponent {
       this.map = new Map(this.mapContainer.nativeElement, mapOptions);
 
       // Create marker with custom pin
-      const pinElement = new PinElement({
-        glyph: 'S',
-        glyphColor: 'white',
-        background: 'blue',
-        borderColor: 'blue',
-      });
+      // const pinElement = new PinElement({
+      //   glyph: 'S',
+      //   glyphColor: 'white',
+      //   background: 'blue',
+      //   borderColor: 'blue',
+      // });
 
       this.marker = new AdvancedMarkerElement({
         position: mapOptions.center,
         map: this.map,
         gmpDraggable: true,
         title: "This marker is draggable.",
-        content: pinElement.element,
+        // content: pinElement.element,
       });
 
       // Initialize Geofence
@@ -122,6 +122,9 @@ export class GenericGoogleMapComponent {
         strokeOpacity: 0.6,
         strokeWeight: 2
       });
+
+      console.log(this.geofence.getBounds());
+      
 
       this.setupEventListeners();
       
@@ -146,7 +149,7 @@ export class GenericGoogleMapComponent {
     
     // Center map on the new position
     this.map.setCenter(position);
-    this.map.setZoom(14);
+    this.map.setZoom(18);
     // if (this.map.getZoom() < 14) {
     // }
   }
@@ -165,7 +168,7 @@ export class GenericGoogleMapComponent {
       const position = this.marker.position as google.maps.LatLng;
       if (position) {
         this.geofence.setCenter(position);
-        this.markerMoved.emit({ lat: position.lat(), lng: position.lng() });
+        this.markerMoved.emit({ lat: position.lat, lng: position.lng });
       }
     });
   }

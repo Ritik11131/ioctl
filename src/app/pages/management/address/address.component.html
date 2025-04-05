@@ -1,9 +1,9 @@
-<app-generic-table [toolBarStartActions]="toolBarStartActions" [tableConfig]="tableConfig" [tableData]="tableData" />
+<app-generic-table [toolBarStartActions]="toolBarStartActions" [tableConfig]="tableConfig" [tableData]="tableData" (onToolBarStartAction)="handleToolBarActions($event)" />
 
 <ng-template #createUpdateUserContent>
     <h3 class="text-xl font-semibold mb-4 text-muted-color-emphasis">Create Address</h3>
     <!-- Map Component -->
-    <app-generic-google-map
+    <!-- <app-generic-google-map
     #mapComponent
     [apiKey]="googleMapsApiKey"
     [height]="400"
@@ -14,10 +14,13 @@
     (mapClick)="onMapClick($event)"
     (radiusChanged)="onRadiusChanged($event)"
     (markerMoved)="onMarkerMoved($event)"
-    />
-    <app-generic-location-search #searchComponent [apiKey]="googleMapsApiKey" [placeholder]="'Sewarch'" (placeSelected)="onPlaceSelected($event)" />
+    /> -->
+
+    <!-- <div class="grid grid-cols-2 gap-2">
+        <app-generic-location-search #searchComponent [apiKey]="googleMapsApiKey" [placeholder]="'Search'" (placeSelected)="onPlaceSelected($event)" />
+    </div> -->
     <!-- Selected Location Info -->
-     @if(selectedLocation) {
+    <!-- @if(selectedLocation) {
     
          <div class="location-info">
              <h3>Selected Location</h3>
@@ -26,5 +29,7 @@
              <p>Coordinates: {{ selectedLocation.lat }}, {{ selectedLocation.lng }}</p>
              <p>Geofence Radius: {{ geofenceRadius }} meters</p>
             </div>
-        }
+        } -->
+
+    <app-generic-stepper [steps]="formSteps" [validateFromApi]="false" (stepChange)="onStepChange($event)" (formSubmit)="onFormSubmit($event)"></app-generic-stepper>
 </ng-template>

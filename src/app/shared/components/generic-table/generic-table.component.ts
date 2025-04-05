@@ -76,7 +76,7 @@ import { ToolbarModule } from 'primeng/toolbar';
                 <tr>
                     @for (col of columns; track $index) {
                         <td>
-                            {{ rowData[col.field] }}
+                            {{ rowData[col.field] || '--' }}
                         </td>
                     }
                 </tr>
