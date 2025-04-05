@@ -66,7 +66,6 @@ export interface StepConfig {
                                                 [initialLongitude]="locationState.lng"
                                                 [initialZoom]="18"
                                                 (mapReady)="onMapReady($event)"
-                                                (mapClick)="onMapClick($event, field.fieldId)"
                                                 (radiusChanged)="onRadiusChanged($event)"
                                                 (markerMoved)="onMarkerMoved($event, field.fieldId)"
                                             />
@@ -441,25 +440,25 @@ export class GenericStepperComponent implements OnInit, OnChanges {
         }
     }
 
-    onMapClick(coords: google.maps.LatLngLiteral, fieldId: string) {
-        // Create location object
-        const location = {
-            lat: coords.lat,
-            lng: coords.lng,
-            name: 'Custom location',
-            address: ''
-        };
+    // onMapClick(coords: google.maps.LatLngLiteral, fieldId: string) {
+    //     // Create location object
+    //     const location = {
+    //         lat: coords.lat,
+    //         lng: coords.lng,
+    //         name: 'Custom location',
+    //         address: ''
+    //     };
 
-        // Update form value
-        this.formGroup.get(fieldId)?.setValue(location);
+    //     // Update form value
+    //     this.formGroup.get(fieldId)?.setValue(location);
 
-        // Update location state
-        this.locationState = {
-            ...this.locationState,
-            lat: coords.lat,
-            lng: coords.lng
-        };
-    }
+    //     // Update location state
+    //     this.locationState = {
+    //         ...this.locationState,
+    //         lat: coords.lat,
+    //         lng: coords.lng
+    //     };
+    // }
 
     onMarkerMoved(coords: google.maps.LatLngLiteral, fieldId: string) {
         // Get current value or create new object

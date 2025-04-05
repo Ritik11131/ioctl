@@ -194,7 +194,7 @@ export class AddressComponent implements OnInit {
         if(this.isEditMode) {
           this.uiService.toggleLoader(true);
           try {
-            const { city, country, geofenceName, state, zipCode, locationPlace3, locationPlace2, locationPlace1 } = formData;
+            const { city, country, geofenceName, state, zipCode, locationPlace3, locationPlace2, locationPlace1, locationMap } = formData;
             const payload = {
               id: this.selectedRowItems[0].id,
               searchBy: 'map',
@@ -210,7 +210,7 @@ export class AddressComponent implements OnInit {
               state: state,
               country: country,
               exCode: null,
-              attributes: JSON.stringify(locationPlace1)
+              attributes: JSON.stringify(locationMap ?? locationPlace1)
             };
             const response = await this.http.put('geortd/address/Modify', this.selectedRowItems[0].id, payload);
             console.log(response, 'response');
@@ -225,7 +225,7 @@ export class AddressComponent implements OnInit {
           }
         } else {
           this.uiService.toggleLoader(true);
-          const  { city, country, geofenceName, state, zipCode, locationPlace3, locationPlace2, locationPlace1 } = formData;
+          const  { city, country, geofenceName, state, zipCode, locationPlace3, locationPlace2, locationPlace1, locationMap } = formData;
           const payload = {
             searchBy: 'map',
             name: geofenceName,
@@ -237,7 +237,7 @@ export class AddressComponent implements OnInit {
             countryId: country?.id,
             zipcode: zipCode,
             exCode: null,
-            attributes: JSON.stringify(locationPlace1)
+            attributes: JSON.stringify(locationMap ?? locationPlace1)
           };
           try {
             const response = await this.http.post('geortd/address/create', payload);
