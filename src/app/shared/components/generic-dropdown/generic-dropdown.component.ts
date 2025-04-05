@@ -37,6 +37,8 @@ export class GenericDropdownComponent implements OnChanges {
   @Input() id: any = null;
   @Input() type!: any;
   @Input() params: Record<string, any> = {};
+  @Input() editMode: boolean = false;
+  @Input() initialValue: any = null;
   @Input() placeholder: string = 'Select';
   @Input() autoFetch: boolean = false; // 👈 special case for dependent dropdown
   @Output() selected = new EventEmitter<any>();
@@ -48,12 +50,25 @@ export class GenericDropdownComponent implements OnChanges {
 
   constructor(private http: HttpService) {}
 
+  ngOnInit(): void {
+    //Called after the constructor, initializing input properties, and the first call to ngOnChanges.
+    //Add 'implements OnInit' to the class.
+    if(this.editMode && this.autoFetch) {
+      this.fetchData();
+    }
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['params'] && !changes['params'].firstChange) {
       this.dataFetched = false;
       if (this.autoFetch) {
         this.fetchData();
       }
+    }
+
+    if (changes['initialValue'] && !changes['initialValue'].firstChange) {
+     console.log();
+     
     }
   }
 

@@ -18,6 +18,7 @@ import { ToolbarModule } from 'primeng/toolbar';
                         [severity]="toolBarStartAction.severity"
                         [label]="toolBarStartAction.label"
                         class="mr-2"
+                        [disabled]="toolBarStartAction.key === 'edit' ? !(selectedItems.length === 1) : false"
                         [icon]="toolBarStartAction.icon"
                         [outlined]="toolBarStartAction.outlined"
                         (onClick)="onToolBarStartAction.emit(toolBarStartAction)"
@@ -39,6 +40,8 @@ import { ToolbarModule } from 'primeng/toolbar';
             [stripedRows]="true"
             [paginator]="true"
             [rows]="10"
+            [(selection)]="selectedItems"
+            (selectionChange)="handleSelectionChange($event)"
             [rowsPerPageOptions]="[10, 20, 50]"
             [showCurrentPageReport]="true"
             [showGridlines]="true"
@@ -62,11 +65,12 @@ import { ToolbarModule } from 'primeng/toolbar';
 
             <ng-template #header let-columns>
                 <tr>
+                    <th style="width: 4rem"><p-tableHeaderCheckbox /></th>
                     @for (col of columns; track $index) {
                         <th [style.min-width]="col.minWidth || '10rem'">
                             <div class="flex items-center">
                                 {{ col.header }}
-                                <p-columnFilter type="text"  [field]="col.subfield ? col.field + '.' + col.subfield : col.field" display="menu" />
+                                <p-columnFilter type="text" [field]="col.subfield ? col.field + '.' + col.subfield : col.field" display="menu" />
                             </div>
                         </th>
                     }
@@ -74,9 +78,12 @@ import { ToolbarModule } from 'primeng/toolbar';
             </ng-template>
             <ng-template #body let-rowData let-columns="columns">
                 <tr>
+                    <td>
+                        <p-tableCheckbox [value]="rowData" />
+                    </td>
                     @for (col of columns; track $index) {
                         <td>
-                            {{ col.subfield ? (rowData[col.field]?.[col.subfield] || '--') :  rowData[col.field] || '--' }}
+                            {{ col.subfield ? rowData[col.field]?.[col.subfield] || '--' : rowData[col.field] || '--' }}
                         </td>
                     }
                 </tr>
@@ -93,16 +100,19 @@ import { ToolbarModule } from 'primeng/toolbar';
                 button {
                     color: var(--p-primary-contrast-color);
                 }
-            }   
+            }
         `
     ]
 })
 export class GenericTableComponent {
+    @Input() selectedItems: any[] = [];
     @Input() toolBarStartActions: any[] = [];
     @Input() tableConfig!: any;
     @Input() tableData!: any[];
 
     @Output() onToolBarStartAction = new EventEmitter<any>();
+    @Output() onSelectionChange = new EventEmitter<any>(); // Event emitter for row select
+
 
     onSearch(dt: Table, event: Event) {
         const input = event.target as HTMLInputElement;
@@ -115,4 +125,8 @@ export class GenericTableComponent {
         table.clear();
         // this.filter.nativeElement.value = '';
     }
+
+    handleSelectionChange(event: any) {
+        this.onSelectionChange.emit(event);
+       }
 }

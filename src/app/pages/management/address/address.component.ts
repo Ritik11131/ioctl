@@ -27,6 +27,7 @@ export class AddressComponent implements OnInit {
 
     selectedLocation: any = null;
     geofenceRadius = 1000;
+    selectedRowItems: any[] = [];
 
     toolBarStartActions = [
         {
@@ -34,6 +35,13 @@ export class AddressComponent implements OnInit {
             label: 'New',
             icon: 'pi pi-plus',
             severity: 'primary',
+            outlined: false
+        },
+        {
+            key: 'edit',
+            label: 'Edit',
+            icon: 'pi pi-pen-to-square',
+            severity: 'secondary',
             outlined: false
         },
         {
@@ -52,10 +60,10 @@ export class AddressComponent implements OnInit {
             { field: 'address2', header: 'Address Line 2', minWidth: '12rem' },
             { field: 'address3', header: 'Address Line 3', minWidth: '12rem' },
             { field: 'city', header: 'City', minWidth: '8rem' },
-            { field: 'state', header: 'State', minWidth: '10rem', subfield:'name' },
-            { field: 'country', header: 'Country', minWidth: '10rem', subfield:'name' },
+            { field: 'state', header: 'State', minWidth: '10rem', subfield: 'name' },
+            { field: 'country', header: 'Country', minWidth: '10rem', subfield: 'name' },
             { field: 'name', header: 'Geofence Name', minWidth: '12rem' },
-            { field: 'zipCode', header: 'Zip Code', minWidth: '10rem' },
+            { field: 'zipCode', header: 'Zip Code', minWidth: '10rem' }
             // { field: 'geofenceColor', header: 'Geofence Color', minWidth: '12rem' },
             // { field: 'geofenceCode', header: 'Geofence Code', minWidth: '12rem' },
             // { field: 'addressUses', header: 'Address Uses', minWidth: '10rem' },
@@ -69,7 +77,7 @@ export class AddressComponent implements OnInit {
             // { field: 'geofenceCenterLongitude', header: 'Geofence Longitude', minWidth: '15rem' }
         ],
         globalFilterFields: ['address1', 'address2', 'address3', 'city', 'geofenceName', 'zipCode'],
-        dataKey: 'addressId'
+        dataKey: 'id'
     };
 
     tableData = [];
@@ -123,30 +131,30 @@ export class AddressComponent implements OnInit {
                     required: true
                 },
                 {
-                  fieldId: 'country',
-                  type: 'dropdown',
-                  apiType: 'country',
-                  label: 'Select Country',
-                  required: true,
-                  placeholder: 'Select a Country',
-                  dependsOn: null
+                    fieldId: 'country',
+                    type: 'dropdown',
+                    apiType: 'country',
+                    label: 'Select Country',
+                    required: true,
+                    placeholder: 'Select a Country',
+                    dependsOn: null
                 },
                 {
-                  fieldId: 'state',
-                  type: 'dropdown',
-                  apiType: 'state',
-                  label: 'Select State',
-                  required: true,
-                  placeholder: 'Select a State',
-                  dependsOn: 'country',
-                  autoFetch: true
+                    fieldId: 'state',
+                    type: 'dropdown',
+                    apiType: 'state',
+                    label: 'Select State',
+                    required: true,
+                    placeholder: 'Select a State',
+                    dependsOn: 'country',
+                    autoFetch: true
                 },
                 {
-                  fieldId: 'city',
-                  type: 'text',
-                  label: 'Enter City',
-                  required: true
-              },
+                    fieldId: 'city',
+                    type: 'text',
+                    label: 'Enter City',
+                    required: true
+                }
             ]
         }
     ];
@@ -155,7 +163,6 @@ export class AddressComponent implements OnInit {
         private uiService: UiService,
         private http: HttpService
     ) {}
-
 
     ngOnInit(): void {
         this.fetchAddressList();
@@ -214,18 +221,24 @@ export class AddressComponent implements OnInit {
     }
 
     handleToolBarActions(event: any) {
-        console.log(event, 'event');
         if (event.key === 'new') {
             this.openNew();
         } else if (event.key === 'delete') {
             // this.deleteSelectedUsers();
+        } else if (event.key === 'edit') {
+          this.handleEditAddress()
         }
     }
-    openNew() {
+
+    async handleEditAddress(): Promise<void> {
+      console.log(this.selectedRowItems, 'selectedRowItems');
+      this.uiService.toggleLoader(true);
+      try {
+        const response: any = await this.http.get('geortd/address/GetAddressById', {}, this.selectedRowItems[0].id);
+        console.log(response, 'response');
         this.uiService.openDrawer(this.createUpdateUserContent, 'Address Management');
         this.isEditMode = true;
-        this.editData = this.tableData[0]; // For demo purposes, using the first item in the list
-        const { address1, address2, address3, city, state, country, zipCode, name, attributes } = this.tableData[this.tableData.length - 1];
+        const { address1, address2, address3, city, state, country, zipCode, name, attributes, id } = response.data;
         this.editData = {
             city,
             country,
@@ -234,69 +247,28 @@ export class AddressComponent implements OnInit {
             zipCode,
             locationPlace3: address3,
             locationPlace2: address2,
-            locationPlace1: JSON.parse("{\"lat\": 28.651027000000003, \"lng\": 77.1562196, \"name\": \"Shadipur\", \"address\": \"Shadipur, New Delhi, Delhi, India\"}")
+            locationPlace1: JSON.parse(attributes)
         };
 
-        // this.product = {};
-        // this.submitted = false;
-        // this.productDialog = true;
-        // this.uiService.showToast('error', 'Error', 'Failed to fetch user list');
+        console.log(this.editData, 'editData');
+        
+      } catch (error) {
+        console.error('Error fetching address details:', error);
+        this.uiService.showToast('error', 'Error', 'Failed to fetch address details');
+      }   finally {
+        this.uiService.toggleLoader(false);
+      }
+
     }
 
-    // onMapReady(map: google.maps.Map) {
-    //     // Connect the search component to the map
-    //     if (this.searchComponent) {
-    //         console.log('if');
 
-    //         this.searchComponent.setupSearchFunctionality(map);
-    //     } else {
-    //         // If search component isn't ready yet, try again in a tick
-    //         setTimeout(() => {
-    //             if (this.searchComponent) {
-    //                 this.searchComponent.setupSearchFunctionality(map);
-    //             }
-    //         });
-    //     }
-    // }
+    openNew() {
+        this.uiService.openDrawer(this.createUpdateUserContent, 'Address Management');
+    }
 
-    // onPlaceSelected(place: any) {
-    //     this.selectedLocation = place;
+    handleRowSelectionChange(event: any): void {
+        console.log(event);
 
-    //     // Update the map marker
-    //     if (this.mapComponent) {
-    //         this.mapComponent.updateMarkerPosition({
-    //             lat: place.lat,
-    //             lng: place.lng
-    //         });
-    //     }
-    // }
-
-    // onMapClick(coords: google.maps.LatLngLiteral) {
-    //     // Update selected location when map is clicked
-    //     this.selectedLocation = {
-    //         lat: coords.lat,
-    //         lng: coords.lng,
-    //         name: 'Custom location',
-    //         address: ''
-    //     };
-    // }
-
-    // onMarkerMoved(coords: google.maps.LatLngLiteral) {
-    //     // Update selected location when marker is dragged
-    //     if (this.selectedLocation) {
-    //         this.selectedLocation.lat = coords.lat;
-    //         this.selectedLocation.lng = coords.lng;
-    //     } else {
-    //         this.selectedLocation = {
-    //             lat: coords.lat,
-    //             lng: coords.lng,
-    //             name: 'Custom location',
-    //             address: ''
-    //         };
-    //     }
-    // }
-
-    // onRadiusChanged(radius: number) {
-    //     this.geofenceRadius = radius;
-    // }
+        this.selectedRowItems = event;
+    }
 }

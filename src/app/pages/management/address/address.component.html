@@ -1,7 +1,7 @@
-<app-generic-table [toolBarStartActions]="toolBarStartActions" [tableConfig]="tableConfig" [tableData]="tableData" (onToolBarStartAction)="handleToolBarActions($event)" />
+<app-generic-table [selectedItems]="selectedRowItems" [toolBarStartActions]="toolBarStartActions" [tableConfig]="tableConfig" [tableData]="tableData" (onToolBarStartAction)="handleToolBarActions($event)" (onSelectionChange)="handleRowSelectionChange($event)" />
 
 <ng-template #createUpdateUserContent>
-    <h3 class="text-xl font-semibold mb-4 text-muted-color-emphasis">Create Address</h3>
+    <h3 class="text-xl font-semibold mb-4 text-muted-color-emphasis">{{isEditMode ? 'Update ' : 'Create '}}Address</h3>
     <!-- Map Component -->
     <!-- <app-generic-google-map
     #mapComponent
