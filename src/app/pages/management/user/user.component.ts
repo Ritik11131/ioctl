@@ -102,15 +102,18 @@ export class UserComponent {
   googleMapsApiKey = environment.googleMapsApiKey;
   
   locationOptions: LocationOption[] = [
-    { name: 'New York', position: { lat: 40.7128, lng: -74.0060 } },
-    { name: 'Los Angeles', position: { lat: 34.0522, lng: -118.2437 } },
-    { name: 'Chicago', position: { lat: 41.8781, lng: -87.6298 } },
-    { name: 'Houston', position: { lat: 29.7604, lng: -95.3698 } },
-    { name: 'Phoenix', position: { lat: 33.4484, lng: -112.0740 } },
-    { name: 'Philadelphia', position: { lat: 39.9526, lng: -75.1652 } },
-    { name: 'San Antonio', position: { lat: 29.4241, lng: -98.4936 } },
-    { name: 'San Diego', position: { lat: 32.7157, lng: -117.1611 } }
-  ];
+    { name: 'Connaught Place', position: { lat: 28.6315, lng: 77.2167 } },
+    { name: 'Karol Bagh', position: { lat: 28.6512, lng: 77.1905 } },
+    { name: 'Chandni Chowk', position: { lat: 28.6562, lng: 77.2301 } },
+    { name: 'Lajpat Nagar', position: { lat: 28.5677, lng: 77.2432 } },
+    { name: 'Saket', position: { lat: 28.5245, lng: 77.2066 } },
+    { name: 'Dwarka', position: { lat: 28.5921, lng: 77.0460 } },
+    { name: 'Vasant Kunj', position: { lat: 28.5243, lng: 77.1551 } },
+    { name: 'Rajouri Garden', position: { lat: 28.6426, lng: 77.1242 } },
+    { name: 'Rohini', position: { lat: 28.7383, lng: 77.0900 } },
+    { name: 'Mayur Vihar', position: { lat: 28.6090, lng: 77.2952 } }
+  ]
+  ;
   
   selectedStartLocation: LocationOption | null = null;
   selectedEndLocation: LocationOption | null = null;
@@ -203,12 +206,14 @@ export class UserComponent {
   }
 
   onRouteCreated(path: google.maps.LatLngLiteral[]) {
-    console.log('Route created with', path.length, 'points');
+    console.log();
+    
+    console.log('Route created with', path, 'points');
     // You can handle this event, for example save the route to your backend
   }
 
   onRouteUpdated(path: google.maps.LatLngLiteral[]) {
-    console.log('Route updated with', path.length, 'points');
+    console.log('Route updated with', path, 'points');
     // You can handle this event, for example save the updated route to your backend
   }
 

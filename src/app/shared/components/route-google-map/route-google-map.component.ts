@@ -131,14 +131,13 @@ export class RouteGoogleMapComponent implements AfterViewInit {
   
   // Colors for segments
   segmentColors = [
-    '#FF0000', // Red
-    '#00FF00', // Green
-    '#0000FF', // Blue
-    '#FFFF00', // Yellow
-    '#FF00FF', // Magenta
-    '#00FFFF', // Cyan
-    '#FFA500', // Orange
-    '#800080', // Purple
+    '#34A853', // Google green
+    '#FBBC05', // Google yellow
+    '#EA4335', // Google red
+    '#673AB7', // Purple
+    '#3F51B5', // Indigo
+    '#00BCD4', // Cyan
+    '#009688', // Teal
   ];
 
   constructor(private ngZone: NgZone, private uiService:UiService) {}
@@ -159,8 +158,7 @@ export class RouteGoogleMapComponent implements AfterViewInit {
       
       // Import required libraries
       const { Map } = await google.maps.importLibrary("maps") as google.maps.MapsLibrary;
-      const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
-      
+
       // Initialize map
       const mapOptions: google.maps.MapOptions = {
         center: { lat: this.initialLatitude, lng: this.initialLongitude },
@@ -232,11 +230,11 @@ export class RouteGoogleMapComponent implements AfterViewInit {
 
     this.directionsService.route(request, (result, status) => {
       if (status === google.maps.DirectionsStatus.OK && result) {
-        // Display the route
+        // Display the route with different color for round trip
         this.directionsRenderer.setOptions({
           polylineOptions: {
             visible: true,
-            strokeColor: '#4285F4',
+            strokeColor: makeRoundTrip ? '#FF6B6B' : '#4285F4', // Red for round trip, blue for normal route
             strokeWeight: 5
           }
         });
