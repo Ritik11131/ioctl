@@ -1,160 +1,215 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { GenericTableComponent } from '../../../shared/components/generic-table/generic-table.component';
+import { SelectModule } from 'primeng/select';
+import { RouteGoogleMapComponent } from '../../../shared/components/route-google-map/route-google-map.component';
+import { FormsModule } from '@angular/forms';
+import { environment } from '../../../../environments/environment.prod';
+
+interface LocationOption {
+  name: string;
+  position: { lat: number, lng: number };
+}
 
 @Component({
   selector: 'app-user',
-  imports: [GenericTableComponent],
-  templateUrl: './user.component.html',
-  styleUrl: './user.component.scss'
+  imports: [SelectModule, RouteGoogleMapComponent, FormsModule],
+  template: `
+  <div class="container">
+    <h2>Route Planner</h2>
+    
+    <div class="location-selectors">
+      <div class="location-group">
+        <label for="startLocation">Start Location:</label>
+        <p-select
+          id="startLocation" 
+          [options]="locationOptions" 
+          [(ngModel)]="selectedStartLocation" 
+          optionLabel="name"
+          placeholder="Select start location">
+        </p-select>
+      </div>
+      
+      <div class="location-group">
+        <label for="endLocation">End Location:</label>
+        <p-select
+          id="endLocation" 
+          [options]="locationOptions" 
+          [(ngModel)]="selectedEndLocation" 
+          optionLabel="name"
+          placeholder="Select end location">
+        </p-select>
+      </div>
+      
+      <div class="round-trip-toggle">
+        <label>
+          <input type="checkbox" [(ngModel)]="isRoundTrip">
+          Round Trip
+        </label>
+      </div>
+      
+      <button (click)="createRoute()" [disabled]="!canCreateRoute()">Create Route</button>
+    </div>
+    
+    <app-route-google-map 
+      #routeMap
+      [apiKey]="googleMapsApiKey"
+      [height]="600"
+      [initialLatitude]="initialLat"
+      [initialLongitude]="initialLng"
+      [initialZoom]="10"
+      (mapReady)="onMapReady($event)"
+      (routeCreated)="onRouteCreated($event)"
+      (routeUpdated)="onRouteUpdated($event)">
+    </app-route-google-map>
+  </div>
+`,
+styles: [`
+  .container {
+    padding: 20px;
+  }
+  .location-selectors {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    align-items: flex-end;
+  }
+  .location-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  button {
+    padding: 8px 16px;
+    background-color: #4285F4;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  button:disabled {
+    background-color: #cccccc;
+  }
+  .round-trip-toggle {
+    display: flex;
+    align-items: center;
+  }
+`]
 })
 export class UserComponent {
 
-  toolBarStartActions = [
-    {
-      key: 'new',
-      label: 'New',
-      icon: 'pi pi-plus',
-      severity: 'primary',
-      outlined: false,
-    },
-    {
-      key: 'delete',
-      label: 'Delete',
-      icon: 'pi pi-trash',
-      severity: 'danger',
-      outlined: true,
-    }
+  @ViewChild('routeMap') routeMap!: RouteGoogleMapComponent;
+  
+  googleMapsApiKey = environment.googleMapsApiKey;
+  
+  locationOptions: LocationOption[] = [
+    { name: 'New York', position: { lat: 40.7128, lng: -74.0060 } },
+    { name: 'Los Angeles', position: { lat: 34.0522, lng: -118.2437 } },
+    { name: 'Chicago', position: { lat: 41.8781, lng: -87.6298 } },
+    { name: 'Houston', position: { lat: 29.7604, lng: -95.3698 } },
+    { name: 'Phoenix', position: { lat: 33.4484, lng: -112.0740 } },
+    { name: 'Philadelphia', position: { lat: 39.9526, lng: -75.1652 } },
+    { name: 'San Antonio', position: { lat: 29.4241, lng: -98.4936 } },
+    { name: 'San Diego', position: { lat: 32.7157, lng: -117.1611 } }
   ];
+  
+  selectedStartLocation: LocationOption | null = null;
+  selectedEndLocation: LocationOption | null = null;
+  isRoundTrip = false;
+  
+  map: google.maps.Map | null = null;
+  customStartPin: any = null;
+  customEndPin: any = null;
+  customWaypointPin: any = null;
+  initialLat = environment.intialLat
+  initialLng = environment.initialLng
 
-
- tableConfig = {
-  title: "Manage Users",
-  dataKey: "userId",
-  columns: [
-      { field: "userName", header: "Username", minWidth: "12rem" },
-      { field: "employeeNumber", header: "Employee Number", minWidth: "15rem" },
-      { field: "emailAddress", header: "Email Address", minWidth: "15rem" },
-      { field: "mobileNumber", header: "Mobile Number", minWidth: "12rem" },
-      { field: "roles", header: "Role", minWidth: "10rem" },
-      // { field: "status", header: "Status", minWidth: "10rem" },
-      { field: "userFirstName", header: "First Name", minWidth: "10rem" },
-      { field: "userLastName", header: "Last Name", minWidth: "10rem" },
-      { field: "formattedDepartmentName", header: "Department", minWidth: "15rem" },
-      { field: "formattedStatus", header: "Status", minWidth: "10rem" },
-      { field: "formattedVendorName", header: "Vendor Name", minWidth: "12rem" },
-  ],
-  globalFilterFields: [
-      "userId", "userName", "employeeNumber", "emailAddress", 
-      "mobileNumber", "roles", "status", "formattedDepartmentName", 
-      "formattedStatus", "licenseNumber", "formattedLicenseExpDate", 
-      "gpsLastLatitude", "gpsLastLongitude", "vehicleNumber", "formattedVendorName"
-  ]
-    
-  };
-
-  tableData = [
-    {
-      userId: 19267783,
-      userName: "asdefrgthjkl",
-      companyId: 14904564,
-      countryIsdCode: null,
-      departmentCode: "MAH",
-      departmentName: "Maharashtra State Office",
-      departmentId: 20481526,
-      emailAddress: "tre@gmail.com",
-      employeeNumber: "EMP1290",
-      formattedAddress: null,
-      geofenceName: null,
-      latitude: null,
-      longitude: null,
-      mobileNumber: "9876543210",
-      roleCodes: "DRIVER",
-      roles: "Driver",
-      status: "A",
-      userFirstName: "Zz",
-      userMiddleName: null,
-      userLastName: "Dd",
-      userStatus: "ACTIVE",
-      formattedName: "Zz Dd",
-      formattedMobileNumber: "",
-      formattedUserType: null,
-      formattedStatus: "Active",
-      formattedDepartmentName: "Maharashtra State Office (MAH)",
-      addressWithGeofence: "",
-      dutyStatus: null,
-      lastLongSyncTime: null,
-      formattedLastLongSyncTime: null,
-      licenseNumber: "MH-12345",
-      licenseExpDate: "2025-07-10",
-      formattedLicenseExpDate: "July 10, 2025",
-      licenseIssueCountryId: 1,
-      licenseIssueCountryName: "India",
-      licenseIssueCountryCode: "IN",
-      licenseIssueStateId: 27,
-      licenseIssueStateCode: "MH",
-      gpsDateTime: null,
-      formattedGpsDateTime: null,
-      gpsLastLatitude: 19.076,
-      gpsLastLongitude: 72.8777,
-      vehicleId: 9876, 
-      vehicleNumber: "MH12AB1234",
-      lastSpeed: 60,
-      formattedLastSpeed: "60 km/h",
-      vendorId: 1234,
-      formattedVendorName: "XYZ Logistics",
-      cellProvider: "Airtel"
-  },
-  {
-      userId: 19267784,
-      userName: "qwertyuiop",
-      companyId: 14904565,
-      countryIsdCode: null,
-      departmentCode: "DEL",
-      departmentName: "Delhi Regional Office",
-      departmentId: 20481527,
-      emailAddress: "example@gmail.com",
-      employeeNumber: "EMP1291",
-      formattedAddress: null,
-      geofenceName: null,
-      latitude: null,
-      longitude: null,
-      mobileNumber: "9876543211",
-      roleCodes: "MANAGER",
-      roles: "Manager",
-      status: "I",
-      userFirstName: "John",
-      userMiddleName: "A",
-      userLastName: "Doe",
-      userStatus: "INACTIVE",
-      formattedName: "John A Doe",
-      formattedMobileNumber: "",
-      formattedUserType: null,
-      formattedStatus: "Inactive",
-      formattedDepartmentName: "Delhi Regional Office (DEL)",
-      addressWithGeofence: "",
-      dutyStatus: null,
-      lastLongSyncTime: null,
-      formattedLastLongSyncTime: null,
-      licenseNumber: "DL-56789",
-      licenseExpDate: "2026-08-15",
-      formattedLicenseExpDate: "August 15, 2026",
-      licenseIssueCountryId: 1,
-      licenseIssueCountryName: "India",
-      licenseIssueCountryCode: "IN",
-      licenseIssueStateId: 7,
-      licenseIssueStateCode: "DL",
-      gpsDateTime: null,
-      formattedGpsDateTime: null,
-      gpsLastLatitude: 28.6139,
-      gpsLastLongitude: 77.209,
-      vehicleId: 9877,
-      vehicleNumber: "DL8CA1234",
-      lastSpeed: 45,
-      formattedLastSpeed: "45 km/h",
-      vendorId: 1235,
-      formattedVendorName: "ABC Transport",
-      cellProvider: "Jio"
+  ngOnInit() {
+    // Initialize custom pins if needed
+    this.initCustomPins();
   }
-  ];
+
+  onMapReady(map: google.maps.Map) {
+    this.map = map;
+    console.log('Map ready', map);
+    
+    // Set custom pins if they're initialized
+    if (this.customStartPin && this.customEndPin && this.customWaypointPin) {
+      this.routeMap.setCustomPins(this.customStartPin, this.customEndPin, this.customWaypointPin);
+    }
+  }
+
+  async initCustomPins() {
+    try {
+      // Wait for Google Maps to load
+      await new Promise<void>((resolve) => {
+        if (window.google && window.google.maps) {
+          resolve();
+        } else {
+          // This is simplified, in a real app you might want to use a more robust approach
+          const checkGoogleMaps = setInterval(() => {
+            if (window.google && window.google.maps) {
+              clearInterval(checkGoogleMaps);
+              resolve();
+            }
+          }, 100);
+        }
+      });
+      
+      // Create custom pins once Google Maps is loaded
+      const { PinElement } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
+      
+      this.customStartPin = new PinElement({
+        background: '#4285F4',
+        borderColor: '#FFFFFF',
+        glyphColor: '#FFFFFF',
+        glyph: 'S',
+      }).element;
+      
+      this.customEndPin = new PinElement({
+        background: '#DB4437',
+        borderColor: '#FFFFFF',
+        glyphColor: '#FFFFFF',
+        glyph: 'E',
+      }).element;
+      
+      this.customWaypointPin = new PinElement({
+        background: '#F4B400',
+        borderColor: '#FFFFFF',
+        glyphColor: '#FFFFFF',
+        glyph: 'W',
+      }).element;
+      
+      // If map is already initialized, set the pins
+      if (this.routeMap) {
+        this.routeMap.setCustomPins(this.customStartPin, this.customEndPin, this.customWaypointPin);
+      }
+    } catch (error) {
+      console.error('Error initializing custom pins:', error);
+    }
+  }
+
+  canCreateRoute(): boolean {
+    return !!this.selectedStartLocation && !!this.selectedEndLocation;
+  }
+
+  createRoute() {
+    if (!this.canCreateRoute()) return;
+    
+    this.routeMap.createRouteFromSelection(
+      this.selectedStartLocation!.position,
+      this.selectedEndLocation!.position,
+      this.isRoundTrip
+    );
+  }
+
+  onRouteCreated(path: google.maps.LatLngLiteral[]) {
+    console.log('Route created with', path.length, 'points');
+    // You can handle this event, for example save the route to your backend
+  }
+
+  onRouteUpdated(path: google.maps.LatLngLiteral[]) {
+    console.log('Route updated with', path.length, 'points');
+    // You can handle this event, for example save the updated route to your backend
+  }
 
 }

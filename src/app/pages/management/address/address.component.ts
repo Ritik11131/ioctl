@@ -20,8 +20,8 @@ export class AddressComponent implements OnInit {
     @ViewChild('searchComponent') searchComponent!: GenericLocationSearchComponent;
 
     googleMapsApiKey = environment.googleMapsApiKey; // Replace with your API key
-    initialLat = 40.73061;
-    initialLng = -73.935242;
+    initialLat = environment.intialLat;
+    initialLng = environment.initialLng;
     isEditMode = false;
     editData: any = null;
 

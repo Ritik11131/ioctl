@@ -136,8 +136,8 @@ export class GenericStepperComponent implements OnInit, OnChanges {
 
     // Location state object to manage location related properties
     locationState = {
-        lat: 40.73061,
-        lng: -73.935242,
+        lat: environment.intialLat,
+        lng: environment.initialLng,
         radius: 50
     };
 
