@@ -79,11 +79,11 @@ export class AppMenu {
                         label: 'Management',
                         icon: 'pi pi-fw pi-warehouse',
                         items: [
-                            {
-                                label: 'User',
-                                icon: 'pi pi-fw pi-users',
-                                routerLink: ['/pages/management/user']
-                            },
+                            // {
+                            //     label: 'User',
+                            //     icon: 'pi pi-fw pi-users',
+                            //     routerLink: ['/pages/management/user']
+                            // },
                             {
                                 label: 'Department',
                                 icon: 'pi pi-fw pi-building',

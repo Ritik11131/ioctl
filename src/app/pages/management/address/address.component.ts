@@ -237,7 +237,7 @@ export class AddressComponent implements OnInit {
             countryId: country?.id,
             zipcode: zipCode,
             exCode: null,
-            attributes: JSON.stringify(locationMap ?? locationPlace1)
+            attributes: JSON.stringify(locationPlace1)
           };
           try {
             const response = await this.http.post('geortd/address/create', payload);
@@ -296,7 +296,8 @@ export class AddressComponent implements OnInit {
           zipCode,
           locationPlace3: address3,
           locationPlace2: address2,
-          locationPlace1: JSON.parse(attributes)
+          locationPlace1: JSON.parse(attributes),
+          locationMap: JSON.parse(attributes)
         };
         this.uiService.openDrawer(this.createUpdateAddressContent, 'Address Management');
         console.log(this.editData, 'editData');
