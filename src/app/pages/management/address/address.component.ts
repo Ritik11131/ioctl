@@ -111,7 +111,7 @@ export class AddressComponent implements OnInit {
                     fieldId: 'locationMap',
                     type: 'map',
                     label: '',
-                    mode: 'gm_address'
+                    mode: 'address'
                 },
                 {
                     fieldId: 'locationPlace1',

@@ -11,7 +11,7 @@ import { GenericGoogleMapComponent } from '../generic-google-map/generic-google-
 import { environment } from '../../../../environments/environment.prod';
 import { GenericLocationSearchComponent } from '../generic-location-search/generic-location-search.component';
 import { GenericDropdownComponent } from "../generic-dropdown/generic-dropdown.component";
-import { GenericGmAddressComponent } from '../generic-gm-address/generic-gm-address.component';
+import { EnhancedGoogleMapComponent } from "../enhanced-google-map/enhanced-google-map.component";
 
 export interface StepFieldConfig {
     fieldId: string;
@@ -37,7 +37,7 @@ export interface StepConfig {
 @Component({
     selector: 'app-generic-stepper',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, StepsModule, InputTextModule, TextareaModule, SelectModule, ButtonModule, GenericGmAddressComponent, GenericLocationSearchComponent, GenericDropdownComponent],
+    imports: [CommonModule, ReactiveFormsModule, StepsModule, InputTextModule, TextareaModule, SelectModule, ButtonModule, GenericLocationSearchComponent, GenericDropdownComponent, EnhancedGoogleMapComponent],
     template: `
         <div class="w-full">
             <!-- Only show steps if there are multiple steps -->
@@ -60,9 +60,9 @@ export interface StepConfig {
                                     </label>
                                     @switch (field.type) {
                                         @case ('map') {
-                                            @if(field?.mode === 'gm_address') {
-                                                <app-generic-gm-address
+                                                <app-enhanced-google-map
                                                     #mapComponent
+                                                    [mode]="field?.mode"
                                                     [apiKey]="googleMapsApiKey"
                                                     [geofenceRadius]="locationState.radius || 100"
                                                     [initialLatitude]="locationState.lat"
@@ -71,8 +71,8 @@ export interface StepConfig {
                                                     (mapReady)="onMapReady($event, field.fieldId)"
                                                     (addressSelected)="onAddressSelected($event, field.fieldId)"
                                                 >
-                                                </app-generic-gm-address>
-                                            }
+                                                </app-enhanced-google-map>
+                                            
                                         }
                                         @case ('text') {
                                             <input pInputText [id]="field.fieldId" [formControlName]="field.fieldId" [placeholder]="field.placeholder || 'Enter text'" class="w-full p-2" />
