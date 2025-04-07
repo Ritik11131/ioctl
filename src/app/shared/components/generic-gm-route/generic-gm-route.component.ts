@@ -1,6 +1,5 @@
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, AfterViewInit, OnDestroy, OnChanges, SimpleChanges, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Loader } from '@googlemaps/js-api-loader';
 import { environment } from '../../../../environments/environment.prod';
 import { ButtonModule } from 'primeng/button';
 import { UiService } from '../../../layout/service/ui.service';

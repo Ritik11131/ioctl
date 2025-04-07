@@ -1,7 +1,6 @@
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, AfterViewInit, OnChanges, SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Loader } from '@googlemaps/js-api-loader';
 import { GoogleMapsModule } from '@angular/google-maps';
 import { GmLoaderService } from '../../../pages/service/gm-loader.service';
 
