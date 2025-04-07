@@ -93,7 +93,12 @@ export class AppMenu {
                                 label: 'Address',
                                 icon: 'pi pi-fw pi-address-book',
                                 routerLink: ['/pages/management/address']
-                            }
+                            },
+                            {
+                                label: 'Routes',
+                                icon: 'pi pi-fw pi-map',
+                                routerLink: ['/pages/management/routes']
+                            },
                         ]
                     },
                     // {

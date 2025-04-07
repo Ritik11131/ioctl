@@ -1,8 +1,6 @@
 import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { UiService } from '../../../layout/service/ui.service';
 import { GenericTableComponent } from '../../../shared/components/generic-table/generic-table.component';
-import { GenericLocationSearchComponent } from '../../../shared/components/generic-location-search/generic-location-search.component';
-import { GenericGoogleMapComponent } from '../../../shared/components/generic-google-map/generic-google-map.component';
 import { environment } from '../../../../environments/environment.prod';
 import { GenericStepperComponent, StepConfig } from '../../../shared/components/generic-stepper/generic-stepper.component';
 import { HttpService } from '../../service/http.service';
@@ -16,10 +14,7 @@ import { HttpService } from '../../service/http.service';
 export class AddressComponent implements OnInit {
     // ViewChild reference to map component for access to its methods
     @ViewChild('createUpdateAddressContent') createUpdateAddressContent!: TemplateRef<any>;
-    @ViewChild('mapComponent') mapComponent!: GenericGoogleMapComponent;
-    @ViewChild('searchComponent') searchComponent!: GenericLocationSearchComponent;
 
-    googleMapsApiKey = environment.googleMapsApiKey; // Replace with your API key
     initialLat = environment.intialLat;
     initialLng = environment.initialLng;
     isEditMode = false;

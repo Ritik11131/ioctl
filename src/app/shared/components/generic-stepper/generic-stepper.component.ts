@@ -1,3 +1,4 @@
+import { GenericGmRouteComponent } from './../generic-gm-route/generic-gm-route.component';
 import { Component, Input, OnInit, Output, EventEmitter, ViewChild, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -12,6 +13,7 @@ import { environment } from '../../../../environments/environment.prod';
 import { GenericLocationSearchComponent } from '../generic-location-search/generic-location-search.component';
 import { GenericDropdownComponent } from "../generic-dropdown/generic-dropdown.component";
 import { EnhancedGoogleMapComponent } from "../enhanced-google-map/enhanced-google-map.component";
+import { GenericGmAddressComponent } from "../generic-gm-address/generic-gm-address.component";
 
 export interface StepFieldConfig {
     fieldId: string;
@@ -37,7 +39,7 @@ export interface StepConfig {
 @Component({
     selector: 'app-generic-stepper',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, StepsModule, InputTextModule, TextareaModule, SelectModule, ButtonModule, GenericLocationSearchComponent, GenericDropdownComponent, EnhancedGoogleMapComponent],
+    imports: [CommonModule, ReactiveFormsModule, StepsModule, InputTextModule, TextareaModule, SelectModule, ButtonModule, GenericLocationSearchComponent, GenericDropdownComponent, GenericGmRouteComponent, GenericGmAddressComponent],
     template: `
         <div class="w-full">
             <!-- Only show steps if there are multiple steps -->
@@ -60,18 +62,22 @@ export interface StepConfig {
                                     </label>
                                     @switch (field.type) {
                                         @case ('map') {
-                                                <app-enhanced-google-map
-                                                    #mapComponent
-                                                    [mode]="field?.mode"
-                                                    [apiKey]="googleMapsApiKey"
-                                                    [geofenceRadius]="locationState.radius || 100"
-                                                    [initialLatitude]="locationState.lat"
-                                                    [initialLongitude]="locationState.lng"
-                                                    [existingAddress]="locationState"
-                                                    (mapReady)="onMapReady($event, field.fieldId)"
-                                                    (addressSelected)="onAddressSelected($event, field.fieldId)"
+                                            @if(field.mode === 'address') {
+
+                                                <app-generic-gm-address
+                                                #mapComponent
+                                                [apiKey]="googleMapsApiKey"
+                                                [geofenceRadius]="locationState.radius || 100"
+                                                [initialLatitude]="locationState.lat"
+                                                [initialLongitude]="locationState.lng"
+                                                [existingAddress]="locationState"
+                                                (mapReady)="onMapReady($event, field.fieldId)"
+                                                (addressSelected)="onAddressSelected($event, field.fieldId)"
                                                 >
-                                                </app-enhanced-google-map>
+                                            </app-generic-gm-address>
+                                        } @else if(field.mode === 'route') {
+                                            <app-generic-gm-route [apiKey]="googleMapsApiKey" />
+                                        }
                                             
                                         }
                                         @case ('text') {

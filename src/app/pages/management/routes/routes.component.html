@@ -1,0 +1,43 @@
+<!-- <app-generic-table [selectedItems]="selectedRowItems" [toolBarStartActions]="toolBarStartActions" [tableConfig]="tableConfig" [tableData]="tableData" (onToolBarStartAction)="handleToolBarActions($event)" (onSelectionChange)="handleRowSelectionChange($event)" />
+<ng-template #createUpdateRouteContent>
+    <h3 class="text-xl font-semibold mb-4 text-muted-color-emphasis">{{isEditMode ? 'Update ' : 'Create '}}Address</h3>
+    <app-generic-stepper [steps]="formSteps" [validateFromApi]="false" [editMode]="isEditMode" [editData]="editData" (stepChange)="onStepChange($event)" (formSubmit)="onFormSubmit($event)"></app-generic-stepper>
+</ng-template> -->
+
+
+
+<div class="container">
+    <!-- <h1>Route</h1> -->
+    
+    <div class="location-selectors">
+      <div class="location-selector">
+        <label for="source">Source Location:</label>
+        <select id="source" [(ngModel)]="selectedSource" (change)="onLocationChange()">
+          <option [ngValue]="null" disabled>Select Source</option>
+          @for (location of locations; track location) {
+            <option [ngValue]="location">{{ location.name }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="location-selector">
+        <label for="destination">Destination Location:</label>
+        <select id="destination" [(ngModel)]="selectedDestination" (change)="onLocationChange()">
+          <option [ngValue]="null" disabled>Select Destination</option>
+          @for (location of locations; track location) {
+            <option [ngValue]="location">{{ location.name }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <app-generic-gm-route
+      [apiKey]="googleMapsApiKey"
+      [sourceLat]="selectedSource?.lat || 0"
+      [sourceLng]="selectedSource?.lng || 0"
+      [destinationLat]="selectedDestination?.lat || 0"
+      [destinationLng]="selectedDestination?.lng || 0"
+      (routeCreated)="onRouteCreated($event)"
+      (routeSelected)="onRouteSelected($event)"
+    ></app-generic-gm-route>
+  </div>
