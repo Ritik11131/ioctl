@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Loader } from '@googlemaps/js-api-loader';
 import { GoogleMapsModule } from '@angular/google-maps';
+import { GmLoaderService } from '../../../pages/service/gm-loader.service';
 
 export interface MarkerPosition {
   lat: number;
@@ -94,7 +95,7 @@ export class GenericGmAddressComponent implements AfterViewInit, OnChanges {
     // Google libraries
     private google: any;
   
-    constructor() {}
+    constructor(private googleMapsLoader:GmLoaderService) {}
   
     async ngAfterViewInit() {
       await this.initMap();
@@ -111,13 +112,15 @@ export class GenericGmAddressComponent implements AfterViewInit, OnChanges {
   
     private async initMap() {
       try {
-          const loader = new Loader({
-              apiKey: this.apiKey,
-              version: 'weekly',
-              libraries: ['places', 'maps', 'marker', 'drawing', 'routes']
-          });
+          // const loader = new Loader({
+          //     apiKey: this.apiKey,
+          //     version: 'weekly',
+          //     libraries: ['places', 'maps', 'marker', 'drawing', 'routes']
+          // });
 
-          await loader.load();
+          // await loader.load();
+
+          await this.googleMapsLoader.initializeLoader()
 
           // Store google globally in component
           this.google = google;

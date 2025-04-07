@@ -4,6 +4,7 @@ import { Loader } from '@googlemaps/js-api-loader';
 import { environment } from '../../../../environments/environment.prod';
 import { ButtonModule } from 'primeng/button';
 import { UiService } from '../../../layout/service/ui.service';
+import { GmLoaderService } from '../../../pages/service/gm-loader.service';
 
 
 interface RouteOption {
@@ -231,7 +232,7 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
   savedRoutes: SavedRoute[] = [];
   currentRoute: SavedRoute | null = null;
 
-  constructor(private uiService:UiService) {
+  constructor(private uiService:UiService, private googleMapsLoader:GmLoaderService) {
     this.loadSavedRoutes();
   }
 
@@ -292,13 +293,15 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
 
   private async initMap() {
     try {
-      const loader = new Loader({
-        apiKey: this.apiKey,
-        version: 'weekly',
-        libraries: ['places', 'geometry', 'routes', 'marker']
-      });
+      // const loader = new Loader({
+      //   apiKey: this.apiKey,
+      //   version: 'weekly',
+      //   libraries: ['places', 'maps', 'marker', 'drawing', 'routes']
+      // });
 
-      await loader.load();
+      // await loader.load();
+
+      await this.googleMapsLoader.initializeLoader()
       
       const { Map } = await google.maps.importLibrary("maps") as google.maps.MapsLibrary;
       const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
