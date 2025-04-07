@@ -11,14 +11,15 @@ import { GenericGoogleMapComponent } from '../generic-google-map/generic-google-
 import { environment } from '../../../../environments/environment.prod';
 import { GenericLocationSearchComponent } from '../generic-location-search/generic-location-search.component';
 import { GenericDropdownComponent } from "../generic-dropdown/generic-dropdown.component";
-import { EnhancedGoogleMapComponent } from '../enhanced-google-map/enhanced-google-map.component';
+import { GenericGmAddressComponent } from '../generic-gm-address/generic-gm-address.component';
 
 export interface StepFieldConfig {
     fieldId: string;
     type: 'text' | 'dropdown' | 'map' | 'place' | 'textarea' | 'number' | 'checkbox' | 'radio' | 'date' | 'time';
     label: string;
     apiType?: string; // For API integration
-    dependsOn?: any; // For conditional rendering
+    dependsOn?: any; // For conditional rendering\
+    mode?:any;
     autoFetch?: boolean; // For dependent dropdowns
     options?: { label: string; value: any }[]; // For dropdowns
     validators?: any[];
@@ -36,7 +37,7 @@ export interface StepConfig {
 @Component({
     selector: 'app-generic-stepper',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, StepsModule, InputTextModule, TextareaModule, SelectModule, ButtonModule, EnhancedGoogleMapComponent, GenericLocationSearchComponent, GenericDropdownComponent],
+    imports: [CommonModule, ReactiveFormsModule, StepsModule, InputTextModule, TextareaModule, SelectModule, ButtonModule, GenericGmAddressComponent, GenericLocationSearchComponent, GenericDropdownComponent],
     template: `
         <div class="w-full">
             <!-- Only show steps if there are multiple steps -->
@@ -59,18 +60,19 @@ export interface StepConfig {
                                     </label>
                                     @switch (field.type) {
                                         @case ('map') {
-                                            <app-enhanced-google-map
-                                                #mapComponent
-                                                mode="address"
-                                                [apiKey]="googleMapsApiKey"
-                                                [geofenceRadius]="locationState.radius || 100"
-                                                [initialLatitude]="locationState.lat"
-                                                [initialLongitude]="locationState.lng"
-                                                [existingAddress]="locationState"
-                                                (mapReady)="onMapReady($event, field.fieldId)"
-                                                (addressSelected)="onAddressSelected($event, field.fieldId)"
-                                            >
-                                            </app-enhanced-google-map>
+                                            @if(field?.mode === 'gm_address') {
+                                                <app-generic-gm-address
+                                                    #mapComponent
+                                                    [apiKey]="googleMapsApiKey"
+                                                    [geofenceRadius]="locationState.radius || 100"
+                                                    [initialLatitude]="locationState.lat"
+                                                    [initialLongitude]="locationState.lng"
+                                                    [existingAddress]="locationState"
+                                                    (mapReady)="onMapReady($event, field.fieldId)"
+                                                    (addressSelected)="onAddressSelected($event, field.fieldId)"
+                                                >
+                                                </app-generic-gm-address>
+                                            }
                                         }
                                         @case ('text') {
                                             <input pInputText [id]="field.fieldId" [formControlName]="field.fieldId" [placeholder]="field.placeholder || 'Enter text'" class="w-full p-2" />

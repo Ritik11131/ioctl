@@ -110,7 +110,8 @@ export class AddressComponent implements OnInit {
                 {
                     fieldId: 'locationMap',
                     type: 'map',
-                    label: ''
+                    label: '',
+                    mode: 'gm_address'
                 },
                 {
                     fieldId: 'locationPlace1',
@@ -313,13 +314,14 @@ export class AddressComponent implements OnInit {
 
 
     openNew() {
-      this.selectedRowItems = []; // Reset selected items when opening new form
+      this.selectedRowItems = []; // Reset selected items when opening new form\
+      this.isEditMode = false;
+      this.editData = null
       this.uiService.openDrawer(this.createUpdateAddressContent, 'Address Management');
     }
 
     handleRowSelectionChange(event: any): void {
         console.log(event);
-
         this.selectedRowItems = event;
     }
 }
