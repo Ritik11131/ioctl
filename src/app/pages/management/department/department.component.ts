@@ -182,7 +182,9 @@ export class DepartmentComponent implements OnInit {
     }
 
     openNew() {
-        this.selectedRowItems = []; // Reset selected items when opening new form
+        this.isEditMode = false;
+        this.editData = null
+          this.selectedRowItems = []; // Reset selected items when opening new form
         this.uiService.openDrawer(this.createUpdateDepartmentContent, 'department Management');
     }
 

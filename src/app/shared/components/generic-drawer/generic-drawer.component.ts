@@ -7,7 +7,7 @@ import { UiService } from '../../../layout/service/ui.service';
 @Component({
   selector: 'app-generic-drawer',
   imports: [CommonModule, DrawerModule, ButtonModule],
-  template: ` <p-drawer [header]="header" [(visible)]="isOpen" [dismissible]="false" position="right" (onHide)="close()" styleClass="!w-full md:!w-96 lg:!w-[40rem] rounded-l-2xl">
+  template: ` <p-drawer [header]="header" [(visible)]="isOpen" [dismissible]="false" position="right" (onHide)="close()" [styleClass]="styleClass">
         <ng-template #closeicon>
             <p-button size="small" icon="pi pi pi-times" [severity]="'danger'" [rounded]="true" text />
         </ng-template>
@@ -24,6 +24,7 @@ import { UiService } from '../../../layout/service/ui.service';
 
 export class GenericDrawerComponent {
   @Input() isOpen = false;
+  @Input() styleClass = '!w-full md:!w-96 lg:!w-[40rem] rounded-l-2xl'
   @Input() header = 'Default Header';
   @Input() contentTemplate: TemplateRef<any> | null = null;
 

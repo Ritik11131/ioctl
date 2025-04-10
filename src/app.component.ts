@@ -17,7 +17,7 @@ import { GenericDrawerComponent } from './app/shared/components/generic-drawer/g
     }
 
    
-        <app-generic-drawer [isOpen]="uiService.isDrawerOpen()" [contentTemplate]="uiService.drawerContent()" [header]="uiService.drawerHeader()" />   
+        <app-generic-drawer [isOpen]="uiService.isDrawerOpen()" [contentTemplate]="uiService.drawerContent()" [header]="uiService.drawerHeader()" [styleClass]="uiService.drawerStyleClass()" />   
     
 
     <p-toast [life]="2000" [breakpoints]="{

@@ -233,6 +233,8 @@ import { HttpService } from '../../service/http.service';
         }
     
         openNew() {
+          this.isEditMode = false;
+          this.editData = null
             this.selectedRowItems = []; // Reset selected items when opening new form
             this.uiService.openDrawer(this.createUpdateUserContent, 'User Management');
         }

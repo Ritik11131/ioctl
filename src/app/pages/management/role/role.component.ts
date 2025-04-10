@@ -96,7 +96,7 @@ export class RoleComponent {
         if(this.isEditMode) {
           this.uiService.toggleLoader(true);
           try {
-            const response = await this.http.put('geortd/roles/Modify', this.selectedRowItems[0].id, {...formData, id: this.selectedRowItems[0].id, attributes:{}});
+            const response = await this.http.put('geortd/roles/Modify', this.selectedRowItems[0].id, {...formData, id: this.selectedRowItems[0].id, attributes:JSON.stringify({})});
             console.log(response, 'response');
             this.uiService.showToast('success', 'Success', 'Department updated successfully');
             this.uiService.closeDrawer(); // Close the drawer after submission
@@ -111,7 +111,7 @@ export class RoleComponent {
         } else {
           this.uiService.toggleLoader(true);
           try {
-            const response = await this.http.post('geortd/roles/create', {...formData, attributes:{}});
+            const response = await this.http.post('geortd/roles/create', {...formData, attributes:JSON.stringify({})});
             console.log(response, 'response');
             this.uiService.showToast('success', 'Success', 'Role created successfully');
             this.uiService.closeDrawer(); // Close the drawer after submission
@@ -159,6 +159,8 @@ export class RoleComponent {
       }
   
       openNew() {
+        this.isEditMode = false;
+        this.editData = null
           this.selectedRowItems = []; // Reset selected items when opening new form
           this.uiService.openDrawer(this.createUpdateRoleContent, 'Role Management');
       }
@@ -183,7 +185,7 @@ export class RoleComponent {
           this.isEditMode = true;
           this.uiService.toggleLoader(true);
           try {
-              const response: any = await this.http.get('geortd/department/GetDepartmentById', {}, this.selectedRowItems[0].id);
+              const response: any = await this.http.get('api/geortd/roles/getbyid', {}, this.selectedRowItems[0].id);
               console.log(response, 'response');
               this.editData = response.data; // Assuming the response has a 'data' property containing the department details
               this.uiService.openDrawer(this.createUpdateRoleContent, 'Role Management');
