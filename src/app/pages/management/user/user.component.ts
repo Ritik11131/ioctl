@@ -45,11 +45,13 @@ import { HttpService } from '../../service/http.service';
             title: 'Manage User',
             dataKey: 'id',
             columns: [
-                { field: 'name', header: 'User Name', minWidth: '12rem' },
-                { field: 'description', header: 'Description', minWidth: '12rem' }
+                { field: 'fName', header: 'Name', minWidth: '8rem' },
+                { field: 'employeeId', header: 'Employee ID', minWidth: '10rem' },
+                { field: 'mobileNo', header: 'Mobile No.', minWidth: '8rem' },
+                { field: 'emailId', header: 'Email ID', minWidth: '10rem' }
     
             ],
-            globalFilterFields: ['name']
+            globalFilterFields: ['fName','mobileNo','employeeId']
         };
     
         tableData = [];
@@ -170,7 +172,7 @@ import { HttpService } from '../../service/http.service';
           if(this.isEditMode) {
             this.uiService.toggleLoader(true);
             try {
-              const response = await this.http.put('geortd/rtduser/modify', this.selectedRowItems[0].id, {...formData, id: this.selectedRowItems[0].id, attributed:{}});
+              const response = await this.http.put('geortd/rtduser/modify', this.selectedRowItems[0].id, {...formData, id: this.selectedRowItems[0].id, attributed:JSON.stringify({})});
               console.log(response, 'response');
               this.uiService.showToast('success', 'Success', 'User updated successfully');
               this.uiService.closeDrawer(); // Close the drawer after submission
@@ -185,7 +187,7 @@ import { HttpService } from '../../service/http.service';
           } else {
             this.uiService.toggleLoader(true);
             try {
-              const response = await this.http.post('geortd/rtduser/create', {...formData, attributes:{}});
+              const response = await this.http.post('geortd/rtduser/create', {...formData, attributes:JSON.stringify({})});
               console.log(response, 'response');
               this.uiService.showToast('success', 'Success', 'User created successfully');
               this.uiService.closeDrawer(); // Close the drawer after submission
@@ -259,7 +261,7 @@ import { HttpService } from '../../service/http.service';
             this.isEditMode = true;
             this.uiService.toggleLoader(true);
             try {
-                const response: any = await this.http.get('geortd/department/GetDepartmentById', {}, this.selectedRowItems[0].id);
+                const response: any = await this.http.get('geortd/rtduser/getbyid', {}, this.selectedRowItems[0].id);
                 console.log(response, 'response');
                 this.editData = response.data; // Assuming the response has a 'data' property containing the department details
                 this.uiService.openDrawer(this.createUpdateUserContent, 'Role Management');

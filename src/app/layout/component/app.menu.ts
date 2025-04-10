@@ -77,7 +77,7 @@ export class AppMenu {
                     // },
                      {
                         label: 'Approval',
-                        icon: 'pi pi-fw pi-globe',
+                        icon: 'pi pi-fw pi-sitemap',
                         routerLink: ['/pages/rtd-approval']
                     },
                     {
