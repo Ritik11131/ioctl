@@ -12,7 +12,8 @@ import { HttpService } from '../../../pages/service/http.service';
   imports: [CommonModule, FormsModule, AutoCompleteModule],
   template: `
     <p-autoComplete 
-    inputStyleClass="w-full"
+      [id]="id"
+      inputStyleClass="w-full"
       appendTo="body"
       [(ngModel)]="selectedItem"
       [suggestions]="suggestions"
@@ -35,11 +36,12 @@ import { HttpService } from '../../../pages/service/http.service';
 })
 export class GenericAutocompleteComponent implements OnInit {
   // Input properties
-  @Input() apiEndpoint: string = ''; // The API endpoint to fetch data from
+  @Input() id:any;
+  @Input() apiEndpoint: any = ''; // The API endpoint to fetch data from
   @Input() displayField: string = 'name'; // Field to display in the dropdown
   @Input() minLength: number = 1; // Minimum length before triggering search
   @Input() delay: number = 300; // Delay before triggering search
-  @Input() placeholder: string = 'Search...';
+  @Input() placeholder: any = 'Search...';
   @Input() style: any = { width: '100%' };
   @Input() inputStyle: any = {};
   @Input() panelStyle: any = {};

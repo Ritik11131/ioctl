@@ -11,17 +11,17 @@ import { SelectModule } from 'primeng/select';
 import { GenericGoogleMapComponent } from '../generic-google-map/generic-google-map.component';
 import { environment } from '../../../../environments/environment.prod';
 import { GenericLocationSearchComponent } from '../generic-location-search/generic-location-search.component';
-import { GenericDropdownComponent } from "../generic-dropdown/generic-dropdown.component";
-import { EnhancedGoogleMapComponent } from "../enhanced-google-map/enhanced-google-map.component";
-import { GenericGmAddressComponent } from "../generic-gm-address/generic-gm-address.component";
+import { GenericDropdownComponent } from '../generic-dropdown/generic-dropdown.component';
+import { GenericGmAddressComponent } from '../generic-gm-address/generic-gm-address.component';
+import { GenericAutocompleteComponent } from '../generic-autocomplete/generic-autocomplete.component';
 
 export interface StepFieldConfig {
     fieldId: string;
-    type: 'text' | 'dropdown' | 'map' | 'place' | 'textarea' | 'number' | 'checkbox' | 'radio' | 'date' | 'time';
+    type: 'text' | 'dropdown' | 'map' | 'place' | 'textarea' | 'number' | 'autocomplete' | 'checkbox' | 'radio' | 'date' | 'time';
     label: string;
     apiType?: string; // For API integration
     dependsOn?: any; // For conditional rendering\
-    mode?:any;
+    mode?: any;
     autoFetch?: boolean; // For dependent dropdowns
     options?: { label: string; value: any }[]; // For dropdowns
     validators?: any[];
@@ -39,7 +39,7 @@ export interface StepConfig {
 @Component({
     selector: 'app-generic-stepper',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, StepsModule, InputTextModule, TextareaModule, SelectModule, ButtonModule, GenericLocationSearchComponent, GenericDropdownComponent, GenericGmRouteComponent, GenericGmAddressComponent],
+    imports: [CommonModule, ReactiveFormsModule, StepsModule, InputTextModule, TextareaModule, SelectModule, ButtonModule, GenericLocationSearchComponent, GenericDropdownComponent, GenericAutocompleteComponent, GenericGmAddressComponent],
     template: `
         <div class="w-full">
             <!-- Only show steps if there are multiple steps -->
@@ -50,7 +50,7 @@ export interface StepConfig {
             <div class="mt-4">
                 <h2 class="text-xl font-semibold mb-4">{{ steps[activeIndex].title }}</h2>
                 <form [formGroup]="formGroup" (ngSubmit)="onStepSubmit()">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div [class]="formClass">
                         <ng-container>
                             @for (field of currentStepFields; track field.fieldId) {
                                 <div [ngClass]="getFieldColumnClass(field)">
@@ -62,23 +62,19 @@ export interface StepConfig {
                                     </label>
                                     @switch (field.type) {
                                         @case ('map') {
-                                            @if(field.mode === 'address') {
-
+                                            @if (field.mode === 'address') {
                                                 <app-generic-gm-address
-                                                #mapComponent
-                                                [apiKey]="googleMapsApiKey"
-                                                [geofenceRadius]="locationState.radius || 100"
-                                                [initialLatitude]="locationState.lat"
-                                                [initialLongitude]="locationState.lng"
-                                                [existingAddress]="locationState"
-                                                (mapReady)="onMapReady($event, field.fieldId)"
-                                                (addressSelected)="onAddressSelected($event, field.fieldId)"
+                                                    #mapComponent
+                                                    [apiKey]="googleMapsApiKey"
+                                                    [geofenceRadius]="locationState.radius || 100"
+                                                    [initialLatitude]="locationState.lat"
+                                                    [initialLongitude]="locationState.lng"
+                                                    [existingAddress]="locationState"
+                                                    (mapReady)="onMapReady($event, field.fieldId)"
+                                                    (addressSelected)="onAddressSelected($event, field.fieldId)"
                                                 >
-                                            </app-generic-gm-address>
-                                        } @else if(field.mode === 'route') {
-                                            <app-generic-gm-route [apiKey]="googleMapsApiKey" />
-                                        }
-                                            
+                                                </app-generic-gm-address>
+                                            }
                                         }
                                         @case ('text') {
                                             <input pInputText [id]="field.fieldId" [formControlName]="field.fieldId" [placeholder]="field.placeholder || 'Enter text'" class="w-full p-2" />
@@ -109,6 +105,10 @@ export interface StepConfig {
                                         @case ('textarea') {
                                             <textarea pTextarea [id]="field.fieldId" [formControlName]="field.fieldId" [placeholder]="field.placeholder || 'Enter text'" rows="5" cols="30" class="w-full p-2"></textarea>
                                         }
+
+                                        @case ('autocomplete') {
+                                            <app-generic-autocomplete [id]="field.fieldId" [apiEndpoint]="field.apiType" displayField="name" [placeholder]="field.placeholder" (itemSelected)="onAutoCompleteSelected($event, field.fieldId)"> </app-generic-autocomplete>
+                                        }
                                     }
                                 </div>
                             }
@@ -131,9 +131,11 @@ export class GenericStepperComponent implements OnInit, OnChanges {
 
     @Input() steps: StepConfig[] = [];
     @Input() validateFromApi = false;
+    @Input() formClass:string = 'grid grid-cols-1 md:grid-cols-2 gap-4'
     @Input() editMode = false;
     @Input() editData: any = null;
     @Output() stepChange = new EventEmitter<{ stepIndex: number; data: any }>();
+    @Output() autoCompleteValue = new EventEmitter<any>();
     @Output() formSubmit = new EventEmitter<any>();
 
     [key: string]: any;
@@ -249,7 +251,7 @@ export class GenericStepperComponent implements OnInit, OnChanges {
             }
         });
 
-        // this.currentCommonLocation = this.editData['locationMap'];        
+        // this.currentCommonLocation = this.editData['locationMap'];
 
         // Handle dependent dropdowns
         this.setupDependentDropdowns();
@@ -475,6 +477,12 @@ export class GenericStepperComponent implements OnInit, OnChanges {
 
         // Handle dependent dropdowns
         this.updateDependentFields(fieldId, selectedValue);
+    }
+
+    onAutoCompleteSelected(selectedValue: any, fieldId: string) {
+        const {value} = selectedValue
+        this.formGroup.get(fieldId)?.setValue(value);
+        this.autoCompleteValue.emit({value, fieldId})
     }
 
     updateDependentFields(fieldId: string, selectedValue: any) {
