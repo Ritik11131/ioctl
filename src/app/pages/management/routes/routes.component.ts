@@ -1,20 +1,16 @@
-import { Component, TemplateRef, ViewChild } from '@angular/core';
+import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { GenericTableComponent } from '../../../shared/components/generic-table/generic-table.component';
 import { GenericStepperComponent, StepConfig } from '../../../shared/components/generic-stepper/generic-stepper.component';
 import { UiService } from '../../../layout/service/ui.service';
 import { FormsModule } from '@angular/forms';
 import { GenericGmRouteComponent } from "../../../shared/components/generic-gm-route/generic-gm-route.component";
 import { environment } from '../../../../environments/environment.prod';
-
-interface Location {
-  name: string;
-  lat: number;
-  lng: number;
-}
+import { HttpService } from '../../service/http.service';
+import { GenericAutocompleteComponent } from '../../../shared/components/generic-autocomplete/generic-autocomplete.component';
 
 @Component({
   selector: 'app-routes',
-  imports: [GenericTableComponent, GenericStepperComponent, FormsModule, GenericGmRouteComponent],
+  imports: [GenericTableComponent, GenericAutocompleteComponent, FormsModule, GenericGmRouteComponent],
   templateUrl: './routes.component.html',
   styles: [`
     .container {
@@ -68,131 +64,139 @@ interface Location {
     }
   `]
 })
-export class RoutesComponent {
+export class RoutesComponent implements OnInit {
 
-//   @ViewChild('createUpdateRouteContent') createUpdateRouteContent!: TemplateRef<any>;
+  @ViewChild('createUpdateRouteContent') createUpdateRouteContent!: TemplateRef<any>;
   
 
-//   selectedRowItems: any[] = [];
-//   isEditMode = false;
+  selectedRowItems: any[] = [];
+  isEditMode = false;
 
-//   editData: any = null;
-
-
-//   toolBarStartActions = [
-//       {
-//           key: 'new',
-//           label: 'New',
-//           icon: 'pi pi-plus',
-//           severity: 'primary',
-//           outlined: false
-//       },
-//       {
-//           key: 'edit',
-//           label: 'Edit',
-//           icon: 'pi pi-pen-to-square',
-//           severity: 'secondary',
-//           outlined: false
-//       },
-//       {
-//           key: 'delete',
-//           label: 'Delete',
-//           icon: 'pi pi-trash',
-//           severity: 'danger',
-//           outlined: true
-//       }
-//   ];
-
-//   tableConfig = {
-//       title: 'Manage Routes',
-//       columns: [
-//           { field: 'name', header: 'Route Name', minWidth: '15rem' },
-         
-//       ],
-//       globalFilterFields: [],
-//       dataKey: 'id'
-//   };
-
-//    formSteps: StepConfig[] = [
-//           {
-//               stepId: 'location',
-//               title: 'Location',
-//               fields: [
-//                   {
-//                       fieldId: 'routeMap',
-//                       type: 'map',
-//                       label: '',
-//                       mode: 'route'
-//                   },
-//                   {
-//                       fieldId: 'source',
-//                       type: 'dropdown',
-//                       apiType: 'SearchAddress',
-//                       label: 'Select Source',
-//                       required: true,
-//                       placeholder: 'Select a Loaction',
-//                       dependsOn: null
-//                   },
-//                   {
-//                       fieldId: 'destination',
-//                       type: 'dropdown',
-//                       apiType: 'SearchAddress',
-//                       label: 'Select Destination',
-//                       required: true,
-//                       placeholder: 'Select a Loaction',
-//                       dependsOn: null,
-//                   },
-//               ]
-//           }
-//       ];
-
-//   tableData = [];
-
-//   constructor(private uiService:UiService) {}
-
-//   async handleToolBarActions(event: any): Promise<void> {
-//     if (event.key === 'new') {
-//       this.openNew();
-//     }
-//   }
-
-//   openNew() {
-//     this.selectedRowItems = []; // Reset selected items when opening new form\
-//     this.isEditMode = false;
-//     this.editData = null
-//     this.uiService.openDrawer(this.createUpdateRouteContent, 'Route Management');
-//   }
-
-//   onStepChange(event: { stepIndex: number; data: any }) {
-//     console.log('Step changed:', event);
-//     // Here you could call an API to validate the step if needed
-// }
-
-// async onFormSubmit(formData: any): Promise<void> {
-
-// }
-
-// handleRowSelectionChange(event: any): void {
-//   console.log(event);
-//   this.selectedRowItems = event;
-// }
+  editData: any = null;
 
 
-locations: Location[] = [
-  { name: 'Connaught Place, Delhi', lat: 28.6315, lng: 77.2167 },
-  { name: 'Ranchi, Jharkhand', lat: 23.3441, lng: 85.3096 },
-  { name: 'Mumbai CST', lat: 18.9398, lng: 72.8354 },
-  { name: 'Bangalore MG Road', lat: 12.9754, lng: 77.6043 },
-  { name: 'Kolkata Howrah', lat: 22.5958, lng: 88.2636 },
-  { name: 'Chennai Central', lat: 13.0827, lng: 80.2707 },
-  { name: 'Hyderabad Charminar', lat: 17.3616, lng: 78.4747 },
-  { name: 'Ahmedabad Sabarmati', lat: 23.0225, lng: 72.5714 },
-  { name: 'Pune Station', lat: 18.5204, lng: 73.8567 },
-  { name: 'Jaipur Hawa Mahal', lat: 26.9239, lng: 75.8267 }
-];
+  toolBarStartActions = [
+      {
+          key: 'new',
+          label: 'New',
+          icon: 'pi pi-plus',
+          severity: 'primary',
+          outlined: false
+      },
+      {
+          key: 'edit',
+          label: 'Edit',
+          icon: 'pi pi-pen-to-square',
+          severity: 'secondary',
+          outlined: false
+      },
+      {
+          key: 'delete',
+          label: 'Delete',
+          icon: 'pi pi-trash',
+          severity: 'danger',
+          outlined: true
+      }
+  ];
 
-selectedSource: Location | null = null;
-selectedDestination: Location | null = null;
+  tableConfig = {
+      title: 'Manage Routes',
+      columns: [
+          { field: 'source', header: 'Source Name', subfield:'name', minWidth: '15rem'  },
+          { field: 'destination', header: 'Destination Name', subfield:'name', minWidth: '15rem'  },
+      ],
+      globalFilterFields: [],
+      dataKey: 'id'
+  };
+
+   formSteps: StepConfig[] = [
+          {
+              stepId: 'location',
+              title: 'Location',
+              fields: [
+                  {
+                      fieldId: 'routeMap',
+                      type: 'map',
+                      label: '',
+                      mode: 'route'
+                  },
+                  {
+                      fieldId: 'source',
+                      type: 'dropdown',
+                      apiType: 'SearchAddress',
+                      label: 'Select Source',
+                      required: true,
+                      placeholder: 'Select a Loaction',
+                      dependsOn: null
+                  },
+                  {
+                      fieldId: 'destination',
+                      type: 'dropdown',
+                      apiType: 'SearchAddress',
+                      label: 'Select Destination',
+                      required: true,
+                      placeholder: 'Select a Loaction',
+                      dependsOn: null,
+                  },
+              ]
+          }
+      ];
+
+  tableData = [];
+
+  constructor(private uiService:UiService, private http:HttpService) {}
+
+  ngOnInit(): void {
+    //Called after the constructor, initializing input properties, and the first call to ngOnChanges.
+    //Add 'implements OnInit' to the class.
+    this.fetchRtdList()
+  }
+
+  async handleToolBarActions(event: any): Promise<void> {
+    if (event.key === 'new') {
+      this.openNew();
+    }
+  }
+
+  async fetchRtdList(): Promise<void> {
+    this.uiService.toggleLoader(true);
+    try {
+        const response: any = await this.http.get('geortd/rtd/list');
+        console.log(response, 'response');
+        this.tableData = response.data; // Assuming the response has a 'data' property containing the list of departments
+        // Handle the response data as needed
+        this.selectedRowItems = []; // Reset selected items after fetching new data
+    } catch (error) {
+        console.error('Error fetching role list:', error);
+        this.uiService.showToast('error', 'Error', 'Failed to fetch role list');
+    } finally {
+        this.uiService.toggleLoader(false);
+    }
+}
+
+  openNew() {
+    this.selectedRowItems = []; // Reset selected items when opening new form\
+    this.isEditMode = false;
+    this.editData = null
+    this.uiService.openDrawer(this.createUpdateRouteContent, 'Route Management','!w-full md:!w-full lg:!w-full rounded-l-2xl');
+  }
+
+  onStepChange(event: { stepIndex: number; data: any }) {
+    console.log('Step changed:', event);
+    // Here you could call an API to validate the step if needed
+}
+
+async onFormSubmit(formData: any): Promise<void> {
+
+}
+
+handleRowSelectionChange(event: any): void {
+  console.log(event);
+  this.selectedRowItems = event;
+}
+
+selectedSource: any = null;
+selectedDestination: any = null;
 googleMapsApiKey = environment.googleMapsApiKey
 
 onLocationChange(): void {
@@ -206,6 +210,16 @@ onRouteCreated(route: any): void {
 
 onRouteSelected(route: any): void {
   console.log('Route selected:', route);
+}
+
+onSourceSelected(source: any) {
+  console.log(source);
+  this.selectedSource = source?.value;
+}
+
+onDestinationSelected(destination: any) {
+  console.log('Selected destination:', destination);
+  this.selectedDestination = destination?.value;
 }
 
 

@@ -7,7 +7,7 @@
     <div class="p-4">
         <div class="grid grid-cols-4 lg:grid-cols-4 gap-4">
             <!-- First Column -->
-            <div class="col-span-3 flex flex-col">
+            <div class="col-span-3 flex flex-col h-[75vh]">
                 <!-- First Row with Two Input Fields -->
                 <div class="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="p-field">
@@ -24,7 +24,7 @@
                 </div>
 
                 <!-- Second Row with Organization Chart -->
-                <div class="border rounded-md p-4 bg-white overflow-auto h-[60vh]">
+                <div class="border rounded-md p-4 bg-white overflow-auto">
                     <p-organizationChart [value]="data" selectionMode="single" [(selection)]="selectedNode"
                         (onNodeSelect)="onNodeSelect($event)" styleClass="w-full">
                         <ng-template pTemplate="default" let-node>

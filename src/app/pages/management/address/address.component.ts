@@ -233,6 +233,8 @@ export class AddressComponent implements OnInit {
             countryId: country?.id,
             zipcode: zipCode,
             exCode: null,
+            latitude:locationPlace1.lat,
+            longitude:locationPlace1.lng,
             attributes: JSON.stringify(locationPlace1)
           };
           try {

@@ -32,7 +32,7 @@ interface SavedRoute {
       <!-- Route Controls -->
       <div class="route-controls">
         <div class="route-inputs">
-          <button pButton class="btn btn-primary" (click)="createRoute()">Create Route</button>
+          <!-- <button pButton class="btn btn-primary" (click)="createRoute()">Create Route</button> -->
           <button pButton class="btn btn-success" (click)="saveRoute()" [disabled]="!currentRoute">Save Route</button>
           <button pButton class="btn btn-secondary" (click)="clearRoute()">Clear Route</button>
         </div>
@@ -196,7 +196,6 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
 
   @Input() apiKey = '';
   @Input() height = 400;
-  @Input() placeholder = 'Search for a location';
   @Input() initialZoom = 12;
   @Input() mapId = 'DEMO_MAP_ID';
   @Input() sourceLat = 0;
@@ -226,40 +225,41 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
   private selectedRouteIndex: number = -1;
   
   geofenceRadius = 1000;
-  sourceAddress = 'Delhi, India';
-  destinationAddress = 'Bihar, India';
   savedRoutes: SavedRoute[] = [];
   currentRoute: SavedRoute | null = null;
 
   constructor(private uiService:UiService, private googleMapsLoader:GmLoaderService) {
-    this.loadSavedRoutes();
+    // this.loadSavedRoutes();
   }
 
-  private loadSavedRoutes() {
-    try {
-      const savedRoutesStr = localStorage.getItem('savedRoutes');
-      if (savedRoutesStr) {
-        const parsedRoutes = JSON.parse(savedRoutesStr);
-        this.savedRoutes = Array.isArray(parsedRoutes) ? parsedRoutes : [];
-        console.log('Loaded routes from localStorage:', this.savedRoutes);
-      }
-    } catch (error) {
-      console.error('Error loading saved routes:', error);
-      this.savedRoutes = [];
-    }
-  }
+  // private loadSavedRoutes() {
+  //   try {
+  //     const savedRoutesStr = localStorage.getItem('savedRoutes');
+  //     if (savedRoutesStr) {
+  //       const parsedRoutes = JSON.parse(savedRoutesStr);
+  //       this.savedRoutes = Array.isArray(parsedRoutes) ? parsedRoutes : [];
+  //       console.log('Loaded routes from localStorage:', this.savedRoutes);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error loading saved routes:', error);
+  //     this.savedRoutes = [];
+  //   }
+  // }
 
   ngOnInit() {
     // Remove the automatic route creation from here since it's now handled in ngOnChanges
   }
 
   ngOnChanges(changes: SimpleChanges) {
+    console.log(changes,'changes');
+    
     // Check if any of the coordinate inputs changed
     if (changes['sourceLat'] || changes['sourceLng'] || 
         changes['destinationLat'] || changes['destinationLng']) {
+      console.log(changes['sourceLat'],changes['destinationLat']);
       
       // Only create route if all coordinates are provided and map is initialized
-      if (this.map && 
+      if (
           this.sourceLat && this.sourceLng && 
           this.destinationLat && this.destinationLng) {
         this.createRouteFromCoordinates(
@@ -292,18 +292,10 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
 
   private async initMap() {
     try {
-      // const loader = new Loader({
-      //   apiKey: this.apiKey,
-      //   version: 'weekly',
-      //   libraries: ['places', 'maps', 'marker', 'drawing', 'routes']
-      // });
-
-      // await loader.load();
 
       await this.googleMapsLoader.initializeLoader()
       
       const { Map } = await google.maps.importLibrary("maps") as google.maps.MapsLibrary;
-      const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
       const { DirectionsService, DirectionsRenderer } = await google.maps.importLibrary("routes") as google.maps.RoutesLibrary;
       
       this.autoCompleteToken = new google.maps.places.AutocompleteSessionToken();
@@ -378,96 +370,96 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
     });
   }
 
-  async createRoute() {
-    if (!this.sourceAddress || !this.destinationAddress) {
-      alert('Please enter both source and destination addresses');
-      return;
-    }
+  // async createRoute() {
+  //   if (!this.sourceAddress || !this.destinationAddress) {
+  //     alert('Please enter both source and destination addresses');
+  //     return;
+  //   }
 
-    try {
-      this.clearRoute();
+  //   try {
+  //     this.clearRoute();
 
-      const request: google.maps.DirectionsRequest = {
-        origin: this.sourceAddress,
-        destination: this.destinationAddress,
-        travelMode: google.maps.TravelMode.DRIVING,
-        provideRouteAlternatives: true
-      };
+  //     const request: google.maps.DirectionsRequest = {
+  //       origin: this.sourceAddress,
+  //       destination: this.destinationAddress,
+  //       travelMode: google.maps.TravelMode.DRIVING,
+  //       provideRouteAlternatives: true
+  //     };
 
-      const result = await this.directionsService.route(request);
+  //     const result = await this.directionsService.route(request);
       
-      if (!result || !result.routes || result.routes.length === 0) {
-        throw new Error('No routes found');
-      }
+  //     if (!result || !result.routes || result.routes.length === 0) {
+  //       throw new Error('No routes found');
+  //     }
 
-      // Clear existing route options
-      this.routeOptions = [];
+  //     // Clear existing route options
+  //     this.routeOptions = [];
 
-      // Get the first route's start and end locations for markers
-      const firstRoute = result.routes[0];
-      const firstLeg = firstRoute.legs?.[0];
+  //     // Get the first route's start and end locations for markers
+  //     const firstRoute = result.routes[0];
+  //     const firstLeg = firstRoute.legs?.[0];
       
-      if (firstLeg) {
-        // Update marker positions
-        this.sourceMarker.position = firstLeg.start_location;
-        this.destinationMarker.position = firstLeg.end_location;
-        this.geofence.setCenter(firstLeg.start_location);
-      }
+  //     if (firstLeg) {
+  //       // Update marker positions
+  //       this.sourceMarker.position = firstLeg.start_location;
+  //       this.destinationMarker.position = firstLeg.end_location;
+  //       this.geofence.setCenter(firstLeg.start_location);
+  //     }
 
-      // Create route renderers and options
-      this.routeRenderers = result.routes.map((route, index) => {
-        const leg = route.legs?.[0];
+  //     // Create route renderers and options
+  //     this.routeRenderers = result.routes.map((route, index) => {
+  //       const leg = route.legs?.[0];
         
-        // Add route option
-        this.routeOptions.push({
-          route: route,
-          distance: leg?.distance?.text || '',
-          duration: leg?.duration?.text || '',
-          color: this.getRouteColor(index, result.routes.length),
-          isSelected: index === 0 // Select first route by default
-        });
+  //       // Add route option
+  //       this.routeOptions.push({
+  //         route: route,
+  //         distance: leg?.distance?.text || '',
+  //         duration: leg?.duration?.text || '',
+  //         color: this.getRouteColor(index, result.routes.length),
+  //         isSelected: index === 0 // Select first route by default
+  //       });
 
-        const directions: google.maps.DirectionsResult = {
-          routes: [route],
-          request: request,
-          geocoded_waypoints: result.geocoded_waypoints || []
-        };
+  //       const directions: google.maps.DirectionsResult = {
+  //         routes: [route],
+  //         request: request,
+  //         geocoded_waypoints: result.geocoded_waypoints || []
+  //       };
 
-        const renderer = new google.maps.DirectionsRenderer({
-          map: this.map,
-          directions: directions,
-          suppressMarkers: true, // We'll use our own markers
-          draggable: false,
-          polylineOptions: {
-            strokeColor: this.getRouteColor(index, result.routes.length),
-            strokeWeight: index === 0 ? 7 : 5,
-            strokeOpacity: index === 0 ? 1 : 0.7
-          }
-        });
+  //       const renderer = new google.maps.DirectionsRenderer({
+  //         map: this.map,
+  //         directions: directions,
+  //         suppressMarkers: true, // We'll use our own markers
+  //         draggable: false,
+  //         polylineOptions: {
+  //           strokeColor: this.getRouteColor(index, result.routes.length),
+  //           strokeWeight: index === 0 ? 7 : 5,
+  //           strokeOpacity: index === 0 ? 1 : 0.7
+  //         }
+  //       });
 
-        return renderer;
-      });
+  //       return renderer;
+  //     });
 
-      // Set current route to first route
-      if (this.routeOptions.length > 0) {
-        this.selectRoute(0);
-      }
+  //     // Set current route to first route
+  //     if (this.routeOptions.length > 0) {
+  //       this.selectRoute(0);
+  //     }
 
-      // Fit map to show all routes and markers
-      const bounds = new google.maps.LatLngBounds();
-      result.routes.forEach(route => {
-        route.legs?.forEach(leg => {
-          bounds.extend(leg.start_location);
-          bounds.extend(leg.end_location);
-        });
-      });
-      this.map.fitBounds(bounds);
+  //     // Fit map to show all routes and markers
+  //     const bounds = new google.maps.LatLngBounds();
+  //     result.routes.forEach(route => {
+  //       route.legs?.forEach(leg => {
+  //         bounds.extend(leg.start_location);
+  //         bounds.extend(leg.end_location);
+  //       });
+  //     });
+  //     this.map.fitBounds(bounds);
 
-    } catch (error) {
-      console.error('Error creating route:', error);
-      alert('Error creating route. Please check the addresses and try again.');
-    }
-  }
+  //   } catch (error) {
+  //     console.error('Error creating route:', error);
+  //     alert('Error creating route. Please check the addresses and try again.');
+  //   }
+  // }
 
   async createRouteFromCoordinates(
     sourceLat: number,
@@ -475,6 +467,8 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
     destinationLat: number,
     destinationLng: number
   ) {
+    console.log(sourceLat,sourceLng,destinationLat,destinationLng);
+    
     try {
       this.uiService.toggleLoader(true);
       this.clearRoute();

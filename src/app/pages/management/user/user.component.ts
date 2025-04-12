@@ -62,21 +62,21 @@ import { HttpService } from '../../service/http.service';
             title: 'Basic Information',
             fields: [
               {
-                fieldId: 'fname',
+                fieldId: 'fName',
                 type: 'text',
                 label: 'First Name',
                 required: true,
                 placeholder: 'Enter first name'
               },
               {
-                fieldId: 'mname',
+                fieldId: 'mName',
                 type: 'text',
                 label: 'Middle Name',
                 required: true,
                 placeholder: 'Enter middle name'
               },
               {
-                fieldId: 'lname',
+                fieldId: 'lName',
                 type: 'text',
                 label: 'Last Name',
                 required: true,

@@ -1,43 +1,46 @@
-<!-- <app-generic-table [selectedItems]="selectedRowItems" [toolBarStartActions]="toolBarStartActions" [tableConfig]="tableConfig" [tableData]="tableData" (onToolBarStartAction)="handleToolBarActions($event)" (onSelectionChange)="handleRowSelectionChange($event)" />
+<app-generic-table [selectedItems]="selectedRowItems" [toolBarStartActions]="toolBarStartActions" [tableConfig]="tableConfig" [tableData]="tableData" (onToolBarStartAction)="handleToolBarActions($event)" (onSelectionChange)="handleRowSelectionChange($event)" />
 <ng-template #createUpdateRouteContent>
     <h3 class="text-xl font-semibold mb-4 text-muted-color-emphasis">{{isEditMode ? 'Update ' : 'Create '}}Address</h3>
-    <app-generic-stepper [steps]="formSteps" [validateFromApi]="false" [editMode]="isEditMode" [editData]="editData" (stepChange)="onStepChange($event)" (formSubmit)="onFormSubmit($event)"></app-generic-stepper>
-</ng-template> -->
 
-
-
-<div class="container">
-    <!-- <h1>Route</h1> -->
-    
-    <div class="location-selectors">
-      <div class="location-selector">
-        <label for="source">Source Location:</label>
-        <select id="source" [(ngModel)]="selectedSource" (change)="onLocationChange()">
-          <option [ngValue]="null" disabled>Select Source</option>
-          @for (location of locations; track location) {
-            <option [ngValue]="location">{{ location.name }}</option>
-          }
-        </select>
-      </div>
-
-      <div class="location-selector">
-        <label for="destination">Destination Location:</label>
-        <select id="destination" [(ngModel)]="selectedDestination" (change)="onLocationChange()">
-          <option [ngValue]="null" disabled>Select Destination</option>
-          @for (location of locations; track location) {
-            <option [ngValue]="location">{{ location.name }}</option>
-          }
-        </select>
+    <div class=" bg-gray-50">
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div class="col-span-1 lg:col-span-3 flex flex-col">
+          <app-generic-gm-route
+            [height]="800"
+            [apiKey]="googleMapsApiKey"
+            [sourceLat]="selectedSource?.latitude || 0"
+            [sourceLng]="selectedSource?.longitude || 0"
+            [destinationLat]="selectedDestination?.latitude || 0"
+            [destinationLng]="selectedDestination?.longitude || 0"
+            (routeCreated)="onRouteCreated($event)"
+            (routeSelected)="onRouteSelected($event)"
+          ></app-generic-gm-route>
+        </div>
+        
+        <div class="border rounded-lg shadow-md p-6 bg-white">
+          <h3 class="text-lg font-semibold mb-4 text-gray-800">Location Settings</h3>
+          
+          <div class="mb-4">
+            <app-generic-autocomplete apiEndpoint="geortd/address/SearchAddress" displayField="name"
+              placeholder="Search Source..." (itemSelected)="onSourceSelected($event)">
+            </app-generic-autocomplete>
+          </div>
+          
+          <div class="mb-4">
+            <app-generic-autocomplete apiEndpoint="geortd/address/SearchAddress" displayField="name"
+              placeholder="Search Destination..." (itemSelected)="onDestinationSelected($event)">
+            </app-generic-autocomplete>
+          </div>
+          
+          <div class="mt-6">
+            <button 
+              class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out"
+              [disabled]="!selectedSource || !selectedDestination"
+            >
+              Get Directions
+            </button>
+          </div>
+        </div>
       </div>
     </div>
-
-    <app-generic-gm-route
-      [apiKey]="googleMapsApiKey"
-      [sourceLat]="selectedSource?.lat || 0"
-      [sourceLng]="selectedSource?.lng || 0"
-      [destinationLat]="selectedDestination?.lat || 0"
-      [destinationLng]="selectedDestination?.lng || 0"
-      (routeCreated)="onRouteCreated($event)"
-      (routeSelected)="onRouteSelected($event)"
-    ></app-generic-gm-route>
-  </div>
+</ng-template>

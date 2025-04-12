@@ -129,7 +129,7 @@ export class RtdApprovalComponent {
       this.uiService.toggleLoader(true);
       try {
         const { title, description } = this.approvalForm.value;
-        const response = await this.http.put('geortd/roles/Modify', this.selectedRowItems[0].id,
+        const response = await this.http.put('geortd/rtdapprovalprocess/Modify', this.selectedRowItems[0].id,
           {
             name: title,
             description,
