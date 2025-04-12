@@ -8,10 +8,10 @@
           <app-generic-gm-route
             [height]="800"
             [apiKey]="googleMapsApiKey"
-            [sourceLat]="selectedSource?.latitude || 0"
-            [sourceLng]="selectedSource?.longitude || 0"
-            [destinationLat]="selectedDestination?.latitude || 0"
-            [destinationLng]="selectedDestination?.longitude || 0"
+            [sourceLat]="selectedSource?.position?.latitude || 0"
+            [sourceLng]="selectedSource?.position?.longitude || 0"
+            [destinationLat]="selectedDestination?.position?.latitude || 0"
+            [destinationLng]="selectedDestination?.position?.longitude || 0"
             (routeCreated)="onRouteCreated($event)"
             (routeSelected)="onRouteSelected($event)"
           ></app-generic-gm-route>
@@ -30,15 +30,6 @@
             <app-generic-autocomplete apiEndpoint="geortd/address/SearchAddress" displayField="name"
               placeholder="Search Destination..." (itemSelected)="onDestinationSelected($event)">
             </app-generic-autocomplete>
-          </div>
-          
-          <div class="mt-6">
-            <button 
-              class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out"
-              [disabled]="!selectedSource || !selectedDestination"
-            >
-              Get Directions
-            </button>
           </div>
         </div>
       </div>

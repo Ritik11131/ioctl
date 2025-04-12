@@ -32,7 +32,6 @@ interface SavedRoute {
       <!-- Route Controls -->
       <div class="route-controls">
         <div class="route-inputs">
-          <!-- <button pButton class="btn btn-primary" (click)="createRoute()">Create Route</button> -->
           <button pButton class="btn btn-success" (click)="saveRoute()" [disabled]="!currentRoute">Save Route</button>
           <button pButton class="btn btn-secondary" (click)="clearRoute()">Clear Route</button>
         </div>
@@ -74,7 +73,6 @@ interface SavedRoute {
               <li>
                 {{ route?.source || 'Unknown source' }} → {{ route?.destination || 'Unknown destination' }}
                 <button pButton class="btn btn-sm btn-info" (click)="editRoute(route, $index)">Edit</button>
-                <button pButton class="btn btn-sm btn-danger" (click)="deleteRoute(route)">Delete</button>
               </li>
             }
           </ul>
@@ -82,20 +80,6 @@ interface SavedRoute {
       </div>
 
       <div #mapContainer class="map-container" [style.height.px]="height"></div>
-      
-      <!-- Radius Control -->
-      <!-- <div class="radius-control">
-        <label for="radiusSlider">Geofence Radius: {{ geofenceRadius }} meters</label>
-        <input
-          id="radiusSlider"
-          type="range"
-          min="100"
-          max="5000"
-          step="100"
-          [(ngModel)]="geofenceRadius"
-          (input)="updateGeofence()"
-        />
-      </div> -->
     </div>
   `,
   styles: [`
@@ -229,34 +213,17 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
   currentRoute: SavedRoute | null = null;
 
   constructor(private uiService:UiService, private googleMapsLoader:GmLoaderService) {
-    // this.loadSavedRoutes();
   }
-
-  // private loadSavedRoutes() {
-  //   try {
-  //     const savedRoutesStr = localStorage.getItem('savedRoutes');
-  //     if (savedRoutesStr) {
-  //       const parsedRoutes = JSON.parse(savedRoutesStr);
-  //       this.savedRoutes = Array.isArray(parsedRoutes) ? parsedRoutes : [];
-  //       console.log('Loaded routes from localStorage:', this.savedRoutes);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error loading saved routes:', error);
-  //     this.savedRoutes = [];
-  //   }
-  // }
 
   ngOnInit() {
     // Remove the automatic route creation from here since it's now handled in ngOnChanges
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    console.log(changes,'changes');
     
     // Check if any of the coordinate inputs changed
     if (changes['sourceLat'] || changes['sourceLng'] || 
         changes['destinationLat'] || changes['destinationLng']) {
-      console.log(changes['sourceLat'],changes['destinationLat']);
       
       // Only create route if all coordinates are provided and map is initialized
       if (
@@ -318,7 +285,6 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
       });
 
       this.setupMarkers();
-      this.setupEventListeners();
     } catch (error) {
       console.error('Error loading Google Maps:', error);
       throw error;
@@ -369,97 +335,6 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
       strokeWeight: 2
     });
   }
-
-  // async createRoute() {
-  //   if (!this.sourceAddress || !this.destinationAddress) {
-  //     alert('Please enter both source and destination addresses');
-  //     return;
-  //   }
-
-  //   try {
-  //     this.clearRoute();
-
-  //     const request: google.maps.DirectionsRequest = {
-  //       origin: this.sourceAddress,
-  //       destination: this.destinationAddress,
-  //       travelMode: google.maps.TravelMode.DRIVING,
-  //       provideRouteAlternatives: true
-  //     };
-
-  //     const result = await this.directionsService.route(request);
-      
-  //     if (!result || !result.routes || result.routes.length === 0) {
-  //       throw new Error('No routes found');
-  //     }
-
-  //     // Clear existing route options
-  //     this.routeOptions = [];
-
-  //     // Get the first route's start and end locations for markers
-  //     const firstRoute = result.routes[0];
-  //     const firstLeg = firstRoute.legs?.[0];
-      
-  //     if (firstLeg) {
-  //       // Update marker positions
-  //       this.sourceMarker.position = firstLeg.start_location;
-  //       this.destinationMarker.position = firstLeg.end_location;
-  //       this.geofence.setCenter(firstLeg.start_location);
-  //     }
-
-  //     // Create route renderers and options
-  //     this.routeRenderers = result.routes.map((route, index) => {
-  //       const leg = route.legs?.[0];
-        
-  //       // Add route option
-  //       this.routeOptions.push({
-  //         route: route,
-  //         distance: leg?.distance?.text || '',
-  //         duration: leg?.duration?.text || '',
-  //         color: this.getRouteColor(index, result.routes.length),
-  //         isSelected: index === 0 // Select first route by default
-  //       });
-
-  //       const directions: google.maps.DirectionsResult = {
-  //         routes: [route],
-  //         request: request,
-  //         geocoded_waypoints: result.geocoded_waypoints || []
-  //       };
-
-  //       const renderer = new google.maps.DirectionsRenderer({
-  //         map: this.map,
-  //         directions: directions,
-  //         suppressMarkers: true, // We'll use our own markers
-  //         draggable: false,
-  //         polylineOptions: {
-  //           strokeColor: this.getRouteColor(index, result.routes.length),
-  //           strokeWeight: index === 0 ? 7 : 5,
-  //           strokeOpacity: index === 0 ? 1 : 0.7
-  //         }
-  //       });
-
-  //       return renderer;
-  //     });
-
-  //     // Set current route to first route
-  //     if (this.routeOptions.length > 0) {
-  //       this.selectRoute(0);
-  //     }
-
-  //     // Fit map to show all routes and markers
-  //     const bounds = new google.maps.LatLngBounds();
-  //     result.routes.forEach(route => {
-  //       route.legs?.forEach(leg => {
-  //         bounds.extend(leg.start_location);
-  //         bounds.extend(leg.end_location);
-  //       });
-  //     });
-  //     this.map.fitBounds(bounds);
-
-  //   } catch (error) {
-  //     console.error('Error creating route:', error);
-  //     alert('Error creating route. Please check the addresses and try again.');
-  //   }
-  // }
 
   async createRouteFromCoordinates(
     sourceLat: number,
@@ -724,19 +599,6 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
     this.selectedRouteIndex = -1;
   }
 
-  deleteRoute(route: SavedRoute) {
-    try {
-      this.savedRoutes = this.savedRoutes.filter(r => r !== route);
-      localStorage.setItem('savedRoutes', JSON.stringify(this.savedRoutes));
-      if (this.currentRoute === route) {
-        this.clearRoute();
-      }
-    } catch (error) {
-      console.error('Error deleting route:', error);
-      alert('Error deleting route. Please try again.');
-    }
-  }
-
   private getRouteColor(index: number, totalRoutes: number): string {
     if (totalRoutes === 1) return '#4285F4';
     if (index === 0) return '#34A853';
@@ -744,47 +606,6 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
     return '#FBBC05';
   }
 
-  private setupEventListeners() {
-    this.mapListeners.push(
-      this.map.addListener('click', (event: google.maps.MapMouseEvent) => {
-        if (event.latLng) {
-          this.updateMarkerAndGeofence(event.latLng);
-          this.mapClick.emit(event.latLng.toJSON());
-        }
-      })
-    );
-
-    this.mapListeners.push(
-      this.sourceMarker.addListener('dragend', () => {
-        const position = this.sourceMarker.position as google.maps.LatLng;
-        if (position) {
-          this.geofence.setCenter(position);
-          this.placeSelected.emit(position.toJSON());
-        }
-      })
-    );
-
-    this.mapListeners.push(
-      this.destinationMarker.addListener('dragend', () => {
-        const position = this.destinationMarker.position as google.maps.LatLng;
-        if (position) {
-          this.geofence.setCenter(position);
-          this.placeSelected.emit(position.toJSON());
-        }
-      })
-    );
-  }
-
-  private updateMarkerAndGeofence(latLng: google.maps.LatLng) {
-    this.sourceMarker.position = latLng;
-    this.destinationMarker.position = latLng;
-    this.geofence.setCenter(latLng);
-  }
-
-  updateGeofence() {
-    this.geofence.setRadius(this.geofenceRadius);
-    this.radiusChanged.emit(this.geofenceRadius);
-  }
 
   selectRoute(index: number) {
     if (this.routeOptions.length > 0) {
