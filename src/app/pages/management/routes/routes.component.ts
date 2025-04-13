@@ -197,7 +197,6 @@ export class RoutesComponent implements OnInit {
     }
 
     async handleEditRoute(): Promise<void> {
-      console.log(this.selectedRowItems, 'selectedRowItems');
       this.formSteps = [
         {
             stepId: 'route_management',
@@ -249,11 +248,11 @@ export class RoutesComponent implements OnInit {
       this.uiService.toggleLoader(true);
       try {
         const response: any = await this.http.get('geortd/rtd/GetById', {}, this.selectedRowItems[0].id);
-        console.log(response, 'response');
         const { source,destination,sourceDept, destinationDept, name, attributes, id, startDate, endDate } = response.data;
         this.selectedSource = source;
         this.selectedDestination = destination;
         const route = JSON.parse(attributes)
+        
         this.currentRoute = route?.route
         this.editData = {
          name,
@@ -265,10 +264,8 @@ export class RoutesComponent implements OnInit {
          startDate
         };
         this.uiService.openDrawer(this.createUpdateRouteContent, 'Route Management', '!w-[90vw] md:!w-[90vw] lg:!w-[90vw] rounded-l-2xl');
-        console.log(this.editData, 'editData');
         
       } catch (error) {
-        console.error('Error fetching address details:', error);
         this.uiService.showToast('error', 'Error', 'Failed to fetch address details');
       }   finally {
         this.uiService.toggleLoader(false);
@@ -280,11 +277,9 @@ export class RoutesComponent implements OnInit {
       this.uiService.toggleLoader(true);
       try {
         const response: any = await this.http.delete('geortd/rtd/delete', this.selectedRowItems[0].id);
-        console.log(response, 'response');
         this.uiService.showToast('success', 'Success', 'Route deleted successfully');
         await this.fetchRtdList(); // Refresh the address list after deletion
       } catch (error) {
-        console.error('Error deleting address:', error);
         this.uiService.showToast('error', 'Error', 'Failed to delete address');
       } finally {
         this.uiService.toggleLoader(false);
@@ -295,12 +290,10 @@ export class RoutesComponent implements OnInit {
         this.uiService.toggleLoader(true);
         try {
             const response: any = await this.http.get('geortd/rtd/list');
-            console.log(response, 'response');
             this.tableData = response.data; // Assuming the response has a 'data' property containing the list of departments
             // Handle the response data as needed
             this.selectedRowItems = []; // Reset selected items after fetching new data
         } catch (error) {
-            console.error('Error fetching role list:', error);
             this.uiService.showToast('error', 'Error', 'Failed to fetch role list');
         } finally {
             this.uiService.toggleLoader(false);
@@ -312,17 +305,79 @@ export class RoutesComponent implements OnInit {
         this.isEditMode = false;
         this.selectedSource = null;
         this.selectedDestination = null;
+        this.currentRoute = null;
+        this.formSteps = [
+            {
+                stepId: 'route_management',
+                title: '',
+                fields: [
+                    {
+                        fieldId: 'name',
+                        type: 'text',
+                        label: 'Route Name',
+                        required: true,
+                        placeholder: 'Enter a name'
+                    },
+                    {
+                        fieldId: 'source_address',
+                        type: 'autocomplete',
+                        apiType: 'geortd/address/SearchAddress',
+                        label: 'Source Address',
+                        required: true,
+                        placeholder: 'Select a Address'
+                    },
+                    {
+                        fieldId: 'destination_address',
+                        type: 'autocomplete',
+                        apiType: 'geortd/address/SearchAddress',
+                        label: 'Destination Address',
+                        required: true,
+                        placeholder: 'Select a Address'
+                    },
+                    {
+                        fieldId: 'source_department',
+                        type: 'dropdown',
+                        apiType: 'department',
+                        label: 'Source Department',
+                        required: true,
+                        placeholder: 'Select a Department',
+                        dependsOn: null
+                    },
+                    {
+                        fieldId: 'destination_department',
+                        type: 'dropdown',
+                        apiType: 'department',
+                        label: 'Department Department',
+                        required: true,
+                        placeholder: 'Select a Department',
+                        dependsOn: null
+                    },
+                    {
+                        fieldId: 'startDate',
+                        type: 'text',
+                        label: 'Start Date',
+                        required: true,
+                        placeholder: 'Enter a date'
+                    },
+                    {
+                        fieldId: 'endDate',
+                        type: 'text',
+                        label: 'End Date',
+                        required: true,
+                        placeholder: 'Enter a date'
+                    }
+                ]
+            }
+        ];
         this.editData = null;
         this.uiService.openDrawer(this.createUpdateRouteContent, 'Route Management', '!w-[90vw] md:!w-[90vw] lg:!w-[90vw] rounded-l-2xl');
     }
 
     onStepChange(event: { stepIndex: number; data: any }) {
-        console.log('Step changed:', event);
         // Here you could call an API to validate the step if needed
     }
 
     async onFormSubmit(formData: any): Promise<void> {
-      console.log(formData);
       if(this.isEditMode) {
         this.uiService.toggleLoader(true);
         const { name, startDate, endDate, destination_department, source_department } = formData;
@@ -338,18 +393,13 @@ export class RoutesComponent implements OnInit {
           reason: "test reason",
           attributes: JSON.stringify( { route: this.currentRoute } )
         }
-        console.log(this.currentRoute);
-        
-        console.log(payload);
         
         try {
           const response = await this.http.put('geortd/rtd/modify', this.selectedRowItems[0].id, payload);
-          console.log(response, 'response');
           this.uiService.showToast('success', 'Success', 'Route updated successfully');
           this.uiService.closeDrawer(); // Close the drawer after submission
           await this.fetchRtdList(); // Refresh the department list after successful submission
         } catch (error) {
-          console.error('Error submitting form:', error);
           this.uiService.showToast('error', 'Error', 'Failed to submit form');
         } finally {
           this.uiService.toggleLoader(false);
@@ -369,14 +419,13 @@ export class RoutesComponent implements OnInit {
           reason: "test reason",
           attributes:JSON.stringify({route:this.currentRoute})
         }
+
           try {
               const response = await this.http.post('geortd/rtd/create', payload);
-              console.log(response, 'response');
               this.uiService.showToast('success', 'Success', 'Route created successfully');
               this.uiService.closeDrawer(); // Close the drawer after submission
               await this.fetchRtdList(); // Refresh the department list after successful submission
           } catch (error) {
-              console.error('Error submitting form:', error);
               this.uiService.showToast('error', 'Error', 'Failed to submit form');
           } finally {
               this.uiService.toggleLoader(false);
@@ -385,7 +434,6 @@ export class RoutesComponent implements OnInit {
     }
 
     handleRowSelectionChange(event: any): void {
-        console.log(event);
         this.selectedRowItems = event;
     }
 
@@ -399,18 +447,14 @@ export class RoutesComponent implements OnInit {
     }
 
     onRouteCreated(route: any): void {
-        console.log('Route created:', route);
         this.currentRoute = route;
     }
 
     onRouteSelected(route: any): void {
-        console.log('Route selected:', route);
         this.currentRoute = route;
     }
 
     handleStepperAutoComplete({ value, fieldId }: any) {
-        console.log(value);
-
         if (fieldId === 'source_address') {
             this.selectedSource = value;
         } else {
