@@ -201,15 +201,19 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
   @Input() destinationGeofenceRadius = 1000;
   @Input() sourceGeofenceColor = '#4285F4';
   @Input() destinationGeofenceColor = '#EA4335';
-  @Input() routeToBeEdited: SavedRoute | null = null;
+  @Input() routeToBeEdited!: {sourceToDestination: SavedRoute | null, destinationToSource: SavedRoute | null};
 
   // Output events
   @Output() placeSelected = new EventEmitter<any>();
   @Output() mapClick = new EventEmitter<google.maps.LatLngLiteral>();
   @Output() sourceRadiusChanged = new EventEmitter<number>();
   @Output() destinationRadiusChanged = new EventEmitter<number>();
-  @Output() routeCreated = new EventEmitter<SavedRoute>();
-  @Output() routeSelected = new EventEmitter<SavedRoute>();
+  // @Output() routeCreated = new EventEmitter<SavedRoute>();
+  // Change the routeCreated Output
+@Output() routeCreated = new EventEmitter<{sourceToDestination: SavedRoute | null, destinationToSource: SavedRoute | null}>();
+@Output() routeSelected = new EventEmitter<{sourceToDestination: SavedRoute | null, destinationToSource: SavedRoute | null}>();
+
+  // @Output() routeSelected = new EventEmitter<SavedRoute>();
 
   // Private properties
   private map!: google.maps.Map;
@@ -233,6 +237,15 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
   savedRoutes: SavedRoute[] = [];
   currentRoute: SavedRoute | null = null;
   showReturnRoutes = false;
+
+  // Add this property to track both selected routes
+selectedRoutes: {
+  sourceToDestination: SavedRoute | null;
+  destinationToSource: SavedRoute | null;
+} = {
+  sourceToDestination: null,
+  destinationToSource: null
+};
 
   constructor(
     private uiService: UiService, 
@@ -484,6 +497,9 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
       if (this.routeOptions.length > 0) {
         this.selectRoute(0, false);
       }
+      if (this.returnRouteOptions.length > 0) {
+        this.selectRoute(0, true);
+      }
 
       // Fit map to show all routes and markers
       const bounds = new google.maps.LatLngBounds();
@@ -493,7 +509,7 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
 
       // Emit route created event
       if (this.currentRoute) {
-        this.routeCreated.emit(this.currentRoute);
+        this.routeCreated.emit(this.selectedRoutes);
       }
 
     } catch (error) {
@@ -616,101 +632,172 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
     this.sourceGeofence.setCenter(leg.start_location);
     this.destinationGeofence.setCenter(leg.end_location);
 
-    // Update current route
-    this.currentRoute = {
-      source: leg.start_address || this.currentRoute?.source || '',
-      destination: leg.end_address || this.currentRoute?.destination || '',
+   // Update the source to destination route if dragged
+  if (this.routeRenderers.length > 0) {
+    const stoD = this.updateDraggedRoute(this.routeRenderers[0], false);
+    if (stoD) {
+      this.selectedRoutes.sourceToDestination = stoD;
+    }
+  }
+  
+  // Update the destination to source route if dragged
+  if (this.returnRouteRenderers.length > 0) {
+    const dtoS = this.updateDraggedRoute(this.returnRouteRenderers[0], true);
+    if (dtoS) {
+      this.selectedRoutes.destinationToSource = dtoS;
+    }
+  }
+
+ // Fit map to show all updated routes
+ const bounds = new google.maps.LatLngBounds();
+  
+ // Add source and destination markers to bounds
+ if (this.sourceMarker.position) bounds.extend(this.sourceMarker.position as google.maps.LatLng);
+ if (this.destinationMarker.position) bounds.extend(this.destinationMarker.position as google.maps.LatLng);
+ 
+ this.map.fitBounds(bounds);
+
+ // Emit both routes
+ this.routeCreated.emit(this.selectedRoutes);
+  }
+
+
+  private updateDraggedRoute(renderer: google.maps.DirectionsRenderer, isReturn: boolean): SavedRoute | null {
+    const directions = renderer.getDirections();
+    if (!directions || !directions.routes || directions.routes.length === 0) return null;
+  
+    const route = directions.routes[0];
+    const leg = route.legs?.[0];
+    if (!leg) return null;
+    
+    // Capture polyline path after drag
+    const polylinePath: google.maps.LatLngLiteral[] = [];
+    if (route.overview_path) {
+      route.overview_path.forEach(point => {
+        polylinePath.push(point.toJSON());
+      });
+    }
+  
+    // Only update markers and geofences for the primary route to avoid conflicts
+    if (!isReturn) {
+      this.sourceMarker.position = leg.start_location;
+      this.destinationMarker.position = leg.end_location;
+      this.sourceGeofence.setCenter(leg.start_location);
+      this.destinationGeofence.setCenter(leg.end_location);
+    }
+  
+    // Create updated route object
+    return {
+      source: leg.start_address || '',
+      destination: leg.end_address || '',
       directions: directions,
-      distance: leg.distance?.text || this.currentRoute?.distance || '',
-      duration: leg.duration?.text || this.currentRoute?.duration || '',
+      distance: leg.distance?.text || '',
+      duration: leg.duration?.text || '',
       startLocation: leg.start_location.toJSON(),
       endLocation: leg.end_location.toJSON(),
       polylinePath: polylinePath,
-      isReturn: this.currentRoute?.isReturn || false
+      isReturn: isReturn
     };
-
-    // Fit map to show all routes and markers
-    const sourceLatLng = new google.maps.LatLng(this.sourceLat, this.sourceLng);
-    const destinationLatLng = new google.maps.LatLng(this.destinationLat, this.destinationLng);
-    const bounds = new google.maps.LatLngBounds();
-    bounds.extend(sourceLatLng);
-    bounds.extend(destinationLatLng);
-    this.map.fitBounds(bounds);
-
-    // Emit route updated event
-    this.routeSelected.emit(this.currentRoute);
   }
 
-  async editRoute(route: SavedRoute | null, index: number) {
-    if (!route || !route.directions) {
-      console.error('Invalid route data:', route);
-      alert('Invalid route data. Cannot edit this route.');
-      return;
-    }
-
+  async editRoute(routes: {sourceToDestination: SavedRoute | null, destinationToSource: SavedRoute | null}, index: number) {
+    // Clear previous routes
+    this.clearRoute();
+    this.isEditing = true;
+    this.currentRouteIndex = index;
+    
     try {
       this.uiService.toggleLoader(true);
-      this.clearRoute();
-      this.isEditing = true;
-      this.currentRouteIndex = index;
-
-      // Check if we have valid location data
-      if (!route.startLocation || !route.endLocation) {
-        console.error('Invalid location data in route:', route);
-        alert('Invalid location data in route. Cannot edit.');
-        return;
-      }
-
-      // Create LatLng objects from the saved coordinates
-      const sourceLatLng = new google.maps.LatLng(
-        route.startLocation.lat,
-        route.startLocation.lng
-      );
       
-      const destinationLatLng = new google.maps.LatLng(
-        route.endLocation.lat,
-        route.endLocation.lng
-      );
-
+      // Process source to destination route
+      if (routes.sourceToDestination) {
+        await this.processEditedRoute(routes.sourceToDestination, false);
+      }
+      
+      // Process destination to source route
+      if (routes.destinationToSource) {
+        await this.processEditedRoute(routes.destinationToSource, true);
+      }
+      
+      // Update selectedRoutes object
+      this.selectedRoutes = {
+        sourceToDestination: routes.sourceToDestination,
+        destinationToSource: routes.destinationToSource
+      };
+      
+      // Calculate bounds to show all routes
+      const bounds = new google.maps.LatLngBounds();
+      
+      // Add source and destination locations to bounds
+      if (routes.sourceToDestination?.startLocation) {
+        bounds.extend(new google.maps.LatLng(
+          routes.sourceToDestination.startLocation.lat,
+          routes.sourceToDestination.startLocation.lng
+        ));
+      }
+      
+      if (routes.sourceToDestination?.endLocation) {
+        bounds.extend(new google.maps.LatLng(
+          routes.sourceToDestination.endLocation.lat,
+          routes.sourceToDestination.endLocation.lng
+        ));
+      }
+      
+      this.map.fitBounds(bounds);
+      
+    } catch (error) {
+      console.error('Error editing routes:', error);
+      alert('Error editing routes. Please try again.');
+      this.clearRoute();
+    } finally {
+      this.uiService.toggleLoader(false);
+    }
+  }
+  
+  // Helper method to process each edited route
+  private async processEditedRoute(route: SavedRoute, isReturn: boolean) {
+    if (!route || !route.directions) {
+      console.error('Invalid route data:', route);
+      return;
+    }
+  
+    // Check if we have valid location data
+    if (!route.startLocation || !route.endLocation) {
+      console.error('Invalid location data in route:', route);
+      return;
+    }
+  
+    // Create LatLng objects from the saved coordinates
+    const sourceLatLng = new google.maps.LatLng(
+      route.startLocation.lat,
+      route.startLocation.lng
+    );
+    
+    const destinationLatLng = new google.maps.LatLng(
+      route.endLocation.lat,
+      route.endLocation.lng
+    );
+  
+    // Set markers and geofences only once (for the primary route)
+    if (!isReturn) {
       // Update marker and geofence positions
       this.sourceMarker.position = sourceLatLng;
       this.destinationMarker.position = destinationLatLng;
       this.sourceGeofence.setCenter(sourceLatLng);
       this.destinationGeofence.setCenter(destinationLatLng);
-
+  
       // Add markers and geofences to map
       this.sourceMarker.map = this.map;
       this.destinationMarker.map = this.map;
       this.sourceGeofence.setMap(this.map);
       this.destinationGeofence.setMap(this.map);
-
-      // Two approaches to restore the route:
-      // 1. If we have a saved polyline path, use it
-      // 2. Otherwise, use the DirectionsService to recalculate
-
-      if (route.polylinePath && route.polylinePath.length > 0) {
-        // Approach 1: Restore using saved polyline path
-        await this.restoreRouteUsingPolyline(route, sourceLatLng, destinationLatLng);
-      } else {
-        // Approach 2: Recalculate using DirectionsService
-        await this.recalculateRoute(route, sourceLatLng, destinationLatLng);
-      }
-
-      // Fit map to show the route
-      const bounds = new google.maps.LatLngBounds();
-      bounds.extend(sourceLatLng);
-      bounds.extend(destinationLatLng);
-      this.map.fitBounds(bounds);
-      
-      // Update current route
-      this.currentRoute = route;
-
-    } catch (error) {
-      console.error('Error editing route:', error);
-      alert('Error editing route. Please try again.');
-      this.clearRoute();
-    } finally {
-      this.uiService.toggleLoader(false);
+    }
+  
+    // Restore or recalculate the route
+    if (route.polylinePath && route.polylinePath.length > 0) {
+      await this.restoreRouteUsingPolyline(route, sourceLatLng, destinationLatLng);
+    } else {
+      await this.recalculateRoute(route, sourceLatLng, destinationLatLng);
     }
   }
 
@@ -740,7 +827,7 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
     this.map.fitBounds(bounds, { top: 50, right: 50, bottom: 50, left: 50 });
     
     // Emit updated route
-    this.routeSelected.emit(this.currentRoute);
+    this.routeSelected.emit(this.selectedRoutes);
   }
 
 // Update both private helper functions to fully handle the isReturn parameter
@@ -1139,6 +1226,13 @@ selectRoute(index: number, isReturn: boolean = false) {
       isReturn: isReturn
     };
 
+    // Update the appropriate route in the selectedRoutes object
+  if (isReturn) {
+    this.selectedRoutes.destinationToSource = this.currentRoute;
+  } else {
+    this.selectedRoutes.sourceToDestination = this.currentRoute;
+  }
+
     // Calculate bounds for the selected route
     const bounds = new google.maps.LatLngBounds();
     bounds.extend(leg.start_location);
@@ -1155,7 +1249,7 @@ selectRoute(index: number, isReturn: boolean = false) {
     this.map.fitBounds(bounds, { top: 50, right: 50, bottom: 50, left: 50 });
 
     // Emit route selected event
-    this.routeSelected.emit(this.currentRoute);
+    this.routeSelected.emit(this.selectedRoutes);
   }
 }
 }
