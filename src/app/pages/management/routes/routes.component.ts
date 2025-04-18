@@ -102,8 +102,15 @@ export class RoutesComponent implements OnInit {
     tableConfig = {
         title: 'Manage Routes',
         columns: [
+            { field: 'name', header: 'Name', minWidth: '12rem' },
             { field: 'source', header: 'Source Name', subfield: 'name', minWidth: '15rem' },
-            { field: 'destination', header: 'Destination Name', subfield: 'name', minWidth: '15rem' }
+            { field: 'destination', header: 'Destination Name', subfield: 'name', minWidth: '15rem' },
+            { field: 'sourceDept', header: 'Source Dept', subfield: 'name', minWidth: '15rem' },
+            { field: 'destinationDept', header: 'Destination Name', subfield: 'name', minWidth: '15rem' },
+            { field: 'startDate', header: 'Start Date', minWidth: '15rem' },
+            { field: 'endDate', header: 'End Date', minWidth: '15rem' },
+
+
         ],
         globalFilterFields: [],
         dataKey: 'id'
