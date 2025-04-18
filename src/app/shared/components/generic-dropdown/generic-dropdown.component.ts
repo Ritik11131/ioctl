@@ -67,7 +67,7 @@ export class GenericDropdownComponent implements OnInit, OnChanges, OnDestroy {
         
         
         // Only emit if fully initialized to avoid initial value emissions
-        if (this.initialized) {
+        if (this.initialized && !this.autoFetch) {
           console.log(value,'subscribevalkue');
           this.selected.emit(value);
         }

@@ -109,6 +109,11 @@ export class AppMenu {
                                 icon: 'pi pi-fw pi-map',
                                 routerLink: ['/pages/management/role']
                             },
+                            {
+                                label: 'Tolls',
+                                icon: 'pi pi-fw pi-map',
+                                routerLink: ['/pages/management/tolls']
+                            },
                         ]
                     },
                     // {

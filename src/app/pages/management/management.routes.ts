@@ -4,6 +4,7 @@ import { DepartmentComponent } from './department/department.component';
 import { AddressComponent } from './address/address.component';
 import { RoutesComponent } from './routes/routes.component';
 import { RoleComponent } from './role/role.component';
+import { TollsComponent } from './tolls/tolls.component';
 
 
 export default [
@@ -12,5 +13,6 @@ export default [
     { path: 'routes', component: RoutesComponent },
     { path: 'role', component: RoleComponent },
     { path: 'user', component: UserComponent },
+    { path: 'tolls', component: TollsComponent },
 
 ] as Routes;

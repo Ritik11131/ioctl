@@ -6,10 +6,11 @@ import { InputTextModule } from 'primeng/inputtext';
 import { RippleModule } from 'primeng/ripple';
 import { Table, TableModule } from 'primeng/table';
 import { ToolbarModule } from 'primeng/toolbar';
+import { GenericDropdownComponent } from '../generic-dropdown/generic-dropdown.component';
 
 @Component({
     selector: 'app-generic-table',
-    imports: [ToolbarModule, ButtonModule, RippleModule, TableModule, IconFieldModule, InputIconModule, InputTextModule],
+    imports: [ToolbarModule, ButtonModule, RippleModule, TableModule, IconFieldModule, InputIconModule, InputTextModule, GenericDropdownComponent],
     template: `
         <p-toolbar styleClass="mb-6">
             <ng-template #start>
@@ -18,7 +19,7 @@ import { ToolbarModule } from 'primeng/toolbar';
                         [severity]="toolBarStartAction.severity"
                         [label]="toolBarStartAction.label"
                         class="mr-2"
-                        [disabled]="(toolBarStartAction.key === 'edit' || toolBarStartAction.key === 'delete' ) ? !(selectedItems.length === 1) : false"
+                        [disabled]="toolBarStartAction.key === 'edit' || toolBarStartAction.key === 'delete' ? !(selectedItems.length === 1) : false"
                         [icon]="toolBarStartAction.icon"
                         [outlined]="toolBarStartAction.outlined"
                         (onClick)="onToolBarStartAction.emit(toolBarStartAction)"
@@ -61,6 +62,17 @@ import { ToolbarModule } from 'primeng/toolbar';
                         <p-button label="Clear" outlined icon="pi pi-filter-slash" (click)="clearFilter(dt)"></p-button>
                     </div>
                 </div>
+                @if(tableConfig?.filterTableDrpdown) {
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mt-3 mb-3">
+                        <app-generic-dropdown
+                                                [id]="tableConfig.filterTableDrpdown.fieldId"
+                                                [type]="tableConfig.filterTableDrpdown.apiType"
+                                                [placeholder]="tableConfig.filterTableDrpdown.placeholder || 'Select'"
+                                                [autoFetch]="tableConfig.filterTableDrpdown.autoFetch"
+                                                (selected)="handleTableDropdownFilter($event)"
+                                            />
+                        </div>
+                }
             </ng-template>
 
             <ng-template #header let-columns>
@@ -112,7 +124,7 @@ export class GenericTableComponent {
 
     @Output() onToolBarStartAction = new EventEmitter<any>();
     @Output() onSelectionChange = new EventEmitter<any>(); // Event emitter for row select
-
+    @Output() onTableDropdownFilter = new EventEmitter<any>();
 
     onSearch(dt: Table, event: Event) {
         const input = event.target as HTMLInputElement;
@@ -128,5 +140,9 @@ export class GenericTableComponent {
 
     handleSelectionChange(event: any) {
         this.onSelectionChange.emit(event);
-       }
+    }
+
+    handleTableDropdownFilter(event: any) {
+        this.onTableDropdownFilter.emit(event);
+    }
 }
