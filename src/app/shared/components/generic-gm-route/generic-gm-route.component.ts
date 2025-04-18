@@ -39,70 +39,129 @@ export interface GeofenceOptions {
   selector: 'app-generic-gm-route',
   imports: [FormsModule, ButtonModule],
   template: `
-    <div class="maps-container">
-      <!-- Route Controls -->
-      <div class="route-controls">
-        <!-- Available Routes -->
-        @if(routeOptions.length > 0 && !isEditing ) {
-          <div class="available-routes">
-            <h4>Source to Destination Routes</h4>
-            <div class="route-list">
-              @for (option of routeOptions; track $index) {
-                <div class="route-option" [class.selected]="option.isSelected">
-                  <div class="route-info">
-                    <div class="route-color" [style.background-color]="option.color"></div>
-                    <div class="route-details">
-                      <div>Distance: {{ option.distance }}</div>
-                      <div>Duration: {{ option.duration }}</div>
-                    </div>
-                  </div>
-                  <button 
-                    class="btn btn-sm" 
-                    pButton
-                    [class.btn-primary]="!option.isSelected"
-                    [class.btn-success]="option.isSelected"
-                    (click)="selectRoute($index, false)"
-                  >
-                    {{ option.isSelected ? 'Selected' : 'Select' }}
-                  </button>
-                </div>
-              }
-            </div>
-          </div>
-        }
+   <div class="flex flex-col lg:flex-row gap-6 p-4 bg-slate-50 rounded-xl shadow-sm">
+  <!-- Left Panel: Route Controls -->
+  <div class="lg:w-80 flex-shrink-0 bg-white rounded-xl shadow-md overflow-hidden border border-slate-200">
+    <!-- Available Routes Section -->
+    @if (routeOptions.length > 0 && !isEditing) {
+      <div class="route-panel">
+        <div class="px-5 py-4 border-b border-slate-100">
+          <h3 class="text-lg font-medium text-slate-800">Source to Destination</h3>
+        </div>
         
-        <!-- Return Routes -->
-        @if(returnRouteOptions.length > 0 && !isEditing ) {
-          <div class="available-routes mt-3">
-            <h4>Return Routes (Destination to Source)</h4>
-            <div class="route-list">
-              @for (option of returnRouteOptions; track $index) {
-                <div class="route-option" [class.selected]="option.isSelected">
-                  <div class="route-info">
-                    <div class="route-color" [style.background-color]="option.color"></div>
-                    <div class="route-details">
-                      <div>Distance: {{ option.distance }}</div>
-                      <div>Duration: {{ option.duration }}</div>
+        <div class="divide-y divide-slate-100">
+          @for (option of routeOptions; track $index) {
+            <div 
+              class="p-4 transition-all hover:bg-slate-50"
+              [class.bg-blue-50]="option.isSelected">
+              <div class="flex items-center justify-between space-y-3">
+                <!-- Route Indicator & Info -->
+                <div class="flex items-center gap-3">
+                  <div class="w-3 h-12 rounded-full" [style.background-color]="option.color"></div>
+                  <div>
+                    <div class="flex items-center gap-2 text-sm text-slate-500">
+                      <i class="pi pi-map-marker text-sm"></i>
+                      <span>{{ option.distance }}</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-sm text-slate-500">
+                      <i class="pi pi-clock text-sm"></i>
+                      <span>{{ option.duration }}</span>
                     </div>
                   </div>
-                  <button 
-                    class="btn btn-sm" 
-                    pButton
-                    [class.btn-primary]="!option.isSelected"
-                    [class.btn-success]="option.isSelected"
-                    (click)="selectRoute($index, true)"
-                  >
-                    {{ option.isSelected ? 'Selected' : 'Select' }}
-                  </button>
                 </div>
-              }
+                
+                <!-- Selection Button using PrimeNG -->
+                <p-button
+                  (onClick)="selectRoute($index, false)"
+                  [outlined]="!option.isSelected"
+                  [severity]="option.isSelected ? 'info' : 'secondary'"
+                  [label]="option.isSelected ? 'Selected' : 'Select'"
+                  styleClass="text-sm"
+                  size="small"
+                  [icon]="option.isSelected ? 'pi pi-check' : 'pi pi-arrow-right'"
+                  iconPos="right"
+                ></p-button>
+              </div>
             </div>
-          </div>
-        }
+          }
+        </div>
       </div>
-
-      <div #mapContainer class="map-container" [style.height.px]="height"></div>
+    }
+    
+    <!-- Return Routes Section -->
+    @if (returnRouteOptions.length > 0 && !isEditing) {
+      <div class="route-panel mt-4">
+        <div class="px-5 py-4 border-b border-slate-100">
+          <h3 class="text-lg font-medium text-slate-800">
+            <i class="pi pi-reply text-slate-400 mr-2"></i>
+            Return Routes
+          </h3>
+          <p class="text-xs text-slate-500 pl-6">Destination to Source</p>
+        </div>
+        
+        <div class="divide-y divide-slate-100">
+          @for (option of returnRouteOptions; track $index) {
+            <div 
+              class="p-4 transition-all hover:bg-slate-50"
+              [class.bg-green-50]="option.isSelected">
+              <div class="flex items-center justify-between space-y-3">
+                <!-- Route Indicator & Info -->
+                <div class="flex items-center gap-3">
+                  <div class="w-3 h-12 rounded-full" [style.background-color]="option.color"></div>
+                  <div>
+                    <div class="flex items-center gap-2 text-sm text-slate-500">
+                      <i class="pi pi-map-marker text-sm"></i>
+                      <span>{{ option.distance }}</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-sm text-slate-500">
+                      <i class="pi pi-clock text-sm"></i>
+                      <span>{{ option.duration }}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Selection Button using PrimeNG -->
+                <p-button
+                  (onClick)="selectRoute($index, true)"
+                  [outlined]="!option.isSelected"
+                  [severity]="option.isSelected ? 'success' : 'secondary'"
+                  [label]="option.isSelected ? 'Selected' : 'Select'"
+                  styleClass="text-sm"
+                  size="small"
+                  [icon]="option.isSelected ? 'pi pi-check' : 'pi pi-arrow-right'"
+                  iconPos="right"
+                ></p-button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+    
+    <!-- Empty state message when no routes -->
+    @if ((routeOptions.length === 0 || returnRouteOptions.length === 0) && !isEditing) {
+      <div class="p-6 flex flex-col items-center justify-center text-center gap-3">
+        <i class="pi pi-map text-4xl text-slate-300"></i>
+        <h4 class="text-lg font-medium text-slate-600">No Routes Available</h4>
+        <p class="text-sm text-slate-500">Select source and destination points on the map</p>
+      </div>
+    }
+  </div>
+  
+  <!-- Right Section: Map Container -->
+  <div class="flex-grow">
+    <div class="relative">
+      <div #mapContainer class="w-full rounded-xl overflow-hidden shadow-lg" [style.height.px]="height"></div>
+      
+      <!-- Map controls overlay -->
+      <!-- <div class="absolute top-4 right-4 bg-white rounded-lg shadow-md p-2 flex flex-col gap-2">
+        <button pButton class="p-button-text p-button-rounded" icon="pi pi-plus"></button>
+        <button pButton class="p-button-text p-button-rounded" icon="pi pi-minus"></button>
+        <button pButton class="p-button-text p-button-rounded" icon="pi pi-map"></button>
+      </div> -->
     </div>
+  </div>
+</div>
   `,
   styles: [`
     .maps-container {

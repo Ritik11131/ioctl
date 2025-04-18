@@ -155,7 +155,7 @@ export class TollsComponent {
             try {
                 const response = await this.http.post('geortd/rtdtoll/create', payload);
                 console.log(response, 'response');
-                this.uiService.showToast('success', 'Success', 'Role created successfully');
+                this.uiService.showToast('success', 'Success', 'Toll created successfully');
                 this.uiService.closeDrawer(); // Close the drawer after submission
                 await this.fetchTollsListRouteWise(this.routeId); // Refresh the department list after successful submission
             } catch (error) {
@@ -180,6 +180,7 @@ export class TollsComponent {
             this.selectedRowItems = []; // Reset selected items after fetching new data
         } catch (error) {
             console.error('Error fetching role list:', error);
+            this.tableData = [];
             this.uiService.showToast('error', 'Error', 'Failed to fetch tolls list');
         } finally {
             this.uiService.toggleLoader(false);

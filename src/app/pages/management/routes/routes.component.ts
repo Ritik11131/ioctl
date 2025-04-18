@@ -11,59 +11,6 @@ import { HttpService } from '../../service/http.service';
     selector: 'app-routes',
     imports: [GenericTableComponent, FormsModule, GenericGmRouteComponent, GenericStepperComponent],
     templateUrl: './routes.component.html',
-    styles: [
-        `
-            .container {
-                max-width: 1200px;
-                margin: 0 auto;
-                padding: 20px;
-            }
-
-            h1 {
-                text-align: center;
-                margin-bottom: 20px;
-                color: #333;
-            }
-
-            .location-selectors {
-                display: flex;
-                gap: 20px;
-                margin-bottom: 20px;
-            }
-
-            .location-selector {
-                flex: 1;
-            }
-
-            label {
-                display: block;
-                margin-bottom: 5px;
-                font-weight: bold;
-                color: #333;
-            }
-
-            select {
-                width: 100%;
-                padding: 8px;
-                border: 1px solid #ddd;
-                border-radius: 4px;
-                font-size: 16px;
-                background-color: white;
-                cursor: pointer;
-            }
-
-            select:focus {
-                outline: none;
-                border-color: #4285f4;
-                box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
-            }
-
-            select:disabled {
-                background-color: #f5f5f5;
-                cursor: not-allowed;
-            }
-        `
-    ]
 })
 export class RoutesComponent implements OnInit {
     @ViewChild('createUpdateRouteContent') createUpdateRouteContent!: TemplateRef<any>;
@@ -270,7 +217,7 @@ export class RoutesComponent implements OnInit {
          endDate,
          startDate
         };
-        this.uiService.openDrawer(this.createUpdateRouteContent, 'Route Management', '!w-[90vw] md:!w-[90vw] lg:!w-[90vw] rounded-l-2xl');
+        this.uiService.openDrawer(this.createUpdateRouteContent, 'Route Management', '!w-[98vw] md:!w-[98vw] lg:!w-[98vw] rounded-l-2xl');
         
       } catch (error) {
         this.uiService.showToast('error', 'Error', 'Failed to fetch address details');
@@ -377,7 +324,7 @@ export class RoutesComponent implements OnInit {
             }
         ];
         this.editData = null;
-        this.uiService.openDrawer(this.createUpdateRouteContent, 'Route Management', '!w-[90vw] md:!w-[90vw] lg:!w-[90vw] rounded-l-2xl');
+        this.uiService.openDrawer(this.createUpdateRouteContent, 'Route Management', '!w-[98vw] md:!w-[98vw] lg:!w-[98vw] rounded-l-2xl');
     }
 
     onStepChange(event: { stepIndex: number; data: any }) {
