@@ -37,8 +37,12 @@ export class TollsComponent {
         title: 'Manage Tolls Route Wise',
         dataKey: 'id',
         columns: [
-            { field: 'name', header: 'Role Name', minWidth: '12rem' },
-            { field: 'description', header: 'Description', minWidth: '12rem' }
+            { field: 'name', header: 'Name', minWidth: '12rem' },
+            { field: 'latitude', header: 'Latitude', minWidth: '12rem' },
+            { field: 'longitude', header: 'Longitude', minWidth: '12rem' },
+            { field: 'description', header: 'Description', minWidth: '12rem' },
+            { field: 'rtd', header: 'Route', minWidth: '10rem', subfield: 'name' },
+
         ],
         globalFilterFields: ['name'],
         filterTableDrpdown: {

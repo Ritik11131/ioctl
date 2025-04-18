@@ -23,6 +23,7 @@ export interface SavedRoute {
   startLocation?: google.maps.LatLngLiteral;
   endLocation?: google.maps.LatLngLiteral;
   polylinePath?: google.maps.LatLngLiteral[]; // Store the path points for reconstruction
+  isReturn?: boolean; // Flag to indicate if this is a return route
 }
 
 export interface GeofenceOptions {
@@ -44,7 +45,7 @@ export interface GeofenceOptions {
         <!-- Available Routes -->
         @if(routeOptions.length > 0 && !isEditing ) {
           <div class="available-routes">
-            <h4>Available Routes</h4>
+            <h4>Source to Destination Routes</h4>
             <div class="route-list">
               @for (option of routeOptions; track $index) {
                 <div class="route-option" [class.selected]="option.isSelected">
@@ -60,7 +61,36 @@ export interface GeofenceOptions {
                     pButton
                     [class.btn-primary]="!option.isSelected"
                     [class.btn-success]="option.isSelected"
-                    (click)="selectRoute($index)"
+                    (click)="selectRoute($index, false)"
+                  >
+                    {{ option.isSelected ? 'Selected' : 'Select' }}
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        }
+        
+        <!-- Return Routes -->
+        @if(returnRouteOptions.length > 0 && !isEditing ) {
+          <div class="available-routes mt-3">
+            <h4>Return Routes (Destination to Source)</h4>
+            <div class="route-list">
+              @for (option of returnRouteOptions; track $index) {
+                <div class="route-option" [class.selected]="option.isSelected">
+                  <div class="route-info">
+                    <div class="route-color" [style.background-color]="option.color"></div>
+                    <div class="route-details">
+                      <div>Distance: {{ option.distance }}</div>
+                      <div>Duration: {{ option.duration }}</div>
+                    </div>
+                  </div>
+                  <button 
+                    class="btn btn-sm" 
+                    pButton
+                    [class.btn-primary]="!option.isSelected"
+                    [class.btn-success]="option.isSelected"
+                    (click)="selectRoute($index, true)"
                   >
                     {{ option.isSelected ? 'Selected' : 'Select' }}
                   </button>
@@ -103,6 +133,9 @@ export interface GeofenceOptions {
       margin: 10px 0;
       max-height: 200px;
       overflow-y: auto;
+    }
+    .mt-3 {
+      margin-top: 15px;
     }
     .route-list {
       display: flex;
@@ -186,6 +219,7 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
   private destinationGeofence!: google.maps.Circle;
   private directionsService!: google.maps.DirectionsService;
   private routeRenderers: google.maps.DirectionsRenderer[] = [];
+  private returnRouteRenderers: google.maps.DirectionsRenderer[] = [];
   private mapListeners: google.maps.MapsEventListener[] = [];
   private customPolyline: google.maps.Polyline | null = null;
   
@@ -193,9 +227,12 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
   isEditing = false;
   currentRouteIndex = -1;
   selectedRouteIndex = -1;
+  selectedReturnRouteIndex = -1;
   routeOptions: RouteOption[] = [];
+  returnRouteOptions: RouteOption[] = [];
   savedRoutes: SavedRoute[] = [];
   currentRoute: SavedRoute | null = null;
+  showReturnRoutes = false;
 
   constructor(
     private uiService: UiService, 
@@ -232,8 +269,6 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
         this.destinationLng
       );
     }
-    
-   
   }
 
   async ngAfterViewInit() {
@@ -405,27 +440,49 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
       this.sourceGeofence.setMap(this.map);
       this.destinationGeofence.setMap(this.map);
 
-      const request: google.maps.DirectionsRequest = {
+      // Source to Destination route
+      const requestStoD: google.maps.DirectionsRequest = {
         origin: sourceLatLng,
         destination: destinationLatLng,
         travelMode: google.maps.TravelMode.DRIVING,
         provideRouteAlternatives: true
       };
 
-      const result = await this.directionsService.route(request);
+      // Destination to Source route (return route)
+      const requestDtoS: google.maps.DirectionsRequest = {
+        origin: destinationLatLng,
+        destination: sourceLatLng,
+        travelMode: google.maps.TravelMode.DRIVING,
+        provideRouteAlternatives: true
+      };
+
+      // Get both directions concurrently
+      const [resultStoD, resultDtoS] = await Promise.all([
+        this.directionsService.route(requestStoD),
+        this.directionsService.route(requestDtoS)
+      ]);
       
-      if (!result || !result.routes || result.routes.length === 0) {
-        throw new Error('No routes found');
+      if (!resultStoD || !resultStoD.routes || resultStoD.routes.length === 0) {
+        throw new Error('No source to destination routes found');
+      }
+
+      if (!resultDtoS || !resultDtoS.routes || resultDtoS.routes.length === 0) {
+        throw new Error('No destination to source routes found');
       }
 
       // Clear existing route options
       this.routeOptions = [];
+      this.returnRouteOptions = [];
 
-      await this.createRouteRenderers(result);
+      // Create renderers for both directions
+      await Promise.all([
+        this.createRouteRenderers(resultStoD, false),
+        this.createRouteRenderers(resultDtoS, true)
+      ]);
 
-      // Set current route to first route
+      // Set current route to first source-to-destination route
       if (this.routeOptions.length > 0) {
-        this.selectRoute(0);
+        this.selectRoute(0, false);
       }
 
       // Fit map to show all routes and markers
@@ -440,15 +497,15 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
       }
 
     } catch (error) {
-      console.error('Error creating route from coordinates:', error);
-      alert('Error creating route. Please check the coordinates and try again.');
+      console.error('Error creating routes from coordinates:', error);
+      alert('Error creating routes. Please check the coordinates and try again.');
     } finally {
       this.uiService.toggleLoader(false);
     }
   }
 
-  // Helper method to create route renderers
-  private async createRouteRenderers(result: google.maps.DirectionsResult) {
+  // Helper method to create route renderers for both S->D and D->S routes
+  private async createRouteRenderers(result: google.maps.DirectionsResult, isReturn: boolean) {
     const { DirectionsRenderer } = await google.maps.importLibrary("routes") as google.maps.RoutesLibrary;
     
     // Sort routes by distance
@@ -458,8 +515,12 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
       return distanceA - distanceB;
     });
 
+    // Reference to the appropriate arrays based on route direction
+    const routeOptionsRef = isReturn ? this.returnRouteOptions : this.routeOptions;
+    const routeRenderersRef = isReturn ? this.returnRouteRenderers : this.routeRenderers;
+
     // Create route renderers and options
-    this.routeRenderers = sortedRoutes.map((route, index) => {
+    const newRenderers = sortedRoutes.map((route, index) => {
       const leg = route.legs?.[0];
       
       // Capture polyline path for later use when editing
@@ -471,12 +532,12 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
       }
       
       // Add route option
-      this.routeOptions.push({
+      routeOptionsRef.push({
         route: route,
         distance: leg?.distance?.text || '',
         duration: leg?.duration?.text || '',
-        color: this.getRouteColor(index, sortedRoutes.length),
-        isSelected: index === 0 // Select first route by default
+        color: this.getRouteColor(index, sortedRoutes.length, isReturn),
+        isSelected: index === 0 && !isReturn // Select first route by default for S->D only
       });
 
       const directions: google.maps.DirectionsResult = {
@@ -491,14 +552,18 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
         suppressMarkers: true, // We'll use our own markers
         draggable: false,
         polylineOptions: {
-          strokeColor: this.getRouteColor(index, sortedRoutes.length),
-          strokeWeight: 5,
-          strokeOpacity: 0.7
-        }
+          strokeColor: this.getRouteColor(index, sortedRoutes.length, isReturn),
+          strokeWeight: isReturn ? 4 : 5, // Make return routes slightly thinner
+          strokeOpacity: isReturn ? 0.5 : 0.7 // Make return routes slightly more transparent
+        },
+        // Hide return routes by default
+        preserveViewport: true,
+        // Only show the source->destination routes initially
+        // visible: !isReturn
       });
 
-      // If this is the first route, update current route
-      if (index === 0 && leg) {
+      // If this is the first source-to-destination route, update current route
+      if (index === 0 && !isReturn && leg) {
         this.currentRoute = {
           source: `${this.sourceLat}, ${this.sourceLng}`,
           destination: `${this.destinationLat}, ${this.destinationLng}`,
@@ -507,16 +572,20 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
           duration: leg.duration?.text || '',
           startLocation: leg.start_location.toJSON(),
           endLocation: leg.end_location.toJSON(),
-          polylinePath: polylinePath
+          polylinePath: polylinePath,
+          isReturn: false
         };
       }
 
       return renderer;
     });
 
+    // Add new renderers to our array
+    routeRenderersRef.push(...newRenderers);
+
     // After creating all renderers, select the first route to ensure proper highlighting
-    if (this.routeOptions.length > 0) {
-      this.selectRoute(0);
+    if (!isReturn && this.routeOptions.length > 0) {
+      this.selectRoute(0, false);
     }
   }
 
@@ -556,7 +625,8 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
       duration: leg.duration?.text || this.currentRoute?.duration || '',
       startLocation: leg.start_location.toJSON(),
       endLocation: leg.end_location.toJSON(),
-      polylinePath: polylinePath
+      polylinePath: polylinePath,
+      isReturn: this.currentRoute?.isReturn || false
     };
 
     // Fit map to show all routes and markers
@@ -644,142 +714,6 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
     }
   }
 
-  private async restoreRouteUsingPolyline(
-    route: SavedRoute, 
-    sourceLatLng: google.maps.LatLng, 
-    destinationLatLng: google.maps.LatLng
-  ) {
-    // Convert saved path to LatLng objects
-    const path = route.polylinePath!.map(point => 
-      new google.maps.LatLng(point.lat, point.lng)
-    );
-
-    // Create a directions result with waypoints
-    const { DirectionsRenderer } = await google.maps.importLibrary("routes") as google.maps.RoutesLibrary;
-    
-    // First attempt: Try to recreate the route with DirectionsRenderer
-    try {
-      // Create a minimal directions result
-      const directions: any= {
-        routes: [{
-          legs: [{
-            start_address: route.source,
-            end_address: route.destination,
-            start_location: sourceLatLng,
-            end_location: destinationLatLng,
-            distance: { text: route.distance, value: 0 },
-            duration: { text: route.duration, value: 0 },
-            steps: [{
-              path: path,
-              start_location: sourceLatLng,
-              end_location: destinationLatLng,
-              distance: { text: route.distance, value: 0 },
-              duration: { text: route.duration, value: 0 },
-              travel_mode: google.maps.TravelMode.DRIVING,
-              instructions: ""
-            }]
-          }],
-          overview_path: path,
-          waypoint_order: [],
-          bounds: new google.maps.LatLngBounds(sourceLatLng, destinationLatLng)
-        }],
-        request: {
-          origin: sourceLatLng,
-          destination: destinationLatLng,
-          travelMode: google.maps.TravelMode.DRIVING
-        },
-        geocoded_waypoints: []
-      };
-
-      const renderer = new DirectionsRenderer({
-        map: this.map,
-        directions: directions,
-        suppressMarkers: true,
-        draggable: true,
-        polylineOptions: {
-          strokeColor: '#4285F4',
-          strokeWeight: 5,
-          strokeOpacity: 0.8
-        }
-      });
-
-      // Add drag listener
-      const dragListener = renderer.addListener('directions_changed', () => {
-        this.updateRouteAfterDrag();
-      });
-      
-      this.mapListeners.push(dragListener);
-      this.routeRenderers.push(renderer);
-
-      // Wait for the map to be fully loaded and rendered
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Calculate bounds after renderer is added to map
-      const bounds = new google.maps.LatLngBounds();
-      bounds.extend(sourceLatLng);
-      bounds.extend(destinationLatLng);
-      
-      // Include all points in the path
-      path.forEach(point => {
-        bounds.extend(point);
-      });
-      
-      // Add padding to the bounds
-      this.map.fitBounds(bounds, { top: 50, right: 50, bottom: 50, left: 50 });
-    } 
-    catch (error) {
-      console.error('Failed to create DirectionsRenderer, falling back to Polyline', error);
-      
-      // Fallback to simple polyline
-      this.customPolyline = new google.maps.Polyline({
-        map: this.map,
-        path: path,
-        strokeColor: '#4285F4',
-        strokeWeight: 5,
-        strokeOpacity: 0.8,
-        editable: true,
-        draggable: true
-      });
-
-      // Add polyline change listener
-      const pathChangeListener = google.maps.event.addListener(
-        this.customPolyline.getPath(), 
-        'set_at', 
-        () => this.updatePolylinePath()
-      );
-      
-      const insertListener = google.maps.event.addListener(
-        this.customPolyline.getPath(), 
-        'insert_at', 
-        () => this.updatePolylinePath()
-      );
-      
-      const removeListener = google.maps.event.addListener(
-        this.customPolyline.getPath(), 
-        'remove_at', 
-        () => this.updatePolylinePath()
-      );
-      
-      this.mapListeners.push(pathChangeListener, insertListener, removeListener);
-
-      // Wait for the polyline to be fully loaded and rendered
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Calculate bounds after polyline is added to map
-      const bounds = new google.maps.LatLngBounds();
-      bounds.extend(sourceLatLng);
-      bounds.extend(destinationLatLng);
-      
-      // Include all points in the path
-      path.forEach(point => {
-        bounds.extend(point);
-      });
-      
-      // Add padding to the bounds
-      this.map.fitBounds(bounds, { top: 50, right: 50, bottom: 50, left: 50 });
-    }
-  }
-
   private updatePolylinePath() {
     if (!this.customPolyline || !this.currentRoute) return;
     
@@ -809,93 +743,274 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
     this.routeSelected.emit(this.currentRoute);
   }
 
-  private async recalculateRoute(
-    route: SavedRoute, 
-    sourceLatLng: google.maps.LatLng, 
-    destinationLatLng: google.maps.LatLng
-  ) {
-    try {
-      const request: google.maps.DirectionsRequest = {
+// Update both private helper functions to fully handle the isReturn parameter
+private async restoreRouteUsingPolyline(
+  route: SavedRoute, 
+  sourceLatLng: google.maps.LatLng, 
+  destinationLatLng: google.maps.LatLng
+) {
+  // Convert saved path to LatLng objects
+  const path = route.polylinePath!.map(point => 
+    new google.maps.LatLng(point.lat, point.lng)
+  );
+
+  // Create a directions result with waypoints
+  const { DirectionsRenderer } = await google.maps.importLibrary("routes") as google.maps.RoutesLibrary;
+  
+  // Determine color based on whether this is a return route
+  const routeColor = route.isReturn ? '#9C27B0' : '#4285F4';
+  
+  // First attempt: Try to recreate the route with DirectionsRenderer
+  try {
+    // Create a minimal directions result
+    const directions: any = {
+      routes: [{
+        legs: [{
+          start_address: route.source,
+          end_address: route.destination,
+          start_location: sourceLatLng,
+          end_location: destinationLatLng,
+          distance: { text: route.distance, value: 0 },
+          duration: { text: route.duration, value: 0 },
+          steps: [{
+            path: path,
+            start_location: sourceLatLng,
+            end_location: destinationLatLng,
+            distance: { text: route.distance, value: 0 },
+            duration: { text: route.duration, value: 0 },
+            travel_mode: google.maps.TravelMode.DRIVING,
+            instructions: ""
+          }]
+        }],
+        overview_path: path,
+        waypoint_order: [],
+        bounds: new google.maps.LatLngBounds(sourceLatLng, destinationLatLng)
+      }],
+      request: {
         origin: sourceLatLng,
         destination: destinationLatLng,
         travelMode: google.maps.TravelMode.DRIVING
-      };
+      },
+      geocoded_waypoints: []
+    };
 
-      const result = await this.directionsService.route(request);
-      
-      if (!result || !result.routes || result.routes.length === 0) {
-        throw new Error('No routes found');
+    const renderer = new DirectionsRenderer({
+      map: this.map,
+      directions: directions,
+      suppressMarkers: true,
+      draggable: true,
+      polylineOptions: {
+        strokeColor: routeColor,
+        strokeWeight: route.isReturn ? 4 : 5,
+        strokeOpacity: route.isReturn ? 0.7 : 0.8
       }
-
-      const { DirectionsRenderer } = await google.maps.importLibrary("routes") as google.maps.RoutesLibrary;
-      
-      // Use the first route
-      const renderer = new DirectionsRenderer({
-        map: this.map,
-        directions: result,
-        suppressMarkers: true,
-        draggable: true,
-        polylineOptions: {
-          strokeColor: '#4285F4',
-          strokeWeight: 5,
-          strokeOpacity: 0.8
-        }
-      });
-
-      // Add drag listener
-      const dragListener = renderer.addListener('directions_changed', () => {
-        this.updateRouteAfterDrag();
-      });
-      
-      this.mapListeners.push(dragListener);
-      this.routeRenderers.push(renderer);
-
-      // Update route data
-      const leg = result.routes[0]?.legs?.[0];
-      if (leg) {
-        // Capture polyline path
-        const polylinePath: google.maps.LatLngLiteral[] = [];
-        if (result.routes[0].overview_path) {
-          result.routes[0].overview_path.forEach(point => {
-            polylinePath.push(point.toJSON());
-          });
-        }
-
-        // Update route
-        route.directions = result;
-        route.distance = leg.distance?.text || route.distance;
-        route.duration = leg.duration?.text || route.duration;
-        route.polylinePath = polylinePath;
-      }
-    } catch (error) {
-      console.error('Error recalculating route:', error);
-      throw error;
-    }
-  }
-
-
-  clearRoute() {
-    // Clear all renderers
-    this.routeRenderers.forEach(renderer => {
-      renderer.setMap(null);
     });
-     // Remove markers and geofences from map
+
+    // Add drag listener
+    const dragListener = renderer.addListener('directions_changed', () => {
+      this.updateRouteAfterDrag();
+    });
+    
+    this.mapListeners.push(dragListener);
+    
+    // Add to appropriate renderer array
+    if (route.isReturn) {
+      this.returnRouteRenderers.push(renderer);
+    } else {
+      this.routeRenderers.push(renderer);
+    }
+
+    // Wait for the map to be fully loaded and rendered
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Calculate bounds after renderer is added to map
+    const bounds = new google.maps.LatLngBounds();
+    bounds.extend(sourceLatLng);
+    bounds.extend(destinationLatLng);
+    
+    // Include all points in the path
+    path.forEach(point => {
+      bounds.extend(point);
+    });
+    
+    // Add padding to the bounds
+    this.map.fitBounds(bounds, { top: 50, right: 50, bottom: 50, left: 50 });
+  } 
+  catch (error) {
+    console.error('Failed to create DirectionsRenderer, falling back to Polyline', error);
+    
+    // Fallback to simple polyline
+    this.customPolyline = new google.maps.Polyline({
+      map: this.map,
+      path: path,
+      strokeColor: routeColor,
+      strokeWeight: route.isReturn ? 4 : 5,
+      strokeOpacity: route.isReturn ? 0.7 : 0.8,
+      editable: true,
+      draggable: true
+    });
+
+    // Add polyline change listeners
+    const pathChangeListener = google.maps.event.addListener(
+      this.customPolyline.getPath(), 
+      'set_at', 
+      () => this.updatePolylinePath()
+    );
+    
+    const insertListener = google.maps.event.addListener(
+      this.customPolyline.getPath(), 
+      'insert_at', 
+      () => this.updatePolylinePath()
+    );
+    
+    const removeListener = google.maps.event.addListener(
+      this.customPolyline.getPath(), 
+      'remove_at', 
+      () => this.updatePolylinePath()
+    );
+    
+    this.mapListeners.push(pathChangeListener, insertListener, removeListener);
+
+    // Wait for the polyline to be fully loaded and rendered
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Calculate bounds after polyline is added to map
+    const bounds = new google.maps.LatLngBounds();
+    bounds.extend(sourceLatLng);
+    bounds.extend(destinationLatLng);
+    
+    // Include all points in the path
+    path.forEach(point => {
+      bounds.extend(point);
+    });
+    
+    // Add padding to the bounds
+    this.map.fitBounds(bounds, { top: 50, right: 50, bottom: 50, left: 50 });
+  }
+}
+
+private async recalculateRoute(
+  route: SavedRoute, 
+  sourceLatLng: google.maps.LatLng, 
+  destinationLatLng: google.maps.LatLng
+) {
+  try {
+    const request: google.maps.DirectionsRequest = {
+      origin: sourceLatLng,
+      destination: destinationLatLng,
+      travelMode: google.maps.TravelMode.DRIVING
+    };
+
+    const result = await this.directionsService.route(request);
+    
+    if (!result || !result.routes || result.routes.length === 0) {
+      throw new Error('No routes found');
+    }
+
+    const { DirectionsRenderer } = await google.maps.importLibrary("routes") as google.maps.RoutesLibrary;
+    
+    // Determine color based on whether this is a return route
+    const routeColor = route.isReturn ? '#9C27B0' : '#4285F4';
+    
+    // Use the first route
+    const renderer = new DirectionsRenderer({
+      map: this.map,
+      directions: result,
+      suppressMarkers: true,
+      draggable: true,
+      polylineOptions: {
+        strokeColor: routeColor,
+        strokeWeight: route.isReturn ? 4 : 5,
+        strokeOpacity: route.isReturn ? 0.7 : 0.8
+      }
+    });
+
+    // Add drag listener
+    const dragListener = renderer.addListener('directions_changed', () => {
+      this.updateRouteAfterDrag();
+    });
+    
+    this.mapListeners.push(dragListener);
+    
+    // Add to appropriate renderer array
+    if (route.isReturn) {
+      this.returnRouteRenderers.push(renderer);
+    } else {
+      this.routeRenderers.push(renderer);
+    }
+
+    // Update route data
+    const leg = result.routes[0]?.legs?.[0];
+    if (leg) {
+      // Capture polyline path
+      const polylinePath: google.maps.LatLngLiteral[] = [];
+      if (result.routes[0].overview_path) {
+        result.routes[0].overview_path.forEach(point => {
+          polylinePath.push(point.toJSON());
+        });
+      }
+
+      // Update route
+      route.directions = result;
+      route.distance = leg.distance?.text || route.distance;
+      route.duration = leg.duration?.text || route.duration;
+      route.polylinePath = polylinePath;
+    }
+  } catch (error) {
+    console.error('Error recalculating route:', error);
+    throw error;
+  }
+}
+
+
+// Update clearRoute to handle return routes properly
+clearRoute() {
+  // Clear all renderers
+  this.routeRenderers.forEach(renderer => {
+    renderer.setMap(null);
+  });
+  this.returnRouteRenderers.forEach(renderer => {
+    renderer.setMap(null);
+  });
+  
+  // Remove markers and geofences from map
   this.sourceMarker.map = null;
   this.destinationMarker.map = null;
   this.sourceGeofence.setMap(null);
   this.destinationGeofence.setMap(null);
-    
-    // Reset state
-    this.routeRenderers = [];
-    this.routeOptions = [];
-    this.currentRoute = null;
-    this.isEditing = false;
-    this.currentRouteIndex = -1;
-    this.selectedRouteIndex = -1;
+  
+  // Clear custom polyline if it exists
+  if (this.customPolyline) {
+    this.customPolyline.setMap(null);
+    this.customPolyline = null;
   }
+  
+  // Reset state
+  this.routeRenderers = [];
+  this.returnRouteRenderers = [];
+  this.routeOptions = [];
+  this.returnRouteOptions = [];
+  this.currentRoute = null;
+  this.isEditing = false;
+  this.currentRouteIndex = -1;
+  this.selectedRouteIndex = -1;
+  this.selectedReturnRouteIndex = -1;
+  this.showReturnRoutes = false;
+}
 
-  private getRouteColor(index: number, totalRoutes: number): string {
-    // Colors based on route distance (shortest to longest)
+// Updated getRouteColor function to handle return routes
+private getRouteColor(index: number, totalRoutes: number, isReturn: boolean = false): string {
+  // Colors based on route distance (shortest to longest)
+  if (isReturn) {
+    // Use purple hues for return routes
+    if (totalRoutes === 1) return '#9C27B0'; // Purple for single return route
+    
+    // For multiple return routes
+    if (index === 0) return '#9C27B0'; // Purple for shortest return route
+    if (index === totalRoutes - 1) return '#E91E63'; // Pink for longest return route
+    return '#BA68C8'; // Light purple for medium distance return routes
+  } else {
+    // Use green/yellow/red for source to destination routes
     if (totalRoutes === 1) return '#4CAF50'; // Green for single route
     
     // For multiple routes
@@ -903,94 +1018,144 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
     if (index === totalRoutes - 1) return '#F44336'; // Red for longest route
     return '#FFC107'; // Yellow for medium distance routes
   }
+}
 
-  selectRoute(index: number) {
-    if (this.routeOptions.length > 0) {
-      // Update selection state
-      this.routeOptions.forEach(option => option.isSelected = false);
-      this.routeOptions[index].isSelected = true;
-      this.selectedRouteIndex = index;
-
-      // Update route renderers to show selection
-      this.routeRenderers.forEach((renderer, i) => {
-        const isSelected = i === index;
-        const color = this.getRouteColor(i, this.routeRenderers.length);
-        
-        // Create new renderer options
-        const options = {
-          polylineOptions: {
-            strokeColor: color,
-            strokeWeight: isSelected ? 6 : 4,
-            strokeOpacity: isSelected ? 1 : 0.4,
-            zIndex: isSelected ? 1 : 0
-          },
-          suppressMarkers: true,
-          draggable: false
-        };
-
-        // Apply options to renderer
-        renderer.setOptions(options);
-        
-        // Force a redraw of the route
-        const directions = renderer.getDirections();
-        if (directions) {
-          renderer.setDirections(directions);
-        }
-      });
-
-      // Update current route with selected route data
-      const selectedRoute = this.routeOptions[index];
-      console.log(selectedRoute,'selectedRouteeee');
-      
-      const leg = selectedRoute.route.legs?.[0];
-
-
-      // Capture polyline path for later use when editing
-      const polylinePath: google.maps.LatLngLiteral[] = [];
-      if (selectedRoute?.route.overview_path) {
-        selectedRoute?.route.overview_path.forEach(point => {
-          polylinePath.push(point.toJSON());
-        });
-      }
-      
-      if (leg) {
-        this.currentRoute = {
-          source: `${this.sourceLat}, ${this.sourceLng}`,
-          destination: `${this.destinationLat}, ${this.destinationLng}`,
-          directions: {
-            routes: [selectedRoute.route],
-            request: {
-              origin: new google.maps.LatLng(this.sourceLat, this.sourceLng),
-              destination: new google.maps.LatLng(this.destinationLat, this.destinationLng),
-              travelMode: google.maps.TravelMode.DRIVING
-            },
-            geocoded_waypoints: []
-          },
-          distance: selectedRoute.distance,
-          duration: selectedRoute.duration,
-          startLocation: leg.start_location?.toJSON(),
-          endLocation: leg.end_location?.toJSON(),
-          polylinePath: polylinePath
-        };
-
-        // Calculate bounds for the selected route
-        const bounds = new google.maps.LatLngBounds();
-        bounds.extend(leg.start_location);
-        bounds.extend(leg.end_location);
-        
-        // Include all points in the path
-        if (selectedRoute.route.overview_path) {
-          selectedRoute.route.overview_path.forEach(point => {
-            bounds.extend(point);
-          });
-        }
-        
-        // Add padding to the bounds
-        this.map.fitBounds(bounds, { top: 50, right: 50, bottom: 50, left: 50 });
-
-        // Emit route selected event
-        this.routeSelected.emit(this.currentRoute);
-      }
-    }
+// Updated selectRoute function to handle return routes
+selectRoute(index: number, isReturn: boolean = false) {
+  // Reference to the appropriate arrays based on route direction
+  const routeOptionsRef = isReturn ? this.returnRouteOptions : this.routeOptions;
+  const routeRenderersRef = isReturn ? this.returnRouteRenderers : this.routeRenderers;
+  
+  if (routeOptionsRef.length <= index) {
+    console.error(`Invalid route index: ${index}`);
+    return;
   }
+
+  // Update selection state
+  routeOptionsRef.forEach(option => option.isSelected = false);
+  routeOptionsRef[index].isSelected = true;
+  
+  if (isReturn) {
+    this.selectedReturnRouteIndex = index;
+    
+    // Show the selected return route and hide others
+    this.returnRouteRenderers.forEach((renderer, i) => {
+      const isSelected = i === index;
+      const color = this.getRouteColor(i, this.returnRouteRenderers.length, true);
+      
+      // Create new renderer options
+      const options = {
+        polylineOptions: {
+          strokeColor: color,
+          strokeWeight: isSelected ? 5 : 3, // Return routes slightly thinner
+          strokeOpacity: isSelected ? 0.9 : 0.3,
+          zIndex: isSelected ? 1 : 0
+        },
+        suppressMarkers: true,
+        draggable: false,
+        visible: isSelected // Only show the selected return route
+      };
+
+      // Apply options to renderer
+      renderer.setOptions(options);
+      
+      // Force a redraw of the route
+      const directions = renderer.getDirections();
+      if (directions) {
+        renderer.setDirections(directions);
+      }
+    });
+  } else {
+    this.selectedRouteIndex = index;
+    
+    // Update route renderers to show selection (source to destination)
+    this.routeRenderers.forEach((renderer, i) => {
+      const isSelected = i === index;
+      const color = this.getRouteColor(i, this.routeRenderers.length, false);
+      
+      // Create new renderer options
+      const options = {
+        polylineOptions: {
+          strokeColor: color,
+          strokeWeight: isSelected ? 6 : 4,
+          strokeOpacity: isSelected ? 1 : 0.4,
+          zIndex: isSelected ? 1 : 0
+        },
+        suppressMarkers: true,
+        draggable: false
+      };
+
+      // Apply options to renderer
+      renderer.setOptions(options);
+      
+      // Force a redraw of the route
+      const directions = renderer.getDirections();
+      if (directions) {
+        renderer.setDirections(directions);
+      }
+    });
+  }
+
+  // Update current route with selected route data
+  const selectedRoute = routeOptionsRef[index];
+  const leg = selectedRoute.route.legs?.[0];
+
+  // Capture polyline path for later use when editing
+  const polylinePath: google.maps.LatLngLiteral[] = [];
+  if (selectedRoute?.route.overview_path) {
+    selectedRoute?.route.overview_path.forEach(point => {
+      polylinePath.push(point.toJSON());
+    });
+  }
+  
+  if (leg) {
+    this.currentRoute = {
+      source: isReturn 
+        ? `${this.destinationLat}, ${this.destinationLng}`
+        : `${this.sourceLat}, ${this.sourceLng}`,
+      destination: isReturn 
+        ? `${this.sourceLat}, ${this.sourceLng}`
+        : `${this.destinationLat}, ${this.destinationLng}`,
+      directions: {
+        routes: [selectedRoute.route],
+        request: {
+          origin: new google.maps.LatLng(
+            isReturn ? this.destinationLat : this.sourceLat, 
+            isReturn ? this.destinationLng : this.sourceLng
+          ),
+          destination: new google.maps.LatLng(
+            isReturn ? this.sourceLat : this.destinationLat, 
+            isReturn ? this.sourceLng : this.destinationLng
+          ),
+          travelMode: google.maps.TravelMode.DRIVING
+        },
+        geocoded_waypoints: []
+      },
+      distance: selectedRoute.distance,
+      duration: selectedRoute.duration,
+      startLocation: leg.start_location?.toJSON(),
+      endLocation: leg.end_location?.toJSON(),
+      polylinePath: polylinePath,
+      isReturn: isReturn
+    };
+
+    // Calculate bounds for the selected route
+    const bounds = new google.maps.LatLngBounds();
+    bounds.extend(leg.start_location);
+    bounds.extend(leg.end_location);
+    
+    // Include all points in the path
+    if (selectedRoute.route.overview_path) {
+      selectedRoute.route.overview_path.forEach(point => {
+        bounds.extend(point);
+      });
+    }
+    
+    // Add padding to the bounds
+    this.map.fitBounds(bounds, { top: 50, right: 50, bottom: 50, left: 50 });
+
+    // Emit route selected event
+    this.routeSelected.emit(this.currentRoute);
+  }
+}
 }
