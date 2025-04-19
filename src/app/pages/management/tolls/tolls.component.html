@@ -1,4 +1,4 @@
-<app-generic-table [selectedItems]="selectedRowItems" [toolBarStartActions]="toolBarStartActions" [toolBarSplitActions]="toolBarSplitActions" [tableConfig]="tableConfig" [tableData]="tableData" (onToolBarStartAction)="handleToolBarActions($event)" (onSelectionChange)="handleRowSelectionChange($event)" (onTableDropdownFilter)="handleTableDropDownFilter($event)" />
+<app-generic-table [selectedItems]="selectedRowItems" [toolBarStartActions]="toolBarStartActions" [tableConfig]="tableConfig" [tableData]="tableData" (onToolBarStartAction)="handleToolBarActions($event)" (onSelectionChange)="handleRowSelectionChange($event)" (onTableDropdownFilter)="handleTableDropDownFilter($event)" />
 
 <ng-template #createUpdateTollsContent>
     <h3 class="text-xl font-semibold mb-4 text-muted-color-emphasis">{{isEditMode ? 'Update ' : 'Create '}}Toll</h3>
@@ -7,5 +7,96 @@
 
 
 <ng-template #setUpdateDeleteTollPrice>
-    <h3 class="text-xl font-semibold mb-4 text-muted-color-emphasis">{{isEditMode ? 'Update ' : 'Create '}}Toll Price</h3>
-</ng-template>
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h3 class="text-xl font-semibold mb-4 text-muted-color-emphasis">Set Toll Price Vehicle Wise</h3>
+      
+      <div class="toll-price-container">
+        @for (item of tollPriceItems; track item.id; let i = $index) {
+          <div class="flex flex-wrap items-center gap-4 mb-3 p-3 rounded-lg transition-all duration-200"
+               [ngClass]="{'bg-blue-50': i % 2 === 0}">
+            
+            <!-- Vehicle Type Dropdown -->
+            <div class="flex-1 min-w-[200px]">
+                <p-select
+                [id]="'vehicleType'"
+                [options]="vehicleTypes"
+                placeholder="Select Vehicle Type"
+                [(ngModel)]="item.selectedVehicleType" 
+                optionLabel="name"
+                optionValue="id"
+                placeholder="Select Vehicle Type"
+                styleClass="w-full" 
+                [showClear]="true"
+                [virtualScroll]="true"
+                [virtualScrollItemSize]="30"
+                [filter]="true"
+                filterBy="name"
+                (onChange)="onVehicleTypeChange(item)"
+                appendTo="body"
+              >
+              </p-select>
+            </div>
+            
+            <!-- Price Input -->
+            <div class="flex-1 min-w-[150px]">
+              <p-inputNumber 
+                [(ngModel)]="item.price" 
+                mode="currency" 
+                currency="INR" 
+                [minFractionDigits]="2"
+                placeholder="Enter Price"
+                styleClass="w-full">
+              </p-inputNumber>
+            </div>
+            
+            <!-- Action Buttons -->
+<div class="flex gap-2">
+    @if (tollPriceItems.length > 1) {
+      <p-button 
+        icon="pi pi-trash" 
+        severity="danger" 
+        outlined
+        (onClick)="removeTollPriceItem(i)">
+      </p-button>
+    }
+    
+    @if (i === tollPriceItems.length - 1) {
+      <p-button 
+        icon="pi pi-plus" 
+        variant="outlined" severity="primary"
+        (onClick)="addNewTollPriceItem()">
+      </p-button>
+    }
+  </div>
+          </div>
+        } @empty {
+          <!-- No Items Message -->
+          <div class="text-center py-4">
+            <p class="text-gray-500">No toll price items added yet.</p>
+            <button 
+              pButton 
+              type="button" 
+              label="Add Vehicle Price" 
+              icon="pi pi-plus" 
+              class="p-button-primary mt-2"
+              (click)="addNewTollPriceItem()">
+            </button>
+          </div>
+        }
+      </div>
+      
+      <!-- Save Button -->
+      @if (tollPriceItems.length > 0) {
+        <div class="flex justify-end mt-6">
+          <button 
+            pButton 
+            type="button" 
+            label="Save Toll Prices" 
+            icon="pi pi-check" 
+            class="p-button-primary"
+            (click)="saveTollPrices()">
+          </button>
+        </div>
+      }
+    </div>
+  </ng-template>

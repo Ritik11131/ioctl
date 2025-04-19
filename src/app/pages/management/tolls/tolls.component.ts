@@ -3,6 +3,11 @@ import { GenericTableComponent } from '../../../shared/components/generic-table/
 import { UiService } from '../../../layout/service/ui.service';
 import { GenericStepperComponent, StepConfig } from '../../../shared/components/generic-stepper/generic-stepper.component';
 import { HttpService } from '../../service/http.service';
+import { CommonModule } from '@angular/common';
+import { SelectModule } from 'primeng/select';
+import { FormsModule } from '@angular/forms';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { ButtonModule } from 'primeng/button';
 
 // Define action types for better type safety
 type TollPriceActionType = 'setTollPrice' | 'updateTollPrice' | 'deleteTollPrice';
@@ -23,14 +28,43 @@ interface ToolbarSplitAction {
     items: SplitButtonItem[];
 }
 
+interface VehicleType {
+    id: number;
+    name: string;
+  }
+  
+  interface Toll {
+    id: number;
+    name: string;
+  }
+  
+  interface TollPriceApiResponse {
+    tollId: number;
+    vehicleTypeId: number;
+    price: number;
+    toll: Toll;
+    vehicleType: VehicleType;
+  }
+  
+  interface TollPriceItem {
+    id: string;                    // Local tracking ID
+    tollId: number;                // Foreign key to toll
+    vehicleTypeId: number | null;  // Foreign key to vehicle type
+    price: number | null;          // Price amount
+    selectedVehicleType: number | null; // Selected vehicle type for dropdown
+    isNew: boolean;                // Flag to track if this is a new record
+  }
+  
+
 @Component({
     selector: 'app-tolls',
-    imports: [GenericTableComponent, GenericStepperComponent],
+    imports: [GenericTableComponent, GenericStepperComponent, CommonModule, SelectModule, FormsModule, InputNumberModule, ButtonModule],
     templateUrl: './tolls.component.html',
     styleUrl: './tolls.component.scss'
 })
 export class TollsComponent {
     @ViewChild('createUpdateTollsContent') createUpdateTollsContent!: TemplateRef<any>;
+    @ViewChild('setUpdateDeleteTollPrice') setUpdateDeleteTollPrice!: TemplateRef<any>;
     isEditMode = false;
     editData: any = null;
     selectedRowItems: any[] = [];
@@ -41,41 +75,24 @@ export class TollsComponent {
             label: 'New',
             icon: 'pi pi-plus',
             severity: 'primary',
-            outlined: false
+            outlined: false,
+            dependentOnRow: false
         },
         {
             key: 'edit',
             label: 'Edit',
             icon: 'pi pi-pen-to-square',
             severity: 'secondary',
-            outlined: false
-        }
-    ];
-
-    toolBarSplitActions: ToolbarSplitAction[] = [
+            outlined: false,
+            dependentOnRow: true
+        },
         {
-            label: 'Toll Price Manager',
-            key: 'tollPriceManager',
-            items: [
-                {
-                    id: 'setTollPrice',
-                    label: 'Set Toll Price',
-                    // icon: 'pi pi-plus-circle',
-                    command: () => this.handleTollPriceAction('setTollPrice')
-                },
-                {
-                    id: 'updateTollPrice',
-                    label: 'Update Toll Price',
-                    // icon: 'pi pi-pencil',
-                    command: () => this.handleTollPriceAction('updateTollPrice')
-                },
-                {
-                    id: 'deleteTollPrice',
-                    label: 'Delete Toll Price',
-                    // icon: 'pi pi-trash',
-                    command: () => this.handleTollPriceAction('deleteTollPrice')
-                }
-            ]
+            key: 'setTollPrice',
+            label: 'Set Toll Price',
+            icon: 'pi pi-sync',
+            severity: 'secondary',
+            outlined: true,
+            dependentOnRow: true
         }
     ];
 
@@ -167,6 +184,20 @@ export class TollsComponent {
             ]
         }
     ];
+
+    vehicleTypes = [
+        { id: 1, name: 'AMBULANCE' },
+        { id: 2, name: 'BUS' },
+        { id: 3, name: 'CAR' },
+        { id: 4, name: 'HEAVY TRUCK' },
+        { id: 5, name: 'LIGHT TRUCK' },
+        { id: 6, name: 'MOTORBIKE' }
+      ];
+
+      tollPriceItems: TollPriceItem[] = [];
+  
+  // Track already assigned vehicle types to prevent duplicates
+  assignedVehicleTypeIds: Set<number> = new Set();
 
     constructor(
         private uiService: UiService,
@@ -266,6 +297,9 @@ export class TollsComponent {
             await this.deleteSelectedRole();
         } else if (event.key === 'edit') {
             await this.handleEditRole();
+        } else if(event.key === 'setTollPrice') {
+            console.log(event);
+            await this.setTollPrice()
         }
     }
 
@@ -314,38 +348,135 @@ export class TollsComponent {
         await this.fetchTollsListRouteWise(this.routeId);
     }
 
-    // Type-safe action handler with defined action types
-    handleTollPriceAction(actionType: TollPriceActionType): void {
-        // Type-safe object mapping
-        const actionHandlers: Record<TollPriceActionType, () => void> = {
-            setTollPrice: () => {
-                console.log('Setting toll price');
-                this.setTollPrice();
-            },
-            updateTollPrice: () => {
-                console.log('Updating toll price');
-                this.updateTollPrice();
-            },
-            deleteTollPrice: () => {
-                console.log('Deleting toll price');
-                this.deleteTollPrice();
-            }
-        };
-
-        // Using the type-safe action handlers
-        actionHandlers[actionType]();
-    }
-
     // Individual action methods with explicit return types
-    private setTollPrice(): void {
+    private async setTollPrice(): Promise<void> {
+        this.uiService.openDrawer(this.setUpdateDeleteTollPrice, 'Set Toll Price', '!w-[35vw] md:!w-[35vw] lg:!w-[35vw] rounded-l-2xl');
+        await this.loadTollPrices()
         // Logic for setting toll price
     }
 
-    private updateTollPrice(): void {
-        // Logic for updating toll price
-    }
+    async loadTollPrices(): Promise<void> {
 
-    private deleteTollPrice(): void {
-        // Logic for deleting toll price
-    }
+        try {
+            const response: any = await this.http.get(`geortd/rtdtoll/getbyid/${this.routeId}`, {}, this.selectedRowItems[0]?.id);
+            const {tollPriceVehicleTypes} = response?.data
+            this.processTollPricesResponse(tollPriceVehicleTypes);
+        } catch (error) {
+            this.uiService.showToast('error','Error','Failed To get toll')
+        }
+      }
+      
+      processTollPricesResponse(data: TollPriceApiResponse[]): void {
+        // Clear existing items
+        this.tollPriceItems = [];
+        this.assignedVehicleTypeIds.clear();
+        
+        // Process each item from API
+        data.forEach(item => {
+          this.assignedVehicleTypeIds.add(item.vehicleTypeId);
+          
+          this.tollPriceItems.push({
+            id: crypto.randomUUID(),
+            tollId: item.tollId,
+            vehicleTypeId: item.vehicleTypeId,
+            price: item.price,
+            selectedVehicleType: item.vehicleTypeId,
+            isNew: false
+          });
+        });
+        
+        // Always add an empty row at the end if needed
+        if (this.tollPriceItems.length === 0) {
+          this.addNewTollPriceItem();
+        }
+      }
+    
+      addNewTollPriceItem(): void {
+        this.tollPriceItems.push({
+          id: crypto.randomUUID(),
+          tollId: this.selectedRowItems[0]?.id,
+          vehicleTypeId: null,
+          selectedVehicleType: null,
+          price: null,
+          isNew: true
+        });
+      }
+    
+
+
+
+    removeTollPriceItem(index: number): void {
+        const item = this.tollPriceItems[index];
+        
+        // If removing a selected vehicle type, remove from tracking set
+        if (item.vehicleTypeId !== null) {
+          this.assignedVehicleTypeIds.delete(item.vehicleTypeId);
+        }
+        
+        this.tollPriceItems.splice(index, 1);
+      }
+      
+      onVehicleTypeChange(item: TollPriceItem): void {
+        // Remove old vehicle type from tracking if it existed
+        if (item.vehicleTypeId !== null) {
+          this.assignedVehicleTypeIds.delete(item.vehicleTypeId);
+        }
+        
+        // Update the vehicleTypeId with the selected value
+        item.vehicleTypeId = item.selectedVehicleType;
+        
+        // Add new vehicle type to tracking
+        if (item.vehicleTypeId !== null) {
+          this.assignedVehicleTypeIds.add(item.vehicleTypeId);
+        }
+      }
+    
+      async saveTollPrices(): Promise<void> {
+        // Validate data
+        const incompleteItems = this.tollPriceItems.filter(
+          item => item.selectedVehicleType === null || item.price === null
+        );
+        
+        if (incompleteItems.length > 0) {
+            this.uiService.showToast('warn','Incomplete Data','Please complete all vehicle type and price fields')
+          return;
+        }
+        
+        // Check for duplicate vehicle types
+        const uniqueVehicleTypes = new Set(
+          this.tollPriceItems.map(item => item.vehicleTypeId).filter(id => id !== null)
+        );
+        
+        if (uniqueVehicleTypes.size !== this.tollPriceItems.length) {
+            this.uiService.showToast('error','Duplicate Vehicle Types','Each vehicle type can only have one price entry')
+          return;
+        }
+        
+        // Prepare data for API
+        const priceUpdates = this.tollPriceItems
+          .filter(item => item.vehicleTypeId !== null && item.price !== null)
+          .map(item => ({
+            tollId: this.selectedRowItems[0]?.id,
+            vehicleTypeId: item.vehicleTypeId,
+            price: item.price
+          }));
+        
+        console.log('Saving toll prices:', priceUpdates);
+
+        try {
+            const {id, name, rtdDirection} = this.selectedRowItems[0];
+            const payload = {
+                id,
+                name,
+                rtdDirection,
+                tollPriceVehicleTypes: priceUpdates
+            }
+            const response = await this.http.post('geortd/rtdtoll/UpdateTollPrice', payload);
+            this.uiService.closeDrawer();
+            this.uiService.showToast('success','Success','Toll prices updated successfully');
+            await this.fetchTollsListRouteWise(this.routeId); // Refresh the department list after successful submission
+        } catch (error) {
+            this.uiService.showToast('error','Error','Failed to update toll prices')
+        }
+      }
 }
