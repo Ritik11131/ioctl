@@ -1,19 +1,60 @@
-import { Component, TemplateRef, ViewChild } from '@angular/core';
+import { Component, TemplateRef, ViewChild, signal } from '@angular/core';
 import { UiService } from '../../layout/service/ui.service';
 import { HttpService } from '../service/http.service';
-import { StepConfig } from '../../shared/components/generic-stepper/generic-stepper.component';
+import { MenuItem, MessageService } from 'primeng/api';
 import { GenericTableComponent } from '../../shared/components/generic-table/generic-table.component';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormControl } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormArray } from '@angular/forms';
 import { TreeNode } from 'primeng/api';
 import { OrganizationChartModule } from 'primeng/organizationchart';
-import { InputTextModule } from 'primeng/inputtext';
-import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { CommonModule } from '@angular/common';
+import { MultiSelectModule } from 'primeng/multiselect';
+
+import { StepsModule } from 'primeng/steps';
+import { CardModule } from 'primeng/card';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
+import { CheckboxModule } from 'primeng/checkbox';
+import { TableModule } from 'primeng/table';
+import { DragDropModule } from 'primeng/dragdrop';
+import { OrderListModule } from 'primeng/orderlist';
+import { SelectModule } from 'primeng/select';
+
+// Update the interface to include transitions
+interface PermissionField {
+    id: string | number;
+    name: string;
+    user: string | number;
+    allowedActions: string[];
+    email: boolean;
+    alert: boolean;
+    notification: boolean;
+}
+
+interface StepTransition {
+    stepId: string | number;
+    nextSteps: (string | number)[];
+}
 
 @Component({
     selector: 'app-rtd-approval',
-    imports: [GenericTableComponent, CommonModule, ReactiveFormsModule, OrganizationChartModule, InputTextModule, ButtonModule, TooltipModule],
+    imports: [
+        GenericTableComponent,
+        CommonModule,
+        ReactiveFormsModule,
+        OrganizationChartModule,
+        InputTextModule,
+        ButtonModule,
+        TooltipModule,
+        StepsModule,
+        MultiSelectModule,
+        CardModule,
+        SelectModule,
+        CheckboxModule,
+        TableModule,
+        DragDropModule,
+        OrderListModule
+    ],
     templateUrl: './rtd-approval.component.html',
     styleUrl: './rtd-approval.component.scss'
 })
@@ -59,40 +100,27 @@ export class RtdApprovalComponent {
 
     tableData = [];
 
-    isAddingMode = false;
-    selectedNode: TreeNode | null = null;
-    parentNode: TreeNode | null = null;
+    activeIndex = signal(0);
+    formSteps: MenuItem[] = [{ label: 'Basic Details' }, { label: 'Permission Configuration' }, { label: 'Transition' }];
 
-    approvalForm!: FormGroup;
-    nodeForm!: FormGroup;
+    permissionForm!: FormGroup;
 
-    // Create direct references to form controls
-    get title(): FormControl {
-        return this.approvalForm.get('title') as FormControl;
-    }
+    // Add these properties to your component class
+    transitionSelections: any[] = [];
+    draggedPermission: any = null;
 
-    get description(): FormControl {
-        return this.approvalForm.get('description') as FormControl;
-    }
-    // Sample data for the organization chart
-    data: TreeNode[] = [
-        {
-            label: 'Root',
-            expanded: true,
-            data: { email: 'root@example.com', role: 'Organization', department: 'Sports' },
-            children: [
-                {
-                    label: 'Parent 1',
-                    expanded: true,
-                    data: { email: 'parent1@example.com', role: 'Team', department: 'South America' },
-                },
-                {
-                    label: 'Parent 2',
-                    expanded: true,
-                    data: { email: 'parent2@example.com', role: 'Team', department: 'Europe' },
-                }
-            ]
-        }
+    users = [
+        { label: 'Admin', value: 'admin' },
+        { label: 'Manager', value: 'manager' },
+        { label: 'User', value: 'user' },
+        { label: 'Guest', value: 'guest' }
+    ];
+
+    allowedActionOptions = [
+        { label: 'Add', value: 'add' },
+        { label: 'Edit', value: 'edit' },
+        { label: 'Delete', value: 'delete' },
+        { label: 'View', value: 'view' }
     ];
 
     constructor(
@@ -100,21 +128,37 @@ export class RtdApprovalComponent {
         private http: HttpService,
         private fb: FormBuilder
     ) {
-      this.approvalForm = this.fb.group({
-        title: ['', Validators.required],
-        description: ['']
-    });
+        this.permissionForm = this.fb.group({
+            basicDetails: this.fb.group({
+                name: ['', [Validators.required]],
+                description: ['']
+            }),
+            steps: this.fb.array([]),
+            transitions: this.fb.array([])
+        });
 
-    this.nodeForm = this.fb.group({
-        label: ['', Validators.required],
-        email: ['', [Validators.required, Validators.email]],
-        role: [''],
-        department: ['']
-    });
+        // Add default permission field
+        // this.addPermissionField();
     }
 
     ngOnInit(): void {
-        this.fetchRtdApprovalList();
+        this.init();
+    }
+
+    private async init(): Promise<void> {
+        await Promise.all([this.fetchRtdApprovalList(), this.fetchUsersList()]);
+    }
+
+    async fetchUsersList(): Promise<void> {
+        try {
+            const response: any = await this.http.get('geortd/rtduser/list');
+            console.log(response);
+            this.users = response.data.map((user: any) => ({
+                label: [user.fName, user.mName, user.lName].filter(Boolean).join(' '),
+                value: user.id
+            }));
+            console.log(this.users);
+        } catch (error) {}
     }
 
     onStepChange(event: { stepIndex: number; data: any }) {
@@ -122,60 +166,12 @@ export class RtdApprovalComponent {
         // Here you could call an API to validate the step if needed
     }
 
-  async submitFormData(): Promise<void> {
-    console.log(this.approvalForm.value);
-    console.log(this.data);
-    if (this.isEditMode) {
-      this.uiService.toggleLoader(true);
-      try {
-        const { title, description } = this.approvalForm.value;
-        const response = await this.http.put('geortd/rtdapprovalprocess/Modify', this.selectedRowItems[0].id,
-          {
-            name: title,
-            description,
-            id: this.selectedRowItems[0].id,
-            attributes: JSON.stringify(this.data)
-          }
-        );
-        console.log(response, 'response');
-        this.uiService.showToast('success', 'Success', 'Approval Flow updated successfully');
-        this.uiService.closeDrawer(); // Close the drawer after submission
-        await this.fetchRtdApprovalList(); // Refresh the department list after successful submission
-      } catch (error) {
-        console.error('Error submitting form:', error);
-        this.uiService.showToast('error', 'Error', 'Failed to submit form');
-      } finally {
-        this.uiService.toggleLoader(false);
-      }
-    } else {
-      this.uiService.toggleLoader(true);
-      try {
-        const { title, description } = this.approvalForm.value
-        const response = await this.http.post('geortd/rtdapprovalprocess/create',
-          {
-            name: title,
-            description,
-            attributes: JSON.stringify(this.data)
-          }
-        );
-        console.log(response, 'response');
-        this.uiService.showToast('success', 'Success', 'Approval Flow created successfully');
-        this.uiService.closeDrawer(); // Close the drawer after submission
-        await this.fetchRtdApprovalList(); // Refresh the department list after successful submission
-      } catch (error) {
-        console.error('Error submitting form:', error);
-        this.uiService.showToast('error', 'Error', 'Failed to submit form');
-      } finally {
-        this.uiService.toggleLoader(false);
-      }
-    }
-
-  }
+    async submitFormData(): Promise<void> {}
 
     async fetchRtdApprovalList(): Promise<void> {
         this.uiService.toggleLoader(true);
         try {
-            const response: any = await this.http.get('geortd/rtdapprovalprocess/list');
+            const response: any = await this.http.get('geortd/RtdApproval/list');
             console.log(response, 'response');
             this.tableData = response.data; // Assuming the response has a 'data' property containing the list of departments
             // Handle the response data as needed
@@ -190,7 +186,6 @@ export class RtdApprovalComponent {
 
     handleRowSelectionChange(event: any): void {
         console.log(event);
-
         this.selectedRowItems = event;
     }
 
@@ -208,8 +203,8 @@ export class RtdApprovalComponent {
         this.isEditMode = false;
         this.editData = null;
         this.selectedRowItems = []; // Reset selected items when opening new form
-       
-        this.uiService.openDrawer(this.createUpdateRtdApprovalContent, 'Rtd Approval', '!w-full md:!w-full lg:!w-full rounded-l-2xl');
+
+        this.uiService.openDrawer(this.createUpdateRtdApprovalContent, 'Rtd Approval', '!w-[80vw] md:!w-[80vw] lg:!w-[80vw] rounded-l-2xl');
     }
 
     async deleteSelectedRole(): Promise<void> {
@@ -232,184 +227,271 @@ export class RtdApprovalComponent {
         this.isEditMode = true;
         this.uiService.toggleLoader(true);
         try {
-            const response: any = await this.http.get('geortd/rtdapprovalprocess/getbyid', {}, this.selectedRowItems[0].id);
-            console.log(response, 'response');
-            this.data = JSON.parse(response?.data?.attributes);
-            this.approvalForm.get('title')?.setValue(response?.data?.name);
-            this.approvalForm.get('description')?.setValue(response?.data?.description);
-            this.editData = response.data; // Assuming the response has a 'data' property containing the department details
-            this.uiService.openDrawer(this.createUpdateRtdApprovalContent, 'Rtd Approval','!w-full md:!w-full lg:!w-full rounded-l-2xl');
+            const response: any = await this.http.get('geortd/RtdApproval/getbyid', {}, this.selectedRowItems[0]?.id);
+            console.log(response);
+            if (response?.data) {
+                const { steps, ...rest } = response.data;
+                this.editData = {
+                    ...rest,
+                    steps: typeof steps === 'string' ? JSON.parse(steps) : steps
+                };
+            }
+            this.uiService.openDrawer(this.createUpdateRtdApprovalContent, 'Rtd Approval', '!w-[80vw] md:!w-[80vw] lg:!w-[80vw] rounded-l-2xl');
+            this.populateForm();
         } catch (error) {
-            console.error('Error fetching department details:', error);
-            this.uiService.showToast('error', 'Error', 'Failed to fetch department details');
         } finally {
             this.uiService.toggleLoader(false);
         }
     }
 
-    onNodeSelect(event: any): void {
-        if (this.isAddingMode) {
-            return; // Don't change selection while adding a new node
-        }
+    // Update the populateForm method
+    populateForm() {
+        if (this.editData) {
+            // Parse steps and transitions if they are strings
+            let stepsData = typeof this.editData.steps === 'string' ? JSON.parse(this.editData.steps) : this.editData.steps;
 
-        // When a node is selected, populate the form with its data
-        const node = event.node;
+            let transitionsData = typeof this.editData.transitions === 'string' ? JSON.parse(this.editData.transitions) : this.editData.transitions || [];
 
-        this.nodeForm.patchValue({
-            label: node.label,
-            email: node.data?.email || '',
-            role: node.data?.role || '',
-            department: node.data?.department || ''
-        });
-    }
-
-    prepareAddChild(node: TreeNode, event: Event): void {
-        // Prevent event propagation to avoid selecting the node
-        event.stopPropagation();
-
-        // Set parent node and enter adding mode
-        this.parentNode = node;
-        this.isAddingMode = true;
-
-        // Reset form with default values
-        this.nodeForm.reset({
-            label: 'Click to set flow',
-            email: '',
-            role: '',
-            department: ''
-        });
-
-        // Select text in label field for easy editing
-        setTimeout(() => {
-            const labelInput = document.getElementById('nodeLabel');
-            if (labelInput) {
-                (labelInput as HTMLInputElement).select();
-                (labelInput as HTMLInputElement).focus();
-            }
-        }, 100);
-    }
-
-    confirmDeleteNode(node: TreeNode, event: Event): void {
-        // Prevent event propagation to avoid selecting the node
-        event.stopPropagation();
-
-        if (this.isRootNode(node)) {
-            return; // Don't allow deleting the root node
-        }
-
-        this.deleteNode(node);
-    }
-
-    deleteNode(nodeToDelete: TreeNode): void {
-        // Helper function to find and remove a node from the tree
-        const removeNodeFromChildren = (children: TreeNode[] | undefined): boolean => {
-            if (!children || children.length === 0) {
-                return false;
-            }
-
-            const index = children.findIndex((child) => child === nodeToDelete);
-            if (index !== -1) {
-                children.splice(index, 1);
-                return true;
-            }
-
-            // Search recursively in children
-            for (const child of children) {
-                if (removeNodeFromChildren(child.children)) {
-                    return true;
+            // Patch basic details
+            this.permissionForm.patchValue({
+                basicDetails: {
+                    name: this.editData.name,
+                    description: this.editData.description
                 }
+            });
+
+            // Clear existing arrays
+            while (this.steps.length) {
+                this.steps.removeAt(0);
             }
 
-            return false;
+            while (this.transitions.length) {
+                this.transitions.removeAt(0);
+            }
+
+            // Add steps from existing data
+            stepsData.forEach((field: PermissionField) => {
+                this.steps.push(
+                    this.fb.group({
+                        id: [field.id],
+                        name: [field.name, Validators.required],
+                        user: [field.user, Validators.required],
+                        allowedActions: [field.allowedActions],
+                        email: [field.email],
+                        alert: [field.alert],
+                        notification: [field.notification]
+                    })
+                );
+
+                // Add corresponding transition form group
+                const existingTransition = transitionsData.find((t: any) => t.stepId === field.id);
+                this.transitions.push(
+                    this.fb.group({
+                        stepId: [field.id],
+                        nextSteps: [existingTransition?.nextSteps || []]
+                    })
+                );
+            });
+        }
+    }
+
+    get steps() {
+        return this.permissionForm.get('steps') as FormArray;
+    }
+
+    // Add getter for transitions FormArray
+    get transitions() {
+        return this.permissionForm.get('transitions') as FormArray;
+    }
+
+    // Update the addPermissionField method
+    addPermissionField(): void {
+        const index = this.steps.length;
+
+        // Add step form group
+        const permissionField = this.fb.group({
+            id: [index],
+            name: ['', Validators.required],
+            user: ['', Validators.required],
+            allowedActions: [[]],
+            email: [false],
+            alert: [false],
+            notification: [false]
+        });
+        this.steps.push(permissionField);
+
+        // Add corresponding transition form group
+        const transitionField = this.fb.group({
+            stepId: [index],
+            nextSteps: [[]]
+        });
+        this.transitions.push(transitionField);
+    }
+
+    // Update the removePermissionField method
+    removePermissionField(index: number) {
+        if (this.steps.length > 1) {
+            this.steps.removeAt(index);
+            this.transitions.removeAt(index);
+
+            // Update the IDs of remaining fields if necessary
+            this.updateFieldIds();
+        } else {
+            this.uiService.showToast('info', 'Info', 'At least one permission field is required.');
+        }
+    }
+
+    // Add method to update field IDs after removal
+    updateFieldIds() {
+        this.steps.controls.forEach((control, index) => {
+            control.get('id')?.setValue(index);
+            this.transitions.at(index).get('stepId')?.setValue(index);
+        });
+    }
+
+    // PrimeNG drag and drop methods
+    dragStart(index: number) {
+        this.draggedPermission = { index, data: this.steps.at(index).value };
+    }
+
+    dragEnd() {
+        this.draggedPermission = null;
+    }
+
+    // Update the drop method for drag and drop
+    drop(event: any, dropIndex: number) {
+        if (this.draggedPermission !== null) {
+            const dragIndex = this.draggedPermission.index;
+
+            if (dragIndex !== dropIndex) {
+                // Get all current form values
+                const stepsValues = this.steps.value;
+                const transitionsValues = this.transitions.value;
+
+                // Remove dragged items
+                const draggedStep = stepsValues.splice(dragIndex, 1)[0];
+                const draggedTransition = transitionsValues.splice(dragIndex, 1)[0];
+
+                // Insert at drop position
+                stepsValues.splice(dropIndex, 0, draggedStep);
+                transitionsValues.splice(dropIndex, 0, draggedTransition);
+
+                // Reset form arrays with new order
+                this.resetPermissionFields(stepsValues, transitionsValues);
+                this.uiService.showToast('success', 'Reordered', 'Permission field order updated');
+            }
+        }
+    }
+
+    // Reset form array with new order
+    // Update reset method to handle transitions too
+    resetPermissionFields(steps: PermissionField[], transitions: StepTransition[]) {
+        // Clear existing fields
+        while (this.steps.length) {
+            this.steps.removeAt(0);
+        }
+
+        while (this.transitions.length) {
+            this.transitions.removeAt(0);
+        }
+
+        // Add fields in new order with updated ids
+        steps.forEach((field, index) => {
+            const updatedField = { ...field, id: index };
+            this.steps.push(
+                this.fb.group({
+                    id: [updatedField.id],
+                    name: [updatedField.name, Validators.required],
+                    user: [updatedField.user, Validators.required],
+                    allowedActions: [updatedField.allowedActions],
+                    email: [updatedField.email],
+                    alert: [updatedField.alert],
+                    notification: [updatedField.notification]
+                })
+            );
+
+            const transition = transitions[index] || { stepId: index, nextSteps: [] };
+            const updatedTransition = { ...transition, stepId: index };
+            this.transitions.push(
+                this.fb.group({
+                    stepId: [updatedTransition.stepId],
+                    nextSteps: [updatedTransition.nextSteps]
+                })
+            );
+        });
+    }
+
+    // Navigation methods
+    nextStep() {
+        if (this.activeIndex() === 0) {
+            // Validate basic details form
+            const basicDetailsForm = this.permissionForm.get('basicDetails');
+            if (basicDetailsForm?.invalid) {
+                this.uiService.showToast('error', 'Validation Error', 'Please fill in all required fields.');
+                return;
+            }
+        } else if (this.activeIndex() === 1) {
+            // Validate permission fields
+            if (this.steps.invalid) {
+                this.uiService.showToast('error', 'Validation Error', 'Please fill in all required fields in the permission configuration.');
+                return;
+            }
+        }
+
+        if (this.activeIndex() < 2) {
+            this.activeIndex.set(this.activeIndex() + 1);
+        }
+    }
+
+    prevStep() {
+        if (this.activeIndex() > 0) {
+            this.activeIndex.set(this.activeIndex() - 1);
+        }
+    }
+
+    // Update the onSubmit method to include transitions
+    onSubmit() {
+        if (this.permissionForm.invalid) {
+            // Validation error
+            this.uiService.showToast('error', 'Validation Error', 'Please fill in all required fields.');
+            return;
+        }
+
+        // Format data for submission
+        const formData = {
+            ...this.permissionForm.value.basicDetails,
+            steps: this.permissionForm.value.steps,
+            transitions: this.permissionForm.value.transitions
         };
 
-        // Start the removal process from the root
-        removeNodeFromChildren(this.data);
+        console.log('Form submitted:', formData);
 
-        // Create a new reference to trigger change detection
-        this.data = [...this.data];
-
-        // Reset selection if the deleted node was selected
-        if (this.selectedNode === nodeToDelete) {
-            this.selectedNode = null;
-            this.nodeForm.reset();
-        }
+        this.uiService.showToast('success', 'Success', `Permission ${this.isEditMode ? 'updated' : 'created'} successfully!`);
     }
 
-    saveChanges(): void {
-        if (this.nodeForm.valid) {
-            const formValues = this.nodeForm.value;
+    // Method to safely format allowed actions
+    formatAllowedActions(actions: any): string {
+        if (!actions) return 'None';
+        if (Array.isArray(actions)) {
+            return actions.join(', ');
+        }
+        return String(actions);
+    }
 
-            if (this.isAddingMode && this.parentNode) {
-                // Add new child node
-                const newNode: TreeNode = {
-                    label: formValues.label,
-                    data: {
-                        email: formValues.email,
-                        role: formValues.role,
-                        department: formValues.department
-                    },
-                    children: []
-                };
-
-                // Initialize children array if it doesn't exist
-                if (!this.parentNode.children) {
-                    this.parentNode.children = [];
+    // Add this method to your component class
+    // Method to get step options for a specific step
+    getStepOptions(currentIndex: number): any[] {
+        // Create options from all steps except the current one
+        return this.steps.controls
+            .map((control, index) => {
+                if (index !== currentIndex) {
+                    return {
+                        label: control.get('name')?.value,
+                        value: control.get('id')?.value
+                    };
                 }
-
-                // Add the new node
-                this.parentNode.children.push(newNode);
-
-                // Ensure parent is expanded
-                this.parentNode.expanded = true;
-
-                // Exit adding mode
-                this.isAddingMode = false;
-                this.parentNode = null;
-            } else if (this.selectedNode) {
-                // Update existing node
-                this.selectedNode.label = formValues.label;
-
-                // Ensure data object exists
-                if (!this.selectedNode.data) {
-                    this.selectedNode.data = {};
-                }
-
-                // Update data properties
-                this.selectedNode.data.email = formValues.email;
-                this.selectedNode.data.role = formValues.role;
-                this.selectedNode.data.department = formValues.department;
-            }
-
-            // Create a new reference to trigger change detection
-            this.data = [...this.data];
-
-            // Optional: Show success message
-            console.log('Changes saved successfully');
-        }
-    }
-
-    cancelEdit(): void {
-        if (this.isAddingMode) {
-            this.isAddingMode = false;
-            this.parentNode = null;
-        }
-
-        // Reset form if node is still selected
-        if (this.selectedNode) {
-            this.nodeForm.patchValue({
-                label: this.selectedNode.label,
-                email: this.selectedNode.data?.email || '',
-                role: this.selectedNode.data?.role || '',
-                department: this.selectedNode.data?.department || ''
-            });
-        } else {
-            this.nodeForm.reset();
-        }
-    }
-
-    isRootNode(node: TreeNode): boolean {
-        // Check if this is the root node (no parent)
-        return this.data.includes(node);
+                return null;
+            })
+            .filter((option) => option !== null);
     }
 }
