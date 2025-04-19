@@ -166,8 +166,6 @@ export class RtdApprovalComponent {
         // Here you could call an API to validate the step if needed
     }
 
-    async submitFormData(): Promise<void> {}
-
     async fetchRtdApprovalList(): Promise<void> {
         this.uiService.toggleLoader(true);
         try {
@@ -460,13 +458,48 @@ export class RtdApprovalComponent {
         // Format data for submission
         const formData = {
             ...this.permissionForm.value.basicDetails,
-            steps: this.permissionForm.value.steps,
-            transitions: this.permissionForm.value.transitions
+            steps: JSON.stringify(this.permissionForm.value.steps),
+            transitions: JSON.stringify(this.permissionForm.value.transitions)
         };
 
         console.log('Form submitted:', formData);
 
-        this.uiService.showToast('success', 'Success', `Permission ${this.isEditMode ? 'updated' : 'created'} successfully!`);
+        const payload = {
+            ...formData,
+            stepCount:formData?.steps?.length,
+            active:true,
+            type:'test'
+        }
+
+        this.submitFormData(payload);
+    }
+    
+    // Add method to submit form data to API
+    async submitFormData(formData: any): Promise<void> {
+      this.uiService.toggleLoader(true);
+      try {
+        let response;
+        if (this.isEditMode) {
+          response = await this.http.put('geortd/RtdApproval/Modify', this.selectedRowItems[0]?.id, {...formData, id:this.selectedRowItems[0]?.id});
+        } else {
+          response = await this.http.post('geortd/RtdApproval/create', formData);
+        }
+        
+        this.uiService.showToast('success', 'Success', 
+          `Approval ${this.isEditMode ? 'updated' : 'created'} successfully!`);
+
+          // Reset form to default state
+    this.resetForm();
+    
+        this.uiService.closeDrawer();
+        await this.fetchRtdApprovalList();
+      } catch (error) {
+        console.error('Error submitting form:', error);
+        this.uiService.showToast('error', 'Error', 
+          `Failed to ${this.isEditMode ? 'update' : 'create'} approval.`);
+      } finally {
+        this.uiService.toggleLoader(false);
+      }
     }
 
     // Method to safely format allowed actions
@@ -494,4 +527,36 @@ export class RtdApprovalComponent {
             })
             .filter((option) => option !== null);
     }
+
+    // Add a method to reset the form
+resetForm(): void {
+    // Reset to initial state
+    this.permissionForm.reset();
+    
+    // Clear all steps and transitions
+    while (this.steps.length) {
+      this.steps.removeAt(0);
+    }
+    
+    while (this.transitions.length) {
+      this.transitions.removeAt(0);
+    }
+    
+    // Reset active index to first step
+    this.activeIndex.set(0);
+    
+    // Reset edit mode
+    this.isEditMode = false;
+    this.editData = null;
+    
+    // Add a default empty permission field if needed
+    // Uncomment the next line if you want a default field
+    // this.addPermissionField();
+    
+    // Set defaults for basic details if needed
+    this.permissionForm.get('basicDetails')?.patchValue({
+      name: '',
+      description: ''
+    });
+  }
 }
