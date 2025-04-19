@@ -6,11 +6,12 @@ import { InputTextModule } from 'primeng/inputtext';
 import { RippleModule } from 'primeng/ripple';
 import { Table, TableModule } from 'primeng/table';
 import { ToolbarModule } from 'primeng/toolbar';
+import { SplitButtonModule } from 'primeng/splitbutton';
 import { GenericDropdownComponent } from '../generic-dropdown/generic-dropdown.component';
 
 @Component({
     selector: 'app-generic-table',
-    imports: [ToolbarModule, ButtonModule, RippleModule, TableModule, IconFieldModule, InputIconModule, InputTextModule, GenericDropdownComponent],
+    imports: [ToolbarModule, ButtonModule, RippleModule, TableModule, IconFieldModule, InputIconModule, SplitButtonModule, InputTextModule, GenericDropdownComponent],
     template: `
         <p-toolbar styleClass="mb-6">
             <ng-template #start>
@@ -24,6 +25,10 @@ import { GenericDropdownComponent } from '../generic-dropdown/generic-dropdown.c
                         [outlined]="toolBarStartAction.outlined"
                         (onClick)="onToolBarStartAction.emit(toolBarStartAction)"
                     />
+                }
+
+                @for (toolBarSplitAction of toolBarSplitActions; track toolBarSplitAction.key) {
+                    <p-splitbutton outlined [label]="toolBarSplitAction?.label" [model]="toolBarSplitAction.items" [disabled]="selectedItems.length !== 1" />
                 }
             </ng-template>
 
@@ -119,6 +124,7 @@ import { GenericDropdownComponent } from '../generic-dropdown/generic-dropdown.c
 export class GenericTableComponent {
     @Input() selectedItems: any[] = [];
     @Input() toolBarStartActions: any[] = [];
+    @Input() toolBarSplitActions: any[] = [];
     @Input() tableConfig!: any;
     @Input() tableData!: any[];
 

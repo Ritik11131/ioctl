@@ -1,4 +1,3 @@
-import { GenericGmRouteComponent } from './../generic-gm-route/generic-gm-route.component';
 import { Component, Input, OnInit, Output, EventEmitter, ViewChild, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -8,6 +7,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { GenericGoogleMapComponent } from '../generic-google-map/generic-google-map.component';
 import { environment } from '../../../../environments/environment.prod';
 import { GenericLocationSearchComponent } from '../generic-location-search/generic-location-search.component';
@@ -23,7 +23,7 @@ export interface StepFieldConfig {
     dependsOn?: any; // For conditional rendering\
     mode?: any;
     autoFetch?: boolean; // For dependent dropdowns
-    options?: { label: string; value: any }[]; // For dropdowns
+    options?: { name: string; value: any }[]; // For dropdowns
     validators?: any[];
     defaultValue?: any;
     required?: boolean;
@@ -39,7 +39,7 @@ export interface StepConfig {
 @Component({
     selector: 'app-generic-stepper',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, StepsModule, InputTextModule, TextareaModule, SelectModule, ButtonModule, GenericLocationSearchComponent, GenericDropdownComponent, GenericAutocompleteComponent, GenericGmAddressComponent],
+    imports: [CommonModule, ReactiveFormsModule, StepsModule, InputTextModule, TextareaModule, SelectModule, ButtonModule, InputNumberModule, GenericLocationSearchComponent, GenericDropdownComponent, GenericAutocompleteComponent, GenericGmAddressComponent],
     template: `
         <div class="w-full">
             <!-- Only show steps if there are multiple steps -->
@@ -78,6 +78,9 @@ export interface StepConfig {
                                         }
                                         @case ('text') {
                                             <input pInputText [id]="field.fieldId" [formControlName]="field.fieldId" [placeholder]="field.placeholder || 'Enter text'" class="w-full p-2" />
+                                        }
+                                        @case ('number') {
+                                            <p-inputnumber [id]="field.fieldId" [formControlName]="field.fieldId" inputId="minmaxfraction" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="10" [placeholder]="field.placeholder || 'Enter text'" class="w-full p-2" />
                                         }
                                         @case ('dropdown') {
                                             <app-generic-dropdown

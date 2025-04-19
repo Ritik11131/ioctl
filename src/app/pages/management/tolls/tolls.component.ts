@@ -4,6 +4,25 @@ import { UiService } from '../../../layout/service/ui.service';
 import { GenericStepperComponent, StepConfig } from '../../../shared/components/generic-stepper/generic-stepper.component';
 import { HttpService } from '../../service/http.service';
 
+// Define action types for better type safety
+type TollPriceActionType = 'setTollPrice' | 'updateTollPrice' | 'deleteTollPrice';
+
+// Define the structure of each menu item
+interface SplitButtonItem {
+    id: string;
+    label: string;
+    icon?: string;
+    disabled?: boolean;
+    command: () => void;
+}
+
+// Define the structure of a toolbar action
+interface ToolbarSplitAction {
+    label: string;
+    key: string;
+    items: SplitButtonItem[];
+}
+
 @Component({
     selector: 'app-tolls',
     imports: [GenericTableComponent, GenericStepperComponent],
@@ -33,6 +52,33 @@ export class TollsComponent {
         }
     ];
 
+    toolBarSplitActions: ToolbarSplitAction[] = [
+        {
+            label: 'Toll Price Manager',
+            key: 'tollPriceManager',
+            items: [
+                {
+                    id: 'setTollPrice',
+                    label: 'Set Toll Price',
+                    // icon: 'pi pi-plus-circle',
+                    command: () => this.handleTollPriceAction('setTollPrice')
+                },
+                {
+                    id: 'updateTollPrice',
+                    label: 'Update Toll Price',
+                    // icon: 'pi pi-pencil',
+                    command: () => this.handleTollPriceAction('updateTollPrice')
+                },
+                {
+                    id: 'deleteTollPrice',
+                    label: 'Delete Toll Price',
+                    // icon: 'pi pi-trash',
+                    command: () => this.handleTollPriceAction('deleteTollPrice')
+                }
+            ]
+        }
+    ];
+
     tableConfig = {
         title: 'Manage Tolls Route Wise',
         dataKey: 'id',
@@ -41,8 +87,7 @@ export class TollsComponent {
             { field: 'latitude', header: 'Latitude', minWidth: '12rem' },
             { field: 'longitude', header: 'Longitude', minWidth: '12rem' },
             { field: 'description', header: 'Description', minWidth: '12rem' },
-            { field: 'rtd', header: 'Route', minWidth: '10rem', subfield: 'name' },
-
+            { field: 'rtd', header: 'Route', minWidth: '10rem', subfield: 'name' }
         ],
         globalFilterFields: ['name'],
         filterTableDrpdown: {
@@ -62,7 +107,7 @@ export class TollsComponent {
     formSteps: StepConfig[] = [
         {
             stepId: 'basic',
-            title: '',
+            title: 'Basic Details',
             fields: [
                 {
                     fieldId: 'name',
@@ -70,6 +115,13 @@ export class TollsComponent {
                     label: 'Toll Name',
                     required: true,
                     placeholder: 'Enter toll name'
+                },
+                {
+                    fieldId: 'exCode',
+                    type: 'text',
+                    label: 'External Code',
+                    required: true,
+                    placeholder: 'Enter code'
                 },
                 {
                     fieldId: 'rtd',
@@ -81,15 +133,26 @@ export class TollsComponent {
                     dependsOn: null
                 },
                 {
+                    fieldId: 'rtdDirection',
+                    type: 'dropdown',
+                    options: [
+                        { name: 'Sorce To Destination', value: 'sourceToDestination' },
+                        { name: 'Destination To Source', value: 'destinationToSource' }
+                    ],
+                    label: 'Route Type',
+                    required: true,
+                    placeholder: 'Select a Route Type'
+                },
+                {
                     fieldId: 'latitude',
-                    type: 'text',
+                    type: 'number',
                     label: 'Latitude',
                     required: true,
                     placeholder: 'Enter toll latitude'
                 },
                 {
                     fieldId: 'longitude',
-                    type: 'text',
+                    type: 'number',
                     label: 'Longitude',
                     required: true,
                     placeholder: 'Enter tol longitude'
@@ -98,7 +161,7 @@ export class TollsComponent {
                     fieldId: 'description',
                     type: 'textarea',
                     label: 'Description',
-                    required: true,
+                    required: false,
                     placeholder: 'Enter description'
                 }
             ]
@@ -121,14 +184,16 @@ export class TollsComponent {
         console.log('Form submitted with data:', formData);
         if (this.isEditMode) {
             this.uiService.toggleLoader(true);
-            const { name, latitude, longitude, rtd, description } = formData;
+            const { name, latitude, longitude, rtd, exCode, rtdDirection, description } = formData;
             const payload = {
                 id: this.selectedRowItems[0]?.id,
                 name,
+                exCode,
                 latitude,
                 longitude,
                 description,
-                rtdId: rtd?.id
+                rtdId: rtd?.id,
+                rtdDirection: rtdDirection?.value
             };
             try {
                 const response = await this.http.put('geortd/rtdtoll/modify', this.selectedRowItems[0].id, payload);
@@ -144,13 +209,15 @@ export class TollsComponent {
             }
         } else {
             this.uiService.toggleLoader(true);
-            const { name, latitude, longitude, rtd, description } = formData;
+            const { name, latitude, longitude, rtd, rtdDirection, exCode, description } = formData;
             const payload = {
                 name,
+                exCode,
                 latitude,
                 longitude,
                 description,
-                rtdId: rtd?.id
+                rtdId: rtd?.id,
+                rtdDirection: rtdDirection?.value
             };
             try {
                 const response = await this.http.post('geortd/rtdtoll/create', payload);
@@ -245,5 +312,40 @@ export class TollsComponent {
         console.log(event);
         this.routeId = event?.id;
         await this.fetchTollsListRouteWise(this.routeId);
+    }
+
+    // Type-safe action handler with defined action types
+    handleTollPriceAction(actionType: TollPriceActionType): void {
+        // Type-safe object mapping
+        const actionHandlers: Record<TollPriceActionType, () => void> = {
+            setTollPrice: () => {
+                console.log('Setting toll price');
+                this.setTollPrice();
+            },
+            updateTollPrice: () => {
+                console.log('Updating toll price');
+                this.updateTollPrice();
+            },
+            deleteTollPrice: () => {
+                console.log('Deleting toll price');
+                this.deleteTollPrice();
+            }
+        };
+
+        // Using the type-safe action handlers
+        actionHandlers[actionType]();
+    }
+
+    // Individual action methods with explicit return types
+    private setTollPrice(): void {
+        // Logic for setting toll price
+    }
+
+    private updateTollPrice(): void {
+        // Logic for updating toll price
+    }
+
+    private deleteTollPrice(): void {
+        // Logic for deleting toll price
     }
 }
