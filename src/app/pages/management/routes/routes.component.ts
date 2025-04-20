@@ -52,7 +52,7 @@ export class RoutesComponent implements OnInit {
         {
             key: 'checkTolls',
             label: 'Check Tolls',
-            icon: 'pi pi-map',
+            icon: 'pi pi-map-marker',
             severity: 'primary',
             outlined: true,
             dependentOnRow: true
