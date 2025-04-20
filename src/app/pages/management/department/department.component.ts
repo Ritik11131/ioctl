@@ -22,21 +22,27 @@ export class DepartmentComponent implements OnInit {
             label: 'New',
             icon: 'pi pi-plus',
             severity: 'primary',
-            outlined: false
+            outlined: false,
+            dependentOnRow: false
+
         },
         {
           key: 'edit',
           label: 'Edit',
           icon: 'pi pi-pen-to-square',
           severity: 'secondary',
-          outlined: false
+          outlined: false,
+            dependentOnRow: true
+
       },
         {
             key: 'delete',
             label: 'Delete',
             icon: 'pi pi-trash',
             severity: 'danger',
-            outlined: true
+            outlined: true,
+            dependentOnRow: true
+
         }
     ];
 
