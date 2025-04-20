@@ -4,3 +4,8 @@
     <h3 class="text-xl font-semibold mb-4 text-muted-color-emphasis">{{isEditMode ? 'Update ' : 'Create '}}Role</h3>
     <app-generic-stepper [steps]="formSteps" [validateFromApi]="false" [editMode]="isEditMode" [editData]="editData" (stepChange)="onStepChange($event)" (formSubmit)="onFormSubmit($event)"></app-generic-stepper>
 </ng-template>
+
+<ng-template #assignRoleToUsers>
+    <h3 class="text-xl font-semibold mb-4 text-muted-color-emphasis">{{isEditMode ? 'Update ' : 'Assign '}}Role</h3>
+    <app-generic-stepper [steps]="assignRoleformSteps" [validateFromApi]="false" [editMode]="isEditMode" [editData]="editData" (stepChange)="onStepChange($event)" (formSubmit)="onAssignUserFormSubmit($event)"></app-generic-stepper>
+</ng-template>

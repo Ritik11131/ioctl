@@ -14,10 +14,11 @@ import { GenericLocationSearchComponent } from '../generic-location-search/gener
 import { GenericDropdownComponent } from '../generic-dropdown/generic-dropdown.component';
 import { GenericGmAddressComponent } from '../generic-gm-address/generic-gm-address.component';
 import { GenericAutocompleteComponent } from '../generic-autocomplete/generic-autocomplete.component';
+import { GenericMultiselectComponent } from '../generic-multiselect/generic-multiselect.component';
 
 export interface StepFieldConfig {
     fieldId: string;
-    type: 'text' | 'dropdown' | 'map' | 'place' | 'textarea' | 'number' | 'autocomplete' | 'checkbox' | 'radio' | 'date' | 'time';
+    type: 'text' | 'dropdown' | 'map' | 'place' | 'textarea' | 'number' | 'autocomplete' | 'multiselect' | 'checkbox' | 'radio' | 'date' | 'time';
     label: string;
     apiType?: string; // For API integration
     dependsOn?: any; // For conditional rendering\
@@ -39,7 +40,21 @@ export interface StepConfig {
 @Component({
     selector: 'app-generic-stepper',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, StepsModule, InputTextModule, TextareaModule, SelectModule, ButtonModule, InputNumberModule, GenericLocationSearchComponent, GenericDropdownComponent, GenericAutocompleteComponent, GenericGmAddressComponent],
+    imports: [
+        CommonModule,
+        ReactiveFormsModule,
+        StepsModule,
+        InputTextModule,
+        TextareaModule,
+        SelectModule,
+        ButtonModule,
+        InputNumberModule,
+        GenericLocationSearchComponent,
+        GenericDropdownComponent,
+        GenericAutocompleteComponent,
+        GenericGmAddressComponent,
+        GenericMultiselectComponent
+    ],
     template: `
         <div class="w-full">
             <!-- Only show steps if there are multiple steps -->
@@ -80,7 +95,16 @@ export interface StepConfig {
                                             <input pInputText [id]="field.fieldId" [formControlName]="field.fieldId" [placeholder]="field.placeholder || 'Enter text'" class="w-full p-2" />
                                         }
                                         @case ('number') {
-                                            <p-inputnumber [id]="field.fieldId" [formControlName]="field.fieldId" inputId="minmaxfraction" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="10" [placeholder]="field.placeholder || 'Enter text'" class="w-full p-2" />
+                                            <p-inputnumber
+                                                [id]="field.fieldId"
+                                                [formControlName]="field.fieldId"
+                                                inputId="minmaxfraction"
+                                                mode="decimal"
+                                                [minFractionDigits]="2"
+                                                [maxFractionDigits]="10"
+                                                [placeholder]="field.placeholder || 'Enter text'"
+                                                class="w-full p-2"
+                                            />
                                         }
                                         @case ('dropdown') {
                                             <app-generic-dropdown
@@ -93,6 +117,19 @@ export interface StepConfig {
                                                 [selectedValue]="formGroup.get(field.fieldId)?.value"
                                                 [staticOptions]="field.options || []"
                                                 (selected)="onDropdownSelect($event, field.fieldId)"
+                                            />
+                                        }
+                                        @case ('multiselect') {
+                                            <app-generic-multiselect
+                                                [id]="field.fieldId"
+                                                [type]="field.apiType"
+                                                [params]="dropdownParams[field.fieldId]"
+                                                [placeholder]="field.placeholder || 'Select multiple'"
+                                                [autoFetch]="field.autoFetch"
+                                                [editMode]="editMode"
+                                                [selectedValue]="formGroup.get(field.fieldId)?.value"
+                                                [staticOptions]="field.options || []"
+                                                (selected)="onMultiselectSelect($event, field.fieldId)"
                                             />
                                         }
                                         @case ('place') {
@@ -110,7 +147,8 @@ export interface StepConfig {
                                         }
 
                                         @case ('autocomplete') {
-                                            <app-generic-autocomplete [id]="field.fieldId" [apiEndpoint]="field.apiType" displayField="name" [placeholder]="field.placeholder" (itemSelected)="onAutoCompleteSelected($event, field.fieldId)"> </app-generic-autocomplete>
+                                            <app-generic-autocomplete [id]="field.fieldId" [apiEndpoint]="field.apiType" displayField="name" [placeholder]="field.placeholder" (itemSelected)="onAutoCompleteSelected($event, field.fieldId)">
+                                            </app-generic-autocomplete>
                                         }
                                     }
                                 </div>
@@ -134,7 +172,7 @@ export class GenericStepperComponent implements OnInit, OnChanges {
 
     @Input() steps: StepConfig[] = [];
     @Input() validateFromApi = false;
-    @Input() formClass:string = 'grid grid-cols-1 md:grid-cols-2 gap-4'
+    @Input() formClass: string = 'grid grid-cols-1 md:grid-cols-2 gap-4';
     @Input() editMode = false;
     @Input() editData: any = null;
     @Output() stepChange = new EventEmitter<{ stepIndex: number; data: any }>();
@@ -482,10 +520,16 @@ export class GenericStepperComponent implements OnInit, OnChanges {
         this.updateDependentFields(fieldId, selectedValue);
     }
 
-    onAutoCompleteSelected(selectedValue: any, fieldId: string) {
-        const {value} = selectedValue
+    // In your stepper component class
+    onMultiselectSelect(value: any, fieldId: string): void {
+        // Set the value in the form control
         this.formGroup.get(fieldId)?.setValue(value);
-        this.autoCompleteValue.emit({value, fieldId})
+    }
+
+    onAutoCompleteSelected(selectedValue: any, fieldId: string) {
+        const { value } = selectedValue;
+        this.formGroup.get(fieldId)?.setValue(value);
+        this.autoCompleteValue.emit({ value, fieldId });
     }
 
     updateDependentFields(fieldId: string, selectedValue: any) {

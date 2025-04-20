@@ -177,8 +177,22 @@ import { HttpService } from '../../service/http.service';
           console.log('Form submitted with data:', formData);
           if(this.isEditMode) {
             this.uiService.toggleLoader(true);
+            const {fName, mName, lName, department, employeeId, roles, emailId, mobileNo, dob, loginId, password } = formData;
+            const payload = {
+              fName,
+              mName,
+              lName,
+              departmentId: department.id,
+              roleId: roles.id,
+              employeeId,
+              emailId,
+              mobileNo,
+              dob,
+              loginId,
+              password
+            }
             try {
-              const response = await this.http.put('geortd/rtduser/modify', this.selectedRowItems[0].id, {...formData, id: this.selectedRowItems[0].id, attributed:JSON.stringify({})});
+              const response = await this.http.put('geortd/rtduser/modify', this.selectedRowItems[0].id, {...payload, id: this.selectedRowItems[0].id, attributes:JSON.stringify({})});
               console.log(response, 'response');
               this.uiService.showToast('success', 'Success', 'User updated successfully');
               this.uiService.closeDrawer(); // Close the drawer after submission
@@ -192,8 +206,22 @@ import { HttpService } from '../../service/http.service';
     
           } else {
             this.uiService.toggleLoader(true);
+            const {fName, mName, lName, department, employeeId, roles, emailId, mobileNo, dob, loginId, password } = formData;
+            const paylaod = {
+              fName,
+              mName,
+              lName,
+              departmentId: department.id,
+              roleId: roles.id,
+              employeeId,
+              emailId,
+              mobileNo,
+              dob,
+              loginId,
+              password
+            }
             try {
-              const response = await this.http.post('geortd/rtduser/create', {...formData, attributes:JSON.stringify({})});
+              const response = await this.http.post('geortd/rtduser/create', {...paylaod, attributes: JSON.stringify({})});
               console.log(response, 'response');
               this.uiService.showToast('success', 'Success', 'User created successfully');
               this.uiService.closeDrawer(); // Close the drawer after submission

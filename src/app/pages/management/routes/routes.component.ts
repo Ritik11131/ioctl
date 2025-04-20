@@ -1,4 +1,4 @@
-import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, OnInit, TemplateRef, viewChild, ViewChild } from '@angular/core';
 import { GenericTableComponent } from '../../../shared/components/generic-table/generic-table.component';
 import { GenericStepperComponent, StepConfig } from '../../../shared/components/generic-stepper/generic-stepper.component';
 import { UiService } from '../../../layout/service/ui.service';
@@ -14,6 +14,7 @@ import { HttpService } from '../../service/http.service';
 })
 export class RoutesComponent implements OnInit {
     @ViewChild('createUpdateRouteContent') createUpdateRouteContent!: TemplateRef<any>;
+    @ViewChild('checkRouteTollsContent') checkRouteTollsContent!:TemplateRef<any>;
 
     selectedRowItems: any[] = [];
     isEditMode = false;
@@ -46,7 +47,14 @@ export class RoutesComponent implements OnInit {
             severity: 'danger',
             outlined: true,
             dependentOnRow: true
-
+        },
+        {
+            key: 'checkTolls',
+            label: 'Check Tolls',
+            icon: 'pi pi-map',
+            severity: 'primary',
+            outlined: true,
+            dependentOnRow: true
         }
     ];
 
@@ -153,7 +161,18 @@ export class RoutesComponent implements OnInit {
         await this.deleteSelectedRoute();
       } else if (event.key === 'edit') {
         await this.handleEditRoute();
+      } else if (event.key === 'checkTolls') {
+        await this.handleTollsView()
       }
+    }
+
+    async handleTollsView(): Promise<void> {
+        try {
+            const response = this.http.get('geortd/rtdtoll/list',{},this.selectedRowItems[0]?.id);
+            this.uiService.openDrawer(this.checkRouteTollsContent,'Showing All Available Tolls')
+        } catch (error) {
+            
+        }
     }
 
     async handleEditRoute(): Promise<void> {

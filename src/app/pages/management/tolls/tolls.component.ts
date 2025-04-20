@@ -158,7 +158,8 @@ export class TollsComponent {
                     ],
                     label: 'Route Type',
                     required: true,
-                    placeholder: 'Select a Route Type'
+                    placeholder: 'Select a Route Type',
+                    autoFetch: false
                 },
                 {
                     fieldId: 'latitude',

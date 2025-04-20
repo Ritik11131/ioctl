@@ -13,21 +13,22 @@ import { HttpService } from '../../service/http.service';
 export class RoleComponent {
 
    @ViewChild('createUpdateRoleContent') createUpdateRoleContent!: TemplateRef<any>;
+   @ViewChild('assignRoleToUsers') assignRoleToUsers!: TemplateRef<any>;
       isEditMode = false;
       editData: any = null;
       selectedRowItems: any[] = [];
   
-      toolBarStartActions = [
-          {
-              key: 'new',
-              label: 'New',
-              icon: 'pi pi-plus',
-              severity: 'primary',
-              outlined: false,
+    toolBarStartActions = [
+        {
+            key: 'new',
+            label: 'New',
+            icon: 'pi pi-plus',
+            severity: 'primary',
+            outlined: false,
             dependentOnRow: false
 
-          },
-          {
+        },
+        {
             key: 'edit',
             label: 'Edit',
             icon: 'pi pi-pen-to-square',
@@ -36,16 +37,23 @@ export class RoleComponent {
             dependentOnRow: true
 
         },
-          {
-              key: 'delete',
-              label: 'Delete',
-              icon: 'pi pi-trash',
-              severity: 'danger',
-              outlined: true,
+        {
+            key: 'delete',
+            label: 'Delete',
+            icon: 'pi pi-trash',
+            severity: 'danger',
+            outlined: true,
             dependentOnRow: true
-
-          }
-      ];
+        },
+        {
+            key: 'assignUsers',
+            label: 'Assign Users',
+            icon: 'pi pi-reply',
+            severity: 'secondary',
+            outlined: false,
+            dependentOnRow: true
+        }
+    ];
   
       tableConfig = {
           title: 'Manage Role',
@@ -82,6 +90,26 @@ export class RoleComponent {
               ]
           }
       ];
+
+
+      assignRoleformSteps: StepConfig[] = [
+        {
+            stepId: 'assignRole',
+            title: '',
+            fields: [
+                {
+                    fieldId: 'users',
+                    type: 'multiselect',
+                    apiType: 'geortd/rtduser/list',
+                    label: 'Users',
+                    required: true,
+                    placeholder: 'Select Users',
+                    dependsOn: null,
+                    autoFetch:true
+                },
+            ]
+        }
+      ]
   
       constructor(
           private uiService: UiService,
@@ -95,6 +123,29 @@ export class RoleComponent {
       onStepChange(event: { stepIndex: number; data: any }) {
           console.log('Step changed:', event);
           // Here you could call an API to validate the step if needed
+      }
+
+      async onAssignUserFormSubmit(formData: any): Promise<void> {
+        console.log(formData);
+        const { users } = formData;
+        const payload = {
+            roleId: this.selectedRowItems[0]?.id,
+            userIds: users.map((user: any)=>{return user?.id})
+        }
+        this.uiService.toggleLoader(true);
+        try {
+            const response = await this.http.post('geortd/roles/bulkupdaterole', payload);
+            console.log(response);
+            this.uiService.showToast('success', 'Success', 'Department updated successfully');
+            this.uiService.closeDrawer(); // Close the drawer after submission
+            await this.fetchRoleList(); // Refresh the department list after successful submission
+        } catch (error) {
+            console.error('Error submitting form:', error);
+            this.uiService.showToast('error', 'Error', 'Failed to submit form');
+          } finally {
+            this.uiService.toggleLoader(false);
+          }
+        
       }
   
       async onFormSubmit(formData: any): Promise<void> {
@@ -161,12 +212,18 @@ export class RoleComponent {
               await this.deleteSelectedRole();
           } else if (event.key === 'edit') {
               await this.handleEditRole();
+          } else if (event.key === 'assignUsers'){
+            await this.handleAssignRoleToUsers()
           }
+      }
+
+      async handleAssignRoleToUsers(): Promise<void> {
+        this.uiService.openDrawer(this.assignRoleToUsers, 'Assign Users')
       }
   
       openNew() {
         this.isEditMode = false;
-        this.editData = null
+        this.editData = null;
           this.selectedRowItems = []; // Reset selected items when opening new form
           this.uiService.openDrawer(this.createUpdateRoleContent, 'Role Management');
       }
