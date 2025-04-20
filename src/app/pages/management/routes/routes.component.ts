@@ -6,10 +6,11 @@ import { FormsModule } from '@angular/forms';
 import { GenericGmRouteComponent } from "../../../shared/components/generic-gm-route/generic-gm-route.component";
 import { environment } from '../../../../environments/environment.prod';
 import { HttpService } from '../../service/http.service';
+import { GenericViewOnMapComponent } from '../../../shared/components/generic-view-on-map/generic-view-on-map.component';
 
 @Component({
     selector: 'app-routes',
-    imports: [GenericTableComponent, FormsModule, GenericGmRouteComponent, GenericStepperComponent],
+    imports: [GenericTableComponent, FormsModule, GenericGmRouteComponent, GenericStepperComponent, GenericViewOnMapComponent],
     templateUrl: './routes.component.html',
 })
 export class RoutesComponent implements OnInit {
@@ -70,8 +71,6 @@ export class RoutesComponent implements OnInit {
             { field: 'destinationDept', header: 'Destination Name', subfield: 'name', minWidth: '15rem' },
             { field: 'startDate', header: 'Start Date', minWidth: '15rem' },
             { field: 'endDate', header: 'End Date', minWidth: '15rem' },
-
-
         ],
         globalFilterFields: [],
         dataKey: 'id'
@@ -143,6 +142,8 @@ export class RoutesComponent implements OnInit {
 
     tableData = [];
 
+    mapObject:any = null
+
     constructor(
         private uiService: UiService,
         private http: HttpService
@@ -162,18 +163,37 @@ export class RoutesComponent implements OnInit {
       } else if (event.key === 'edit') {
         await this.handleEditRoute();
       } else if (event.key === 'checkTolls') {
-        await this.handleTollsView()
+        await this.handleRouteWithTolls();
       }
     }
 
-    async handleTollsView(): Promise<void> {
+    async handleRouteWithTolls(): Promise<void> {
+        this.uiService.toggleLoader(true);
         try {
-            const response = this.http.get('geortd/rtdtoll/list',{},this.selectedRowItems[0]?.id);
-            this.uiService.openDrawer(this.checkRouteTollsContent,'Showing All Available Tolls')
+          // First get the route data
+          const routeResponse: any = await this.http.get('geortd/rtd/GetById', {}, this.selectedRowItems[0].id);
+          const { source, destination, attributes } = routeResponse.data;
+          
+          // Then get the tolls data
+          const tollsResponse: any = await this.http.get('geortd/rtdtoll/list', {}, this.selectedRowItems[0]?.id);
+          
+          // Combine all data into mapObject
+          this.mapObject = {
+            source,
+            destination,
+            routeData: JSON.parse(attributes),
+            tolls: tollsResponse?.data
+          };
+          
+          // Open drawer with combined data
+          this.uiService.openDrawer(this.checkRouteTollsContent, 'View Route', '!w-[98vw] md:!w-[98vw] lg:!w-[98vw] rounded-l-2xl');
+          
         } catch (error) {
-            
+          this.uiService.showToast('error', 'Error', 'Failed to fetch route or toll details');
+        } finally {
+          this.uiService.toggleLoader(false);
         }
-    }
+      }
 
     async handleEditRoute(): Promise<void> {
       this.formSteps = [

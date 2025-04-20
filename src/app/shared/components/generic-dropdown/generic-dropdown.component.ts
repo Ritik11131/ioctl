@@ -146,8 +146,20 @@ export class GenericDropdownComponent implements OnInit, OnChanges, OnDestroy {
 
   private setControlValue(): void {
     if (!this.selectedValue || !this.options?.length) return;
-
-    const matched = this.options.find(opt => opt.id === this.selectedValue.id);
+    
+    let matched;
+    
+    // Check if selectedValue is a string or an object with id
+    if (typeof this.selectedValue === 'string') {
+      // For static options where selectedValue is just a string ID
+      matched = this.options.find(opt => opt.id === this.selectedValue);
+    } else {
+      // For API options where selectedValue is an object with id property
+      matched = this.options.find(opt => opt.id === this.selectedValue.id);
+    }
+    
+    console.log(matched, this.selectedValue);
+    
     this.control.setValue(matched || this.selectedValue); // fallback if not found
   }
 

@@ -153,13 +153,12 @@ export class TollsComponent {
                     fieldId: 'rtdDirection',
                     type: 'dropdown',
                     options: [
-                        { name: 'Sorce To Destination', value: 'sourceToDestination' },
-                        { name: 'Destination To Source', value: 'destinationToSource' }
+                        { name: 'Sorce To Destination', id: 'sourceToDestination' },
+                        { name: 'Destination To Source', id: 'destinationToSource' }
                     ],
                     label: 'Route Type',
                     required: true,
                     placeholder: 'Select a Route Type',
-                    autoFetch: false
                 },
                 {
                     fieldId: 'latitude',
@@ -225,7 +224,7 @@ export class TollsComponent {
                 longitude,
                 description,
                 rtdId: rtd?.id,
-                rtdDirection: rtdDirection?.value
+                rtdDirection: rtdDirection?.id
             };
             try {
                 const response = await this.http.put('geortd/rtdtoll/modify', this.selectedRowItems[0].id, payload);
@@ -249,7 +248,7 @@ export class TollsComponent {
                 longitude,
                 description,
                 rtdId: rtd?.id,
-                rtdDirection: rtdDirection?.value
+                rtdDirection: rtdDirection?.id
             };
             try {
                 const response = await this.http.post('geortd/rtdtoll/create', payload);

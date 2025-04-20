@@ -24,7 +24,7 @@ export interface StepFieldConfig {
     dependsOn?: any; // For conditional rendering\
     mode?: any;
     autoFetch?: boolean; // For dependent dropdowns
-    options?: { name: string; value: any }[]; // For dropdowns
+    options?: { name: string; id: any }[]; // For dropdowns
     validators?: any[];
     defaultValue?: any;
     required?: boolean;
