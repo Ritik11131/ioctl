@@ -6,6 +6,13 @@ interface Position {
   longitude: number;
 }
 
+interface TollPriceVehicleType {
+  id: number;
+  vehicleType: string;
+  price: number;
+  currency?: string;
+}
+
 interface Toll {
   id: number;
   name: string;
@@ -14,9 +21,8 @@ interface Toll {
   description?: string;
   rtdId?: number;
   rtd?: any;
-  tollPriceVehicleTypes?: any[];
+  tollPriceVehicleTypes?: TollPriceVehicleType[];
 }
-
 
 @Component({
   selector: 'app-generic-view-on-map',
@@ -33,7 +39,6 @@ export class GenericViewOnMapComponent {
   @Input() mapId = 'DEMO_MAP_ID';
   @Input() initialZoom: number = 13;
   @Input() source: any = null;
-  @Input() height = 400;
   @Input() destination: any = null;
   @Input() sourceGeofenceColor = '#4285F4';
   @Input() destinationGeofenceColor = '#EA4335';
@@ -54,6 +59,7 @@ export class GenericViewOnMapComponent {
   destToSourceRenderer!: google.maps.DirectionsRenderer;
   
   tollMarkers: google.maps.marker.AdvancedMarkerElement[] = [];
+  infoWindow!: google.maps.InfoWindow;
 
   async ngAfterViewInit() {
     await this.initMap();
@@ -70,7 +76,7 @@ export class GenericViewOnMapComponent {
       await loader.load();
       
       // Import required libraries
-      const { Map } = await google.maps.importLibrary("maps") as google.maps.MapsLibrary;
+      const { Map, InfoWindow } = await google.maps.importLibrary("maps") as google.maps.MapsLibrary;
       
       // Get source and destination coordinates
       const sourceAttributes = typeof this.source.attributes === 'string' ? 
@@ -92,6 +98,9 @@ export class GenericViewOnMapComponent {
       };
       
       this.map = new Map(this.mapContainer.nativeElement, mapOptions);
+      
+      // Initialize InfoWindow for tooltips
+      this.infoWindow = new InfoWindow();
       
       // Initialize directions renderers - one for each direction with different colors
       this.sourceToDestRenderer = new google.maps.DirectionsRenderer({
@@ -236,9 +245,81 @@ export class GenericViewOnMapComponent {
         map: this.map,
         title: toll.name,
         content: tollPinElement.element,
+        gmpClickable:true
+      });
+      
+      // Add click listener for the toll marker
+      tollMarker.addEventListener('gmp-click', () => {
+        this.showTollInfoWindow(toll, tollMarker);
       });
       
       this.tollMarkers.push(tollMarker);
+    }
+  }
+  
+  // Method to show toll info in an InfoWindow
+  private showTollInfoWindow(toll: Toll, marker: google.maps.marker.AdvancedMarkerElement) {
+    // Build the content for the info window
+    let contentString = `
+      <div style="min-width: 200px; max-width: 300px;">
+        <h2 style="margin: 0 0 8px 0; font-size: 16px; color: #1A73E8;">${toll.name}</h2>
+    `;
+    
+    // Add description if available
+    if (toll.description) {
+      contentString += `<p style="margin: 0 0 10px 0; font-size: 14px;">${toll.description}</p>`;
+    }
+    
+    // Add toll prices by vehicle type if available
+    if (toll.tollPriceVehicleTypes && toll.tollPriceVehicleTypes.length > 0) {
+      contentString += `
+        <div style="margin-top: 10px;">
+          <h3 style="margin: 0 0 5px 0; font-size: 14px; font-weight: bold;">Toll Prices:</h3>
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr>
+                <th style="text-align: left; padding: 5px; font-size: 13px; border-bottom: 1px solid #ddd;">Vehicle Type</th>
+                <th style="text-align: right; padding: 5px; font-size: 13px; border-bottom: 1px solid #ddd;">Price</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+      
+      // Add each vehicle type and price
+      toll.tollPriceVehicleTypes.forEach((vehicleType: any) => {
+        const currency = vehicleType.currency || 'Rs.';
+        contentString += `
+          <tr>
+            <td style="text-align: left; padding: 5px; font-size: 13px; border-bottom: 1px solid #eee;">${vehicleType?.vehicleType?.name}</td>
+            <td style="text-align: right; padding: 5px; font-size: 13px; border-bottom: 1px solid #eee;">${currency}${vehicleType?.price.toFixed(2)}</td>
+          </tr>
+        `;
+      });
+      
+      contentString += `
+            </tbody>
+          </table>
+        </div>
+      `;
+    } else {
+      contentString += `<p style="font-size: 13px; font-style: italic; color: #666;">No pricing information available</p>`;
+    }
+    
+    // Add RTD info if available
+    if (toll.rtd) {
+      contentString += `<p style="margin: 10px 0 0 0; font-size: 13px;">RTD ID: ${toll.rtdId}</p>`;
+    }
+    
+    contentString += `</div>`;
+    
+    // Set the content and position of the info window
+    this.infoWindow.setContent(contentString);
+    
+    // Get the position of the marker
+    const position = marker.position;
+    if (position) {
+      this.infoWindow.setPosition(position);
+      this.infoWindow.open(this.map);
     }
   }
   

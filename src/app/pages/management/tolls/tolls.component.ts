@@ -224,7 +224,7 @@ export class TollsComponent {
                 longitude,
                 description,
                 rtdId: rtd?.id,
-                rtdDirection: rtdDirection?.id
+                rtdDirection: rtdDirection?.id ?? rtdDirection
             };
             try {
                 const response = await this.http.put('geortd/rtdtoll/modify', this.selectedRowItems[0].id, payload);
