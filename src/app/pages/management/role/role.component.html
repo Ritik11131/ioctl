@@ -2,7 +2,45 @@
 
 <ng-template #createUpdateRoleContent>
     <h3 class="text-xl font-semibold mb-4 text-muted-color-emphasis">{{isEditMode ? 'Update ' : 'Create '}}Role</h3>
-    <app-generic-stepper [steps]="formSteps" [validateFromApi]="false" [editMode]="isEditMode" [editData]="editData" (stepChange)="onStepChange($event)" (formSubmit)="onFormSubmit($event)"></app-generic-stepper>
+    <app-generic-stepper [steps]="formSteps" [validateFromApi]="false" [editMode]="isEditMode" [editData]="editData" (stepChange)="onStepChange($event)" (formSubmit)="onFormSubmit($event)">
+
+        <ng-template #customStep let-stepIndex let-data>
+           <!-- panel-menu.component.html -->
+<!-- panel-menu.component.html -->
+<p-panelMenu [model]="menuItems" styleClass="w-full md:w-80" (onNodeExpand)="onNodeExpand($event)">
+    <ng-template #item let-item>
+      <div class="flex items-center justify-between px-4 py-2 cursor-pointer group">
+        <div class="flex items-center">
+          <i [class]="item.icon + ' text-primary group-hover:text-inherit'"></i>
+          <span class="ml-2">{{ item.label }}</span>
+        </div>
+        <div class="flex items-center space-x-3">
+          <div class="flex items-center">
+            <span class="mr-1 text-xs">Read</span>
+            <p-checkbox 
+              [binary]="true" 
+              [(ngModel)]="item.permissions.read" 
+              (onChange)="toggleReadPermission(item, $event)"
+              [disabled]="false">
+            </p-checkbox>
+          </div>
+          <div class="flex items-center">
+            <span class="mr-1 text-xs">Write</span>
+            <p-checkbox 
+              [binary]="true" 
+              [(ngModel)]="item.permissions.write" 
+              (onChange)="toggleWritePermission(item, $event)"
+              [disabled]="false">
+            </p-checkbox>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+  </p-panelMenu>
+          </ng-template>
+
+
+    </app-generic-stepper>
 </ng-template>
 
 <ng-template #assignRoleToUsers>

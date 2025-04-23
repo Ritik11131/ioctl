@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, Output, EventEmitter, ViewChild, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnInit, Output, EventEmitter, ViewChild, OnChanges, SimpleChanges, ContentChild, TemplateRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { StepsModule } from 'primeng/steps';
@@ -35,6 +35,7 @@ export interface StepConfig {
     stepId: string;
     title: string;
     fields: StepFieldConfig[];
+    customTemplate?: boolean; // Flag to indicate if this step uses a custom template
 }
 
 @Component({
@@ -64,104 +65,118 @@ export interface StepConfig {
 
             <div class="mt-4">
                 <h2 class="text-xl font-semibold mb-4">{{ steps[activeIndex].title }}</h2>
-                <form [formGroup]="formGroup" (ngSubmit)="onStepSubmit()">
-                    <div [class]="formClass">
-                        <ng-container>
-                            @for (field of currentStepFields; track field.fieldId) {
-                                <div [ngClass]="getFieldColumnClass(field)">
-                                    <label [for]="field.fieldId" class="block mb-2 font-medium">
-                                        {{ field.label }}
-                                        @if (field.required) {
-                                            <span class="text-red-500">*</span>
-                                        }
-                                    </label>
-                                    @switch (field.type) {
-                                        @case ('map') {
-                                            @if (field.mode === 'address') {
-                                                <app-generic-gm-address
-                                                    #mapComponent
-                                                    [apiKey]="googleMapsApiKey"
-                                                    [geofenceRadius]="locationState.radius || 100"
-                                                    [initialLatitude]="locationState.lat"
-                                                    [initialLongitude]="locationState.lng"
-                                                    [existingAddress]="locationState"
-                                                    (mapReady)="onMapReady($event, field.fieldId)"
-                                                    (addressSelected)="onAddressSelected($event, field.fieldId)"
-                                                >
-                                                </app-generic-gm-address>
-                                            }
-                                        }
-                                        @case ('text') {
-                                            <input pInputText [id]="field.fieldId" [formControlName]="field.fieldId" [placeholder]="field.placeholder || 'Enter text'" class="w-full p-2" />
-                                        }
-                                        @case ('number') {
-                                            <p-inputnumber
-                                                [id]="field.fieldId"
-                                                [formControlName]="field.fieldId"
-                                                inputId="minmaxfraction"
-                                                mode="decimal"
-                                                [minFractionDigits]="2"
-                                                [maxFractionDigits]="10"
-                                                [placeholder]="field.placeholder || 'Enter text'"
-                                                class="w-full p-2"
-                                            />
-                                        }
-                                        @case ('dropdown') {
-                                            <app-generic-dropdown
-                                                [id]="field.fieldId"
-                                                [type]="field.apiType"
-                                                [params]="dropdownParams[field.fieldId]"
-                                                [placeholder]="field.placeholder || 'Select'"
-                                                [autoFetch]="field.autoFetch"
-                                                [editMode]="editMode"
-                                                [selectedValue]="formGroup.get(field.fieldId)?.value"
-                                                [staticOptions]="field.options || []"
-                                                (selected)="onDropdownSelect($event, field.fieldId)"
-                                            />
-                                        }
-                                        @case ('multiselect') {
-                                            <app-generic-multiselect
-                                                [id]="field.fieldId"
-                                                [type]="field.apiType"
-                                                [params]="dropdownParams[field.fieldId]"
-                                                [placeholder]="field.placeholder || 'Select multiple'"
-                                                [autoFetch]="field.autoFetch"
-                                                [editMode]="editMode"
-                                                [selectedValue]="formGroup.get(field.fieldId)?.value"
-                                                [staticOptions]="field.options || []"
-                                                (selected)="onMultiselectSelect($event, field.fieldId)"
-                                            />
-                                        }
-                                        @case ('place') {
-                                            <app-generic-location-search
-                                                #searchComponent
-                                                [apiKey]="googleMapsApiKey"
-                                                [placeholder]="'Search'"
-                                                (placeSelected)="onPlaceSelected($event, field.fieldId)"
-                                                [searchText]="placeDisplayValues[field.fieldId]"
-                                            />
-                                        }
-
-                                        @case ('textarea') {
-                                            <textarea pTextarea [id]="field.fieldId" [formControlName]="field.fieldId" [placeholder]="field.placeholder || 'Enter text'" rows="5" cols="30" class="w-full p-2"></textarea>
-                                        }
-
-                                        @case ('autocomplete') {
-                                            <app-generic-autocomplete [id]="field.fieldId" [apiEndpoint]="field.apiType" displayField="name" [placeholder]="field.placeholder" (itemSelected)="onAutoCompleteSelected($event, field.fieldId)">
-                                            </app-generic-autocomplete>
-                                        }
-                                    }
-                                </div>
-                            }
-                        </ng-container>
-                    </div>
-
+                
+                <!-- Custom template step -->
+                @if (steps[activeIndex].customTemplate) {
+                    <!-- Render custom template using content projection -->
+                    <ng-container *ngTemplateOutlet="customStepTemplate; context: { $implicit: activeIndex, data: getStepData() }"></ng-container>
+                    
+                    <!-- Navigation buttons for custom template step -->
                     <div class="flex justify-between mt-6">
                         <button pButton type="button" label="Previous" [disabled]="activeIndex === 0" (click)="prevStep()" class="p-button-outlined"></button>
-
-                        <button pButton type="submit" [label]="isLastStep ? 'Submit' : 'Next'" [disabled]="!isStepValid()" class="p-button-primary"></button>
+                        <button pButton type="button" label="{{isLastStep ? 'Submit' : 'Next'}}" (click)="onCustomStepContinue()" class="p-button-primary"></button>
                     </div>
-                </form>
+                } @else {
+                    <!-- Default form-based step -->
+                    <form [formGroup]="formGroup" (ngSubmit)="onStepSubmit()">
+                        <div [class]="formClass">
+                            <ng-container>
+                                @for (field of currentStepFields; track field.fieldId) {
+                                    <div [ngClass]="getFieldColumnClass(field)">
+                                        <label [for]="field.fieldId" class="block mb-2 font-medium">
+                                            {{ field.label }}
+                                            @if (field.required) {
+                                                <span class="text-red-500">*</span>
+                                            }
+                                        </label>
+                                        @switch (field.type) {
+                                            @case ('map') {
+                                                @if (field.mode === 'address') {
+                                                    <app-generic-gm-address
+                                                        #mapComponent
+                                                        [apiKey]="googleMapsApiKey"
+                                                        [geofenceRadius]="locationState.radius || 100"
+                                                        [initialLatitude]="locationState.lat"
+                                                        [initialLongitude]="locationState.lng"
+                                                        [existingAddress]="locationState"
+                                                        (mapReady)="onMapReady($event, field.fieldId)"
+                                                        (addressSelected)="onAddressSelected($event, field.fieldId)"
+                                                    >
+                                                    </app-generic-gm-address>
+                                                }
+                                            }
+                                            @case ('text') {
+                                                <input pInputText [id]="field.fieldId" [formControlName]="field.fieldId" [placeholder]="field.placeholder || 'Enter text'" class="w-full p-2" />
+                                            }
+                                            @case ('number') {
+                                                <p-inputnumber
+                                                    [id]="field.fieldId"
+                                                    [formControlName]="field.fieldId"
+                                                    inputId="minmaxfraction"
+                                                    mode="decimal"
+                                                    [minFractionDigits]="2"
+                                                    [maxFractionDigits]="10"
+                                                    [placeholder]="field.placeholder || 'Enter text'"
+                                                    class="w-full p-2"
+                                                />
+                                            }
+                                            @case ('dropdown') {
+                                                <app-generic-dropdown
+                                                    [id]="field.fieldId"
+                                                    [type]="field.apiType"
+                                                    [params]="dropdownParams[field.fieldId]"
+                                                    [placeholder]="field.placeholder || 'Select'"
+                                                    [autoFetch]="field.autoFetch"
+                                                    [editMode]="editMode"
+                                                    [selectedValue]="formGroup.get(field.fieldId)?.value"
+                                                    [staticOptions]="field.options || []"
+                                                    (selected)="onDropdownSelect($event, field.fieldId)"
+                                                />
+                                            }
+                                            @case ('multiselect') {
+                                                <app-generic-multiselect
+                                                    [id]="field.fieldId"
+                                                    [type]="field.apiType"
+                                                    [params]="dropdownParams[field.fieldId]"
+                                                    [placeholder]="field.placeholder || 'Select multiple'"
+                                                    [autoFetch]="field.autoFetch"
+                                                    [editMode]="editMode"
+                                                    [selectedValue]="formGroup.get(field.fieldId)?.value"
+                                                    [staticOptions]="field.options || []"
+                                                    (selected)="onMultiselectSelect($event, field.fieldId)"
+                                                />
+                                            }
+                                            @case ('place') {
+                                                <app-generic-location-search
+                                                    #searchComponent
+                                                    [apiKey]="googleMapsApiKey"
+                                                    [placeholder]="'Search'"
+                                                    (placeSelected)="onPlaceSelected($event, field.fieldId)"
+                                                    [searchText]="placeDisplayValues[field.fieldId]"
+                                                />
+                                            }
+
+                                            @case ('textarea') {
+                                                <textarea pTextarea [id]="field.fieldId" [formControlName]="field.fieldId" [placeholder]="field.placeholder || 'Enter text'" rows="5" cols="30" class="w-full p-2"></textarea>
+                                            }
+
+                                            @case ('autocomplete') {
+                                                <app-generic-autocomplete [id]="field.fieldId" [apiEndpoint]="field.apiType" displayField="name" [placeholder]="field.placeholder" (itemSelected)="onAutoCompleteSelected($event, field.fieldId)">
+                                                </app-generic-autocomplete>
+                                            }
+                                        }
+                                    </div>
+                                }
+                            </ng-container>
+                        </div>
+
+                        <div class="flex justify-between mt-6">
+                            <button pButton type="button" label="Previous" [disabled]="activeIndex === 0" (click)="prevStep()" class="p-button-outlined"></button>
+
+                            <button pButton type="submit" [label]="isLastStep ? 'Submit' : 'Next'" [disabled]="!isStepValid()" class="p-button-primary"></button>
+                        </div>
+                    </form>
+                }
             </div>
         </div>
     `
@@ -169,15 +184,19 @@ export interface StepConfig {
 export class GenericStepperComponent implements OnInit, OnChanges {
     @ViewChild('mapComponent') mapComponent!: GenericGoogleMapComponent;
     @ViewChild('searchComponent') searchComponent!: GenericLocationSearchComponent;
+    @ContentChild('customStep') customStepTemplate!: TemplateRef<any>;
 
     @Input() steps: StepConfig[] = [];
     @Input() validateFromApi = false;
     @Input() formClass: string = 'grid grid-cols-1 md:grid-cols-2 gap-4';
     @Input() editMode = false;
     @Input() editData: any = null;
+    @Input() customStepData: any = {}; // Data for custom template steps
+    
     @Output() stepChange = new EventEmitter<{ stepIndex: number; data: any }>();
     @Output() autoCompleteValue = new EventEmitter<any>();
     @Output() formSubmit = new EventEmitter<any>();
+    @Output() customStepContinue = new EventEmitter<{ stepIndex: number; data: any }>();
 
     [key: string]: any;
 
@@ -231,43 +250,49 @@ export class GenericStepperComponent implements OnInit, OnChanges {
 
         // Create form controls for all fields across all steps
         this.steps.forEach((step) => {
-            step.fields.forEach((field) => {
-                const validators = [];
+            if (!step.customTemplate) {
+                step.fields.forEach((field) => {
+                    const validators = [];
 
-                if (field.required) {
-                    validators.push(Validators.required);
-                }
+                    if (field.required) {
+                        validators.push(Validators.required);
+                    }
 
-                if (field.validators) {
-                    validators.push(...field.validators);
-                }
+                    if (field.validators) {
+                        validators.push(...field.validators);
+                    }
 
-                formGroupConfig[field.fieldId] = [field.defaultValue || '', validators];
-            });
+                    formGroupConfig[field.fieldId] = [field.defaultValue || '', validators];
+                });
+            }
         });
 
         this.formGroup = this.fb.group(formGroupConfig);
 
         // Initialize dropdown params
         this.steps.forEach((step) => {
-            step.fields.forEach((field) => {
-                if (field.type === 'dropdown') {
-                    this.dropdownParams[field.fieldId] = {};
-                }
+            if (!step.customTemplate) {
+                step.fields.forEach((field) => {
+                    if (field.type === 'dropdown') {
+                        this.dropdownParams[field.fieldId] = {};
+                    }
 
-                if (field.type === 'place') {
-                    this.placeDisplayValues[field.fieldId] = '';
-                }
-            });
+                    if (field.type === 'place') {
+                        this.placeDisplayValues[field.fieldId] = '';
+                    }
+                });
+            }
         });
     }
 
     private initializeFieldClasses() {
         // Pre-compute CSS classes for fields
         this.steps.forEach((step) => {
-            step.fields.forEach((field) => {
-                this.fieldColumnClasses[field.fieldId] = field.type === 'map' ? 'col-span-2' : 'col-span-1';
-            });
+            if (!step.customTemplate) {
+                step.fields.forEach((field) => {
+                    this.fieldColumnClasses[field.fieldId] = field.type === 'map' ? 'col-span-2' : 'col-span-1';
+                });
+            }
         });
     }
 
@@ -292,8 +317,6 @@ export class GenericStepperComponent implements OnInit, OnChanges {
             }
         });
 
-        // this.currentCommonLocation = this.editData['locationMap'];
-
         // Handle dependent dropdowns
         this.setupDependentDropdowns();
 
@@ -303,16 +326,18 @@ export class GenericStepperComponent implements OnInit, OnChanges {
 
     private setupDependentDropdowns() {
         this.steps.forEach((step) => {
-            step.fields.forEach((field) => {
-                if (field.type === 'dropdown' && field.dependsOn) {
-                    const parentField = field.dependsOn;
-                    if (this.editData[parentField]) {
-                        const paramKey = `${parentField}Id`;
-                        const parentValue = this.editData[parentField]?.id || this.editData[parentField];
-                        this.dropdownParams[field.fieldId] = parentValue ? { [paramKey]: parentValue } : {};
+            if (!step.customTemplate) {
+                step.fields.forEach((field) => {
+                    if (field.type === 'dropdown' && field.dependsOn) {
+                        const parentField = field.dependsOn;
+                        if (this.editData[parentField]) {
+                            const paramKey = `${parentField}Id`;
+                            const parentValue = this.editData[parentField]?.id || this.editData[parentField];
+                            this.dropdownParams[field.fieldId] = parentValue ? { [paramKey]: parentValue } : {};
+                        }
                     }
-                }
-            });
+                });
+            }
         });
     }
 
@@ -379,10 +404,15 @@ export class GenericStepperComponent implements OnInit, OnChanges {
     }
 
     get currentStepFields(): StepFieldConfig[] {
-        return this.steps[this.activeIndex].fields;
+        return this.steps[this.activeIndex]?.fields || [];
     }
 
     isStepValid(): boolean {
+        // If this is a custom template step, no validation needed
+        if (this.steps[this.activeIndex]?.customTemplate) {
+            return true;
+        }
+
         if (this.validateFromApi) {
             // In real implementation, this would call an API or service
             return true;
@@ -437,18 +467,53 @@ export class GenericStepperComponent implements OnInit, OnChanges {
         }
     }
 
-    emitStepChange() {
-        const stepData: any = {};
-
-        // Extract only the data relevant to the current step
-        this.currentStepFields.forEach((field) => {
-            stepData[field.fieldId] = this.formGroup.get(field.fieldId)?.value;
-        });
-
-        this.stepChange.emit({
+    onCustomStepContinue() {
+        // Emit event with custom step data
+        this.customStepContinue.emit({
             stepIndex: this.activeIndex,
-            data: stepData
+            data: this.customStepData
         });
+        
+        if (this.isLastStep) {
+            // Combine form data with custom step data
+            const finalData = {
+                ...this.formGroup.value,
+                ...this.customStepData
+            };
+            
+            // Emit the final combined data
+            this.formSubmit.emit(finalData);
+        } else {
+            this.nextStep();
+        }
+    }
+
+    emitStepChange() {
+        if (this.steps[this.activeIndex]?.customTemplate) {
+            // For custom template steps, emit the custom data
+            this.stepChange.emit({
+                stepIndex: this.activeIndex,
+                data: this.customStepData
+            });
+        } else {
+            // For regular steps, extract form data
+            const stepData: any = {};
+
+            // Extract only the data relevant to the current step
+            this.currentStepFields.forEach((field) => {
+                stepData[field.fieldId] = this.formGroup.get(field.fieldId)?.value;
+            });
+
+            this.stepChange.emit({
+                stepIndex: this.activeIndex,
+                data: stepData
+            });
+        }
+    }
+
+    // Method to get current step data for template context
+    getStepData(): any {
+        return this.customStepData;
     }
 
     onMapReady(map: any, fieldId: string) {
@@ -472,19 +537,10 @@ export class GenericStepperComponent implements OnInit, OnChanges {
             radius: addressData.radius
         };
 
-        // // Update form value
-        // if (this.formGroup && this.formGroup.get(fieldId)) {
-        //     const locationValue = {
-        //         latitude: addressData.position.lat,
-        //         longitude: addressData.position.lng,
-        //         radius: addressData.radius
-        //     };
         this.formGroup.get(fieldId)?.setValue(this.currentCommonLocation);
         this.formGroup.get(fieldId)?.markAsDirty();
 
         this.formGroup.get('locationPlace1')?.setValue(this.currentCommonLocation);
-
-        // }
     }
 
     onPlaceSelected(place: any, fieldId: string) {
@@ -520,7 +576,6 @@ export class GenericStepperComponent implements OnInit, OnChanges {
         this.updateDependentFields(fieldId, selectedValue);
     }
 
-    // In your stepper component class
     onMultiselectSelect(value: any, fieldId: string): void {
         // Set the value in the form control
         this.formGroup.get(fieldId)?.setValue(value);
@@ -549,24 +604,26 @@ export class GenericStepperComponent implements OnInit, OnChanges {
 
         // Find fields that depend on this field
         this.steps.forEach((step) => {
-            step.fields.forEach((f) => {
-                if (f.dependsOn === fieldId) {
-                    // Reset the dependent form control
-                    this.formGroup.get(f.fieldId)?.reset();
+            if (!step.customTemplate) {
+                step.fields.forEach((f) => {
+                    if (f.dependsOn === fieldId) {
+                        // Reset the dependent form control
+                        this.formGroup.get(f.fieldId)?.reset();
 
-                    // Set API params for the dependent dropdown
-                    if (paramValue) {
-                        // Use the original fieldId as parameter name
-                        this.dropdownParams[f.fieldId] = { [fieldId]: paramValue };
-                    } else {
-                        // Clear params when parent value is cleared
-                        this.dropdownParams[f.fieldId] = {};
+                        // Set API params for the dependent dropdown
+                        if (paramValue) {
+                            // Use the original fieldId as parameter name
+                            this.dropdownParams[f.fieldId] = { [fieldId]: paramValue };
+                        } else {
+                            // Clear params when parent value is cleared
+                            this.dropdownParams[f.fieldId] = {};
+                        }
+
+                        // Clear any nested dependents recursively
+                        this.updateDependentFields(f.fieldId, null);
                     }
-
-                    // Clear any nested dependents recursively
-                    this.updateDependentFields(f.fieldId, null);
-                }
-            });
+                });
+            }
         });
     }
 }

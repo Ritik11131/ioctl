@@ -3,13 +3,18 @@ import { GenericTableComponent } from '../../../shared/components/generic-table/
 import { UiService } from '../../../layout/service/ui.service';
 import { GenericStepperComponent, StepConfig } from '../../../shared/components/generic-stepper/generic-stepper.component';
 import { HttpService } from '../../service/http.service';
+import { PanelMenuModule } from 'primeng/panelmenu';
+import { CheckboxModule } from 'primeng/checkbox';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-role',
-  imports: [GenericTableComponent, GenericStepperComponent],
+  imports: [GenericTableComponent, GenericStepperComponent, PanelMenuModule, CheckboxModule, FormsModule],
   templateUrl: './role.component.html',
   styleUrl: './role.component.scss'
 })
+
+
 export class RoleComponent {
 
    @ViewChild('createUpdateRoleContent') createUpdateRoleContent!: TemplateRef<any>;
@@ -17,6 +22,51 @@ export class RoleComponent {
       isEditMode = false;
       editData: any = null;
       selectedRowItems: any[] = [];
+
+      menuItems = [
+        {
+          label: 'Approval',
+          icon: 'pi pi-fw pi-sitemap',
+          permissions: { read: false, write: false },
+        },
+        {
+          label: 'Management',
+          icon: 'pi pi-fw pi-warehouse',
+          permissions: { read: false, write: false },
+          items: [
+            {
+              label: 'User',
+              icon: 'pi pi-fw pi-users',
+              permissions: { read: false, write: false },
+            },
+            {
+              label: 'Department',
+              icon: 'pi pi-fw pi-building',
+              permissions: { read: false, write: false },
+            },
+            {
+              label: 'Address',
+              icon: 'pi pi-fw pi-address-book',
+              permissions: { read: false, write: false },
+            },
+            {
+              label: 'Routes',
+              icon: 'pi pi-fw pi-map',
+              permissions: { read: false, write: false },
+            },
+            {
+              label: 'Role',
+              icon: 'pi pi-fw pi-user',
+              permissions: { read: false, write: false },
+            },
+            {
+              label: 'Tolls',
+              icon: 'pi pi-fw pi-map-marker',
+              permissions: { read: false, write: false },
+            }
+          ]
+        }
+      ];
   
     toolBarStartActions = [
         {
@@ -88,7 +138,14 @@ export class RoleComponent {
                     placeholder: 'Enter description'
                 }
               ]
+          },
+          {
+            stepId: 'custom',
+            title: 'Permissions',
+            fields: [], // No fields as we will use custom template
+            customTemplate: true // Mark this step as using a custom template
           }
+          
       ];
 
 
@@ -248,16 +305,108 @@ export class RoleComponent {
           this.isEditMode = true;
           this.uiService.toggleLoader(true);
           try {
-              const response: any = await this.http.get('api/geortd/roles/getbyid', {}, this.selectedRowItems[0].id);
+              const response: any = await this.http.get('geortd/roles/getbyid', {}, this.selectedRowItems[0].id);
               console.log(response, 'response');
               this.editData = response.data; // Assuming the response has a 'data' property containing the department details
               this.uiService.openDrawer(this.createUpdateRoleContent, 'Role Management');
           } catch (error) {
               console.error('Error fetching department details:', error);
-              this.uiService.showToast('error', 'Error', 'Failed to fetch department details');
+              this.uiService.showToast('error', 'Error', 'Failed to fetch role details');
           } finally {
               this.uiService.toggleLoader(false);
           }
       }
+
+
+     // Toggle read permission
+  toggleReadPermission(item: any, event: any) {
+    event.stopPropagation();
+    
+    // Toggle the read permission for current item
+    if (item.permissions) {
+      item.permissions.read = !item.permissions.read;
+      
+      // If read permission is unchecked, also uncheck write permission
+      if (!item.permissions.read) {
+        item.permissions.write = false;
+      }
+      
+      // Update child items if present
+      if (item.items && item.items.length > 0) {
+        this.updateChildPermissions(item.items, 'read', item.permissions.read);
+      }
+    }
+  }
+
+  // Toggle write permission
+  toggleWritePermission(item: any, event: any) {
+    event.stopPropagation();
+    
+    // Toggle the write permission for current item
+    if (item.permissions) {
+      item.permissions.write = !item.permissions.write;
+      
+      // If write permission is checked, also check read permission
+      if (item.permissions.write) {
+        item.permissions.read = true;
+      }
+      
+      // Update child items if present
+      if (item.items && item.items.length > 0) {
+        this.updateChildPermissions(item.items, 'write', item.permissions.write);
+      }
+    }
+  }
+
+  // Update permissions for all child items
+  private updateChildPermissions(items: any[], permissionType: 'read' | 'write', value: boolean) {
+    for (const childItem of items) {
+      if (childItem.permissions) {
+        if (permissionType === 'read') {
+          childItem.permissions.read = value;
+          // If read is unchecked, also uncheck write
+          if (!value) {
+            childItem.permissions.write = false;
+          }
+        } else if (permissionType === 'write') {
+          childItem.permissions.write = value;
+          // If write is checked, also check read
+          if (value) {
+            childItem.permissions.read = true;
+          }
+        }
+      }
+      
+      // Recursively update grandchildren
+      if (childItem.items && childItem.items.length > 0) {
+        this.updateChildPermissions(childItem.items, permissionType, value);
+      }
+    }
+  }
+
+  // Check if this is a parent item that contains children
+  hasChildren(item: any): boolean {
+    return item.items !== undefined && item.items.length > 0;
+  }
+
+  // Check all child items after expanding a parent
+  onNodeExpand(event: any) {
+    const expandedItem = event.node as any;
+    if (expandedItem.permissions && expandedItem.permissions.read) {
+      // Apply parent permissions to all children when expanded
+      if (expandedItem.items && expandedItem.items.length > 0) {
+        this.updateChildPermissions(
+          expandedItem.items, 
+          'read', 
+          expandedItem.permissions.read
+        );
+        this.updateChildPermissions(
+          expandedItem.items, 
+          'write', 
+          expandedItem.permissions.write
+        );
+      }
+    }
+  }
 
 }

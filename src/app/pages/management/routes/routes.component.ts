@@ -16,6 +16,7 @@ import { GenericViewOnMapComponent } from '../../../shared/components/generic-vi
 export class RoutesComponent implements OnInit {
     @ViewChild('createUpdateRouteContent') createUpdateRouteContent!: TemplateRef<any>;
     @ViewChild('checkRouteTollsContent') checkRouteTollsContent!:TemplateRef<any>;
+    @ViewChild('linkRtdAproval') linkRtdAproval!:TemplateRef<any>;
 
     selectedRowItems: any[] = [];
     isEditMode = false;
@@ -53,6 +54,14 @@ export class RoutesComponent implements OnInit {
             key: 'checkTolls',
             label: 'Check Tolls',
             icon: 'pi pi-map-marker',
+            severity: 'primary',
+            outlined: true,
+            dependentOnRow: true
+        },
+        {
+            key: 'linkApproval',
+            label: 'Link Rtd ',
+            icon: 'pi pi-link',
             severity: 'primary',
             outlined: true,
             dependentOnRow: true
@@ -164,7 +173,32 @@ export class RoutesComponent implements OnInit {
         await this.handleEditRoute();
       } else if (event.key === 'checkTolls') {
         await this.handleRouteWithTolls();
+      } else if(event.key === 'linkApproval') {
+        await this.handleLinkApproval();
       }
+    }
+
+    async handleLinkApproval(): Promise<void> {
+        this.uiService.openDrawer(this.linkRtdAproval, 'View Route');
+
+        this.formSteps = [
+            {
+                stepId: 'link_approval_to_rtd',
+                title: '',
+                fields: [
+                    {
+                        fieldId: 'approval',
+                        type: 'dropdown',
+                        apiType: 'RtdApproval',
+                        label: 'Approval',
+                        required: true,
+                        placeholder: 'Select A Flow',
+                        dependsOn: null,
+                        autoFetch:true
+                    },
+                ]
+            }
+        ]
     }
 
     async handleRouteWithTolls(): Promise<void> {
@@ -374,6 +408,26 @@ export class RoutesComponent implements OnInit {
 
     onStepChange(event: { stepIndex: number; data: any }) {
         // Here you could call an API to validate the step if needed
+    }
+
+    async onLinkApprovalFormSubmit(formData: any): Promise<void> {
+        this.uiService.toggleLoader(true);
+        const { approval } = formData;
+        const payload = {
+            rtdId: this.selectedRowItems[0].id,
+            approvalId: approval?.id
+        }
+        
+        try {
+          const response = await this.http.post('geortd/RtdApproval/LinkApprovalToRtd', payload);
+          this.uiService.showToast('success', 'Success', 'Route linked successfully');
+          this.uiService.closeDrawer(); // Close the drawer after submission
+          await this.fetchRtdList(); // Refresh the department list after successful submission
+        } catch (error) {
+          this.uiService.showToast('error', 'Error', 'Failed to submit form');
+        } finally {
+          this.uiService.toggleLoader(false);
+        }
     }
 
     async onFormSubmit(formData: any): Promise<void> {
