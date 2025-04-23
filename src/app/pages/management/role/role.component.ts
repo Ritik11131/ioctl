@@ -210,7 +210,7 @@ export class RoleComponent {
         if(this.isEditMode) {
           this.uiService.toggleLoader(true);
           try {
-            const response = await this.http.put('geortd/roles/Modify', this.selectedRowItems[0].id, {...formData, id: this.selectedRowItems[0].id, attributes:JSON.stringify({})});
+            const response = await this.http.put('geortd/roles/Modify', this.selectedRowItems[0].id, {...formData, id: this.selectedRowItems[0].id, users:[], attributes:JSON.stringify(this.menuItems)});
             console.log(response, 'response');
             this.uiService.showToast('success', 'Success', 'Department updated successfully');
             this.uiService.closeDrawer(); // Close the drawer after submission
@@ -225,7 +225,7 @@ export class RoleComponent {
         } else {
           this.uiService.toggleLoader(true);
           try {
-            const response = await this.http.post('geortd/roles/create', {...formData, attributes:JSON.stringify({})});
+            const response = await this.http.post('geortd/roles/create', {...formData,users:[], attributes:JSON.stringify(this.menuItems)});
             console.log(response, 'response');
             this.uiService.showToast('success', 'Success', 'Role created successfully');
             this.uiService.closeDrawer(); // Close the drawer after submission
@@ -308,6 +308,8 @@ export class RoleComponent {
               const response: any = await this.http.get('geortd/roles/getbyid', {}, this.selectedRowItems[0].id);
               console.log(response, 'response');
               this.editData = response.data; // Assuming the response has a 'data' property containing the department details
+              const {attributes} = response?.data;
+              this.menuItems = JSON.parse(attributes)
               this.uiService.openDrawer(this.createUpdateRoleContent, 'Role Management');
           } catch (error) {
               console.error('Error fetching department details:', error);
@@ -317,96 +319,42 @@ export class RoleComponent {
           }
       }
 
+    /**
+   * Update all child permissions when parent is toggled
+   */
+  updateChildPermissions(parentItem: any, permissionType: 'read' | 'write'): void {
+    if (!parentItem.items || parentItem.items.length === 0) {
+      return;
+    }
 
-     // Toggle read permission
-  toggleReadPermission(item: any, event: any) {
-    event.stopPropagation();
+    // Set all children to match parent's permission value
+    const permValue = parentItem.permissions[permissionType];
     
-    // Toggle the read permission for current item
-    if (item.permissions) {
-      item.permissions.read = !item.permissions.read;
-      
-      // If read permission is unchecked, also uncheck write permission
-      if (!item.permissions.read) {
-        item.permissions.write = false;
-      }
-      
-      // Update child items if present
-      if (item.items && item.items.length > 0) {
-        this.updateChildPermissions(item.items, 'read', item.permissions.read);
-      }
-    }
+    parentItem.items.forEach((item: any) => {
+      item.permissions[permissionType] = permValue;
+    });
   }
 
-  // Toggle write permission
-  toggleWritePermission(item: any, event: any) {
-    event.stopPropagation();
+  /**
+   * Update parent permission status based on children
+   */
+  updateParentPermissions(parentItem: any): void {
+    if (!parentItem.items || parentItem.items.length === 0) {
+      return;
+    }
+
+    // Check if all children have the same read permission
+    const allChildrenRead = parentItem.items.every((item: any) => item.permissions.read);
+    const anyChildrenRead = parentItem.items.some((item: any) => item.permissions.read);
     
-    // Toggle the write permission for current item
-    if (item.permissions) {
-      item.permissions.write = !item.permissions.write;
-      
-      // If write permission is checked, also check read permission
-      if (item.permissions.write) {
-        item.permissions.read = true;
-      }
-      
-      // Update child items if present
-      if (item.items && item.items.length > 0) {
-        this.updateChildPermissions(item.items, 'write', item.permissions.write);
-      }
-    }
-  }
+    // Check if all children have the same write permission
+    const allChildrenWrite = parentItem.items.every((item: any) => item.permissions.write);
+    const anyChildrenWrite = parentItem.items.some((item: any) => item.permissions.write);
 
-  // Update permissions for all child items
-  private updateChildPermissions(items: any[], permissionType: 'read' | 'write', value: boolean) {
-    for (const childItem of items) {
-      if (childItem.permissions) {
-        if (permissionType === 'read') {
-          childItem.permissions.read = value;
-          // If read is unchecked, also uncheck write
-          if (!value) {
-            childItem.permissions.write = false;
-          }
-        } else if (permissionType === 'write') {
-          childItem.permissions.write = value;
-          // If write is checked, also check read
-          if (value) {
-            childItem.permissions.read = true;
-          }
-        }
-      }
-      
-      // Recursively update grandchildren
-      if (childItem.items && childItem.items.length > 0) {
-        this.updateChildPermissions(childItem.items, permissionType, value);
-      }
-    }
-  }
-
-  // Check if this is a parent item that contains children
-  hasChildren(item: any): boolean {
-    return item.items !== undefined && item.items.length > 0;
-  }
-
-  // Check all child items after expanding a parent
-  onNodeExpand(event: any) {
-    const expandedItem = event.node as any;
-    if (expandedItem.permissions && expandedItem.permissions.read) {
-      // Apply parent permissions to all children when expanded
-      if (expandedItem.items && expandedItem.items.length > 0) {
-        this.updateChildPermissions(
-          expandedItem.items, 
-          'read', 
-          expandedItem.permissions.read
-        );
-        this.updateChildPermissions(
-          expandedItem.items, 
-          'write', 
-          expandedItem.permissions.write
-        );
-      }
-    }
+    // Update parent permissions based on children
+    // Only set parent as checked if ALL children are checked
+    parentItem.permissions.read = allChildrenRead;
+    parentItem.permissions.write = allChildrenWrite;
   }
 
 }
