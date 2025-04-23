@@ -69,6 +69,7 @@ export class RoutesComponent implements OnInit {
     ];
 
     currentRoute: any = null;
+    suggestedRoutes: any = null;
 
     tableConfig = {
         title: 'Manage Routes',
@@ -285,8 +286,11 @@ export class RoutesComponent implements OnInit {
         this.selectedSource = source;
         this.selectedDestination = destination;
         const route = JSON.parse(attributes)
+        const {suggestedDestinationRoutes, suggestedSourceRoutes} = route;
         
-        this.currentRoute = route?.route
+        this.currentRoute = route?.route;
+        this.suggestedRoutes = {suggestedSourceRoutes, suggestedDestinationRoutes};
+        
         this.editData = {
          name,
          source_address:source,
@@ -339,6 +343,7 @@ export class RoutesComponent implements OnInit {
         this.selectedSource = null;
         this.selectedDestination = null;
         this.currentRoute = null;
+        this.suggestedRoutes = null;
         this.formSteps = [
             {
                 stepId: 'route_management',
@@ -444,7 +449,7 @@ export class RoutesComponent implements OnInit {
           sourceDeptId:source_department?.id,
           destinationDeptId: destination_department?.id,
           reason: "test reason",
-          attributes: JSON.stringify( { route: this.currentRoute } )
+          attributes: JSON.stringify( { route: this.currentRoute, ...this.suggestedRoutes } )
         }
         
         try {
@@ -470,7 +475,7 @@ export class RoutesComponent implements OnInit {
           sourceDeptId:source_department?.id,
           destinationDeptId: destination_department?.id,
           reason: "test reason",
-          attributes:JSON.stringify({route:this.currentRoute})
+          attributes:JSON.stringify({route:this.currentRoute, ...this.suggestedRoutes})
         }
 
           try {
@@ -505,6 +510,11 @@ export class RoutesComponent implements OnInit {
 
     onRouteSelected(route: any): void {
         this.currentRoute = route;
+    }
+
+    onSuggestedRoutes(routes: any): void {
+        // Handle suggested routes if needed
+        this.suggestedRoutes = {...this.suggestedRoutes,...routes};
     }
 
     handleStepperAutoComplete({ value, fieldId }: any) {

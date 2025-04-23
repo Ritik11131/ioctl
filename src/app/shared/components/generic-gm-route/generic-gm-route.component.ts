@@ -189,8 +189,9 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
   @Output() destinationRadiusChanged = new EventEmitter<number>();
   // @Output() routeCreated = new EventEmitter<SavedRoute>();
   // Change the routeCreated Output
-@Output() routeCreated = new EventEmitter<{sourceToDestination: SavedRoute | null, destinationToSource: SavedRoute | null}>();
-@Output() routeSelected = new EventEmitter<{sourceToDestination: SavedRoute | null, destinationToSource: SavedRoute | null}>();
+  @Output() suggestedRoutes = new EventEmitter<any>();
+  @Output() routeCreated = new EventEmitter<{sourceToDestination: SavedRoute | null, destinationToSource: SavedRoute | null}>();
+  @Output() routeSelected = new EventEmitter<{sourceToDestination: SavedRoute | null, destinationToSource: SavedRoute | null}>();
 
   // @Output() routeSelected = new EventEmitter<SavedRoute>();
 
@@ -509,6 +510,8 @@ selectedRoutes: {
       const distanceB = b.legs?.[0]?.distance?.value || 0;
       return distanceA - distanceB;
     });
+
+    this.suggestedRoutes.emit({[!isReturn ? 'suggestedSourceRoutes' : 'suggestedDestinationRoutes']: sortedRoutes});
 
     // Reference to the appropriate arrays based on route direction
     const routeOptionsRef = isReturn ? this.returnRouteOptions : this.routeOptions;
