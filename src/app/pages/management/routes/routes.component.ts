@@ -392,14 +392,18 @@ export class RoutesComponent implements OnInit {
                     },
                     {
                         fieldId: 'startDate',
-                        type: 'text',
+                        type: 'date',
+                        selectionMode: 'single',
+                        dateFormat: 'yy-mm-dd',
                         label: 'Start Date',
                         required: true,
                         placeholder: 'Enter a date'
                     },
                     {
                         fieldId: 'endDate',
-                        type: 'text',
+                        type: 'date',
+                        selectionMode: 'single',
+                        dateFormat: 'yy-mm-dd',
                         label: 'End Date',
                         required: true,
                         placeholder: 'Enter a date'

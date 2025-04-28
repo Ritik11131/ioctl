@@ -5,6 +5,7 @@ import { StepsModule } from 'primeng/steps';
 import { MenuItem } from 'primeng/api';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
+import { DatePickerModule } from 'primeng/datepicker';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
 import { InputNumberModule } from 'primeng/inputnumber';
@@ -29,6 +30,8 @@ export interface StepFieldConfig {
     defaultValue?: any;
     required?: boolean;
     placeholder?: string;
+    selectionMode?: any;
+    dateFormat?: any; // For date fields
 }
 
 export interface StepConfig {
@@ -49,6 +52,7 @@ export interface StepConfig {
         TextareaModule,
         SelectModule,
         ButtonModule,
+        DatePickerModule,
         InputNumberModule,
         GenericLocationSearchComponent,
         GenericDropdownComponent,
@@ -163,6 +167,10 @@ export interface StepConfig {
                                             @case ('autocomplete') {
                                                 <app-generic-autocomplete [id]="field.fieldId" [apiEndpoint]="field.apiType" displayField="name" [placeholder]="field.placeholder" (itemSelected)="onAutoCompleteSelected($event, field.fieldId)">
                                                 </app-generic-autocomplete>
+                                            }
+
+                                            @case ('date') {
+                                                <p-datepicker [id]="field.fieldId" [formControlName]="field.fieldId" [iconDisplay]="'input'" [showIcon]="true" inputId="icondisplay" [selectionMode]="field?.selectionMode" [dateFormat]="field?.dateFormat" styleClass="w-full" />
                                             }
                                         }
                                     </div>
