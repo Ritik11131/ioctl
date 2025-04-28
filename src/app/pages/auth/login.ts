@@ -83,6 +83,7 @@ export class Login {
           console.error(error);
           this.uiService.showToast('error', 'Error', 'Failed to logIN');
         } finally {
+          this.uiService.toggleLoader(false);
         }
       }
 }
