@@ -65,9 +65,9 @@ import { AuthService } from '../service/auth.service';
     `
 })
 export class Login {
-    usernameOrEmail: string = '11111';
+    usernameOrEmail: string = 'abhishek.jiyoun@gmail.com';
 
-    password: string = '2222';
+    password: string = '123456';
 
     checked: boolean = false;
 

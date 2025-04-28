@@ -79,8 +79,8 @@ export class RoutesComponent implements OnInit {
             { field: 'destination', header: 'Destination Name', subfield: 'name', minWidth: '15rem' },
             { field: 'sourceDept', header: 'Source Dept', subfield: 'name', minWidth: '15rem' },
             { field: 'destinationDept', header: 'Destination Name', subfield: 'name', minWidth: '15rem' },
-            { field: 'startDate', header: 'Start Date', minWidth: '15rem' },
-            { field: 'endDate', header: 'End Date', minWidth: '15rem' },
+            { field: 'startDate', header: 'Start Date', minWidth: '15rem', date: true },
+            { field: 'endDate', header: 'End Date', minWidth: '15rem', date: true },
         ],
         globalFilterFields: [],
         dataKey: 'id'
@@ -223,8 +223,8 @@ export class RoutesComponent implements OnInit {
           // Open drawer with combined data
           this.uiService.openDrawer(this.checkRouteTollsContent, 'View Route', '!w-[98vw] md:!w-[98vw] lg:!w-[98vw] rounded-l-2xl');
           
-        } catch (error) {
-          this.uiService.showToast('error', 'Error', 'Failed to fetch route or toll details');
+        } catch (error: any) {
+          this.uiService.showToast('error', 'Error', error?.error?.data);
         } finally {
           this.uiService.toggleLoader(false);
         }
@@ -302,8 +302,8 @@ export class RoutesComponent implements OnInit {
         };
         this.uiService.openDrawer(this.createUpdateRouteContent, 'Route Management', '!w-[98vw] md:!w-[98vw] lg:!w-[98vw] rounded-l-2xl');
         
-      } catch (error) {
-        this.uiService.showToast('error', 'Error', 'Failed to fetch address details');
+      } catch (error: any) {
+        this.uiService.showToast('error', 'Error',  error?.error?.data);
       }   finally {
         this.uiService.toggleLoader(false);
       }
@@ -316,8 +316,8 @@ export class RoutesComponent implements OnInit {
         const response: any = await this.http.delete('geortd/rtd/delete', this.selectedRowItems[0].id);
         this.uiService.showToast('success', 'Success', 'Route deleted successfully');
         await this.fetchRtdList(); // Refresh the address list after deletion
-      } catch (error) {
-        this.uiService.showToast('error', 'Error', 'Failed to delete address');
+      } catch (error: any) {
+        this.uiService.showToast('error', 'Error',  error?.error?.data);
       } finally {
         this.uiService.toggleLoader(false);
       }
@@ -330,8 +330,8 @@ export class RoutesComponent implements OnInit {
             this.tableData = response.data; // Assuming the response has a 'data' property containing the list of departments
             // Handle the response data as needed
             this.selectedRowItems = []; // Reset selected items after fetching new data
-        } catch (error) {
-            this.uiService.showToast('error', 'Error', 'Failed to fetch role list');
+        } catch (error: any) {
+            this.uiService.showToast('error', 'Error',  error?.error?.data);
         } finally {
             this.uiService.toggleLoader(false);
         }
@@ -428,9 +428,10 @@ export class RoutesComponent implements OnInit {
           this.uiService.showToast('success', 'Success', 'Route linked successfully');
           this.uiService.closeDrawer(); // Close the drawer after submission
           await this.fetchRtdList(); // Refresh the department list after successful submission
-        } catch (error) {
-          this.uiService.showToast('error', 'Error', 'Failed to submit form');
-        } finally {
+        } catch (error: any) {
+            console.error('Error submitting form:', error);
+            this.uiService.showToast('error', 'Error', error?.error?.data);
+          } finally {
           this.uiService.toggleLoader(false);
         }
     }
@@ -457,9 +458,10 @@ export class RoutesComponent implements OnInit {
           this.uiService.showToast('success', 'Success', 'Route updated successfully');
           this.uiService.closeDrawer(); // Close the drawer after submission
           await this.fetchRtdList(); // Refresh the department list after successful submission
-        } catch (error) {
-          this.uiService.showToast('error', 'Error', 'Failed to submit form');
-        } finally {
+        } catch (error: any) {
+            console.error('Error submitting form:', error);
+            this.uiService.showToast('error', 'Error', error?.error?.data);
+          } finally {
           this.uiService.toggleLoader(false);
         }
 
@@ -483,9 +485,10 @@ export class RoutesComponent implements OnInit {
               this.uiService.showToast('success', 'Success', 'Route created successfully');
               this.uiService.closeDrawer(); // Close the drawer after submission
               await this.fetchRtdList(); // Refresh the department list after successful submission
-          } catch (error) {
-              this.uiService.showToast('error', 'Error', 'Failed to submit form');
-          } finally {
+            } catch (error: any) {
+                console.error('Error submitting form:', error);
+                this.uiService.showToast('error', 'Error', error?.error?.data);
+              } finally {
               this.uiService.toggleLoader(false);
           }
       }

@@ -8,10 +8,11 @@ import { Table, TableModule } from 'primeng/table';
 import { ToolbarModule } from 'primeng/toolbar';
 import { SplitButtonModule } from 'primeng/splitbutton';
 import { GenericDropdownComponent } from '../generic-dropdown/generic-dropdown.component';
+import { DatePipe } from '@angular/common';
 
 @Component({
     selector: 'app-generic-table',
-    imports: [ToolbarModule, ButtonModule, RippleModule, TableModule, IconFieldModule, InputIconModule, SplitButtonModule, InputTextModule, GenericDropdownComponent],
+    imports: [ToolbarModule, ButtonModule, RippleModule, TableModule, IconFieldModule, InputIconModule, SplitButtonModule, InputTextModule, GenericDropdownComponent, DatePipe],
     template: `
         <p-toolbar styleClass="mb-6">
             <ng-template #start>
@@ -100,7 +101,7 @@ import { GenericDropdownComponent } from '../generic-dropdown/generic-dropdown.c
                     </td>
                     @for (col of columns; track $index) {
                         <td>
-                            {{ col.subfield ? rowData[col.field]?.[col.subfield] || '--' : rowData[col.field] || '--' }}
+                            {{ col.subfield ? (rowData[col.field]?.[col.subfield] || '--') : ( col.date ? ((rowData[col.field] | date: 'medium') || '--') :  rowData[col.field] || '--') }}
                         </td>
                     }
                 </tr>

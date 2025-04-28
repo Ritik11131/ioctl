@@ -276,10 +276,10 @@ export class TollsComponent {
             this.tableData = response.data; // Assuming the response has a 'data' property containing the list of departments
             // Handle the response data as needed
             this.selectedRowItems = []; // Reset selected items after fetching new data
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error fetching role list:', error);
             this.tableData = [];
-            this.uiService.showToast('error', 'Error', 'Failed to fetch tolls list');
+            this.uiService.showToast('error', 'Error',  error?.error?.data);
         } finally {
             this.uiService.toggleLoader(false);
         }
@@ -317,9 +317,9 @@ export class TollsComponent {
             console.log(response, 'response');
             this.uiService.showToast('success', 'Success', 'Role deleted successfully');
             // await this.fetchTollsListRouteWise(); // Refresh the department list after deletion
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error deleting role:', error);
-            this.uiService.showToast('error', 'Error', 'Failed to delete role');
+            this.uiService.showToast('error', 'Error',  error?.error?.data);
         } finally {
             this.uiService.toggleLoader(false);
         }
@@ -334,9 +334,9 @@ export class TollsComponent {
             console.log(response, 'response');
             this.editData = response.data; // Assuming the response has a 'data' property containing the department details
             this.uiService.openDrawer(this.createUpdateTollsContent, 'Toll Management');
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error fetching department details:', error);
-            this.uiService.showToast('error', 'Error', 'Failed to fetch department details');
+            this.uiService.showToast('error', 'Error',  error?.error?.data);
         } finally {
             this.uiService.toggleLoader(false);
         }
@@ -361,8 +361,8 @@ export class TollsComponent {
             const response: any = await this.http.get(`geortd/rtdtoll/getbyid/${this.routeId}`, {}, this.selectedRowItems[0]?.id);
             const {tollPriceVehicleTypes} = response?.data
             this.processTollPricesResponse(tollPriceVehicleTypes);
-        } catch (error) {
-            this.uiService.showToast('error','Error','Failed To get toll')
+        } catch (error: any) {
+            this.uiService.showToast('error','Error', error?.error?.data)
         }
       }
       

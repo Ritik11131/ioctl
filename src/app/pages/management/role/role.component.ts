@@ -196,9 +196,9 @@ export class RoleComponent {
             this.uiService.showToast('success', 'Success', 'Department updated successfully');
             this.uiService.closeDrawer(); // Close the drawer after submission
             await this.fetchRoleList(); // Refresh the department list after successful submission
-        } catch (error) {
+          } catch (error: any) {
             console.error('Error submitting form:', error);
-            this.uiService.showToast('error', 'Error', 'Failed to submit form');
+            this.uiService.showToast('error', 'Error', error?.error?.data);
           } finally {
             this.uiService.toggleLoader(false);
           }
@@ -215,9 +215,9 @@ export class RoleComponent {
             this.uiService.showToast('success', 'Success', 'Department updated successfully');
             this.uiService.closeDrawer(); // Close the drawer after submission
             await this.fetchRoleList(); // Refresh the department list after successful submission
-          } catch (error) {
+          } catch (error: any) {
             console.error('Error submitting form:', error);
-            this.uiService.showToast('error', 'Error', 'Failed to submit form');
+            this.uiService.showToast('error', 'Error', error?.error?.data);
           } finally {
             this.uiService.toggleLoader(false);
           }
@@ -230,9 +230,9 @@ export class RoleComponent {
             this.uiService.showToast('success', 'Success', 'Role created successfully');
             this.uiService.closeDrawer(); // Close the drawer after submission
             await this.fetchRoleList(); // Refresh the department list after successful submission
-          } catch (error) {
+          } catch (error: any) {
             console.error('Error submitting form:', error);
-            this.uiService.showToast('error', 'Error', 'Failed to submit form');
+            this.uiService.showToast('error', 'Error', error?.error?.data);
           } finally {
             this.uiService.toggleLoader(false);
           }
@@ -248,9 +248,9 @@ export class RoleComponent {
               this.tableData = response.data; // Assuming the response has a 'data' property containing the list of departments
               // Handle the response data as needed
               this.selectedRowItems = []; // Reset selected items after fetching new data
-          } catch (error) {
+          } catch (error: any) {
               console.error('Error fetching role list:', error);
-              this.uiService.showToast('error', 'Error', 'Failed to fetch role list');
+              this.uiService.showToast('error', 'Error',  error?.error?.data);
           } finally {
               this.uiService.toggleLoader(false);
           }
@@ -292,10 +292,10 @@ export class RoleComponent {
               console.log(response, 'response');
               this.uiService.showToast('success', 'Success', 'Role deleted successfully');
               await this.fetchRoleList(); // Refresh the department list after deletion
-          } catch (error) {
-              console.error('Error deleting role:', error);
-              this.uiService.showToast('error', 'Error', 'Failed to delete role');
-          } finally {
+            } catch (error: any) {
+              console.error('Error submitting form:', error);
+              this.uiService.showToast('error', 'Error', error?.error?.data);
+            } finally {
               this.uiService.toggleLoader(false);
           }
       }
@@ -311,10 +311,10 @@ export class RoleComponent {
               const {attributes} = response?.data;
               this.menuItems = JSON.parse(attributes)
               this.uiService.openDrawer(this.createUpdateRoleContent, 'Role Management');
-          } catch (error) {
-              console.error('Error fetching department details:', error);
-              this.uiService.showToast('error', 'Error', 'Failed to fetch role details');
-          } finally {
+            } catch (error: any) {
+              console.error('Error submitting form:', error);
+              this.uiService.showToast('error', 'Error', error?.error?.data);
+            } finally {
               this.uiService.toggleLoader(false);
           }
       }

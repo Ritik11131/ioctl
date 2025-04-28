@@ -78,7 +78,7 @@ import { HttpService } from '../../service/http.service';
                 fieldId: 'mName',
                 type: 'text',
                 label: 'Middle Name',
-                required: true,
+                required: false,
                 placeholder: 'Enter middle name'
               },
               {
@@ -103,11 +103,11 @@ import { HttpService } from '../../service/http.service';
                 placeholder: 'Enter mobile number'
               },
               {
-                fieldId: 'dob',
+                fieldId: 'employeeId',
                 type: 'text',
-                label: 'Date of Birth',
+                label: 'Employee ID',
                 required: true,
-                placeholder: 'Enter date of birth'
+                placeholder: 'Enter Employee ID'
               },
               {
                 fieldId: 'department',
@@ -197,9 +197,9 @@ import { HttpService } from '../../service/http.service';
               this.uiService.showToast('success', 'Success', 'User updated successfully');
               this.uiService.closeDrawer(); // Close the drawer after submission
               await this.fetchUserList(); // Refresh the department list after successful submission
-            } catch (error) {
+            } catch (error: any) {
               console.error('Error submitting form:', error);
-              this.uiService.showToast('error', 'Error', 'Failed to submit form');
+              this.uiService.showToast('error', 'Error', error?.error?.data);
             } finally {
               this.uiService.toggleLoader(false);
             }
@@ -226,9 +226,9 @@ import { HttpService } from '../../service/http.service';
               this.uiService.showToast('success', 'Success', 'User created successfully');
               this.uiService.closeDrawer(); // Close the drawer after submission
               await this.fetchUserList(); // Refresh the department list after successful submission
-            } catch (error) {
+            } catch (error: any) {
               console.error('Error submitting form:', error);
-              this.uiService.showToast('error', 'Error', 'Failed to submit form');
+              this.uiService.showToast('error', 'Error', error?.error?.data);
             } finally {
               this.uiService.toggleLoader(false);
             }
@@ -244,10 +244,10 @@ import { HttpService } from '../../service/http.service';
                 this.tableData = response.data; // Assuming the response has a 'data' property containing the list of departments
                 // Handle the response data as needed
                 this.selectedRowItems = []; // Reset selected items after fetching new data
-            } catch (error) {
-                console.error('Error fetching user list:', error);
-                this.uiService.showToast('error', 'Error', 'Failed to fetch user list');
-            } finally {
+              } catch (error: any) {
+                console.error('Error submitting form:', error);
+                this.uiService.showToast('error', 'Error', error?.error?.data);
+              } finally {
                 this.uiService.toggleLoader(false);
             }
         }
@@ -282,10 +282,10 @@ import { HttpService } from '../../service/http.service';
                 console.log(response, 'response');
                 this.uiService.showToast('success', 'Success', 'Role deleted successfully');
                 await this.fetchUserList(); // Refresh the department list after deletion
-            } catch (error) {
-                console.error('Error deleting role:', error);
-                this.uiService.showToast('error', 'Error', 'Failed to delete role');
-            } finally {
+              } catch (error: any) {
+                console.error('Error submitting form:', error);
+                this.uiService.showToast('error', 'Error', error?.error?.data);
+              } finally {
                 this.uiService.toggleLoader(false);
             }
         }
@@ -299,10 +299,10 @@ import { HttpService } from '../../service/http.service';
                 console.log(response, 'response');
                 this.editData = response.data; // Assuming the response has a 'data' property containing the department details
                 this.uiService.openDrawer(this.createUpdateUserContent, 'Role Management');
-            } catch (error) {
-                console.error('Error fetching department details:', error);
-                this.uiService.showToast('error', 'Error', 'Failed to fetch department details');
-            } finally {
+              } catch (error: any) {
+                console.error('Error submitting form:', error);
+                this.uiService.showToast('error', 'Error', error?.error?.data);
+              } finally {
                 this.uiService.toggleLoader(false);
             }
         }

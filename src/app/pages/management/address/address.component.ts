@@ -183,10 +183,10 @@ export class AddressComponent implements OnInit {
             this.tableData = response.data; // Assuming the response has a 'data' property containing the list of addresses
             // Handle the response data as needed
             this.selectedRowItems = []; // Reset selected items after fetching new data
-        } catch (error) {
-            console.error('Error fetching address list:', error);
-            this.uiService.showToast('error', 'Error', 'Failed to fetch address list');
-        } finally {
+          } catch (error: any) {
+            console.error('Error submitting form:', error);
+            this.uiService.showToast('error', 'Error', error?.error?.data);
+          }finally {
             this.uiService.toggleLoader(false);
         }
     }
@@ -219,9 +219,9 @@ export class AddressComponent implements OnInit {
             this.uiService.showToast('success', 'Success', 'Address updated successfully');
             this.uiService.closeDrawer(); // Close the drawer after submission
             await this.fetchAddressList(); // Refresh the address list after successful submission
-          } catch (error) {
+          } catch (error: any) {
             console.error('Error submitting form:', error);
-            this.uiService.showToast('error', 'Error', 'Failed to submit form');
+            this.uiService.showToast('error', 'Error', error?.error?.data);
           } finally {
             this.uiService.toggleLoader(false);
           }
@@ -249,9 +249,9 @@ export class AddressComponent implements OnInit {
             this.uiService.showToast('success', 'Success', 'Address created successfully');
             this.uiService.closeDrawer(); // Close the drawer after submission
             await this.fetchAddressList(); // Refresh the address list after successful submission
-          } catch (error) {
+          } catch (error: any) {
             console.error('Error submitting form:', error);
-            this.uiService.showToast('error', 'Error', 'Failed to submit form');
+            this.uiService.showToast('error', 'Error', error?.error?.data);
           } finally {
             this.uiService.toggleLoader(false);
           }
@@ -276,9 +276,9 @@ export class AddressComponent implements OnInit {
       console.log(response, 'response');
       this.uiService.showToast('success', 'Success', 'Address deleted successfully');
       await this.fetchAddressList(); // Refresh the address list after deletion
-    } catch (error) {
-      console.error('Error deleting address:', error);
-      this.uiService.showToast('error', 'Error', 'Failed to delete address');
+    } catch (error: any) {
+      console.error('Error submitting form:', error);
+      this.uiService.showToast('error', 'Error', error?.error?.data);
     } finally {
       this.uiService.toggleLoader(false);
     }
@@ -306,10 +306,10 @@ export class AddressComponent implements OnInit {
         this.uiService.openDrawer(this.createUpdateAddressContent, 'Address Management');
         console.log(this.editData, 'editData');
         
-      } catch (error) {
-        console.error('Error fetching address details:', error);
-        this.uiService.showToast('error', 'Error', 'Failed to fetch address details');
-      }   finally {
+      } catch (error: any) {
+        console.error('Error submitting form:', error);
+        this.uiService.showToast('error', 'Error', error?.error?.data);
+      }  finally {
         this.uiService.toggleLoader(false);
       }
 

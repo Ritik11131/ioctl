@@ -130,10 +130,10 @@ export class DepartmentComponent implements OnInit {
           this.uiService.showToast('success', 'Success', 'Department updated successfully');
           this.uiService.closeDrawer(); // Close the drawer after submission
           await this.fetchDepartmentList(); // Refresh the department list after successful submission
-        } catch (error) {
-          console.error('Error submitting form:', error);
-          this.uiService.showToast('error', 'Error', 'Failed to submit form');
-        } finally {
+        } catch (error: any) {
+            console.error('Error submitting form:', error);
+            this.uiService.showToast('error', 'Error', error?.error?.data);
+          } finally {
           this.uiService.toggleLoader(false);
         }
 
@@ -145,10 +145,10 @@ export class DepartmentComponent implements OnInit {
           this.uiService.showToast('success', 'Success', 'Department created successfully');
           this.uiService.closeDrawer(); // Close the drawer after submission
           await this.fetchDepartmentList(); // Refresh the department list after successful submission
-        } catch (error) {
-          console.error('Error submitting form:', error);
-          this.uiService.showToast('error', 'Error', 'Failed to submit form');
-        } finally {
+        } catch (error: any) {
+            console.error('Error submitting form:', error);
+            this.uiService.showToast('error', 'Error', error?.error?.data);
+          } finally {
           this.uiService.toggleLoader(false);
         }
       }
@@ -163,10 +163,10 @@ export class DepartmentComponent implements OnInit {
             this.tableData = response.data; // Assuming the response has a 'data' property containing the list of departments
             // Handle the response data as needed
             this.selectedRowItems = []; // Reset selected items after fetching new data
-        } catch (error) {
-            console.error('Error fetching department list:', error);
-            this.uiService.showToast('error', 'Error', 'Failed to fetch department list');
-        } finally {
+        } catch (error: any) {
+            console.error('Error submitting form:', error);
+            this.uiService.showToast('error', 'Error', error?.error?.data);
+          } finally {
             this.uiService.toggleLoader(false);
         }
     }
@@ -201,10 +201,10 @@ export class DepartmentComponent implements OnInit {
             console.log(response, 'response');
             this.uiService.showToast('success', 'Success', 'Department deleted successfully');
             await this.fetchDepartmentList(); // Refresh the department list after deletion
-        } catch (error) {
-            console.error('Error deleting department:', error);
-            this.uiService.showToast('error', 'Error', 'Failed to delete department');
-        } finally {
+        } catch (error: any) {
+            console.error('Error submitting form:', error);
+            this.uiService.showToast('error', 'Error', error?.error?.data);
+          } finally {
             this.uiService.toggleLoader(false);
         }
     }
@@ -218,9 +218,9 @@ export class DepartmentComponent implements OnInit {
             console.log(response, 'response');
             this.editData = response.data; // Assuming the response has a 'data' property containing the department details
             this.uiService.openDrawer(this.createUpdateDepartmentContent, 'Department Management');
-        } catch (error) {
-            console.error('Error fetching department details:', error);
-            this.uiService.showToast('error', 'Error', 'Failed to fetch department details');
+        } catch (error: any) {
+            console.error('Error submitting form:', error);
+            this.uiService.showToast('error', 'Error', error?.error?.data);
         } finally {
             this.uiService.toggleLoader(false);
         }
