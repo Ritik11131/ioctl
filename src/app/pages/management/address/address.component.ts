@@ -130,8 +130,14 @@ export class AddressComponent implements OnInit {
                     fieldId: 'locationPlace3',
                     type: 'text',
                     label: 'Enter Location 3',
-                    required: true
+                    required: false
                 },
+                {
+                  fieldId: 'exCode',
+                  type: 'text',
+                  label: 'Enter Sap Code',
+                  required: true
+              },
                 {
                     fieldId: 'country',
                     type: 'dropdown',
@@ -196,7 +202,7 @@ export class AddressComponent implements OnInit {
         if(this.isEditMode) {
           this.uiService.toggleLoader(true);
           try {
-            const { city, country, geofenceName, state, zipCode, locationPlace3, locationPlace2, locationPlace1, locationMap } = formData;
+            const { city, country, geofenceName, state, zipCode, locationPlace3, locationPlace2, locationPlace1, locationMap, exCode } = formData;
             const payload = {
               id: this.selectedRowItems[0].id,
               searchBy: 'map',
@@ -211,7 +217,7 @@ export class AddressComponent implements OnInit {
               zipcode: zipCode,
               state: state,
               country: country,
-              exCode: null,
+              exCode,
               attributes: JSON.stringify(locationMap ?? locationPlace1)
             };
             const response = await this.http.put('geortd/address/Modify', this.selectedRowItems[0].id, payload);
@@ -227,7 +233,7 @@ export class AddressComponent implements OnInit {
           }
         } else {
           this.uiService.toggleLoader(true);
-          const  { city, country, geofenceName, state, zipCode, locationPlace3, locationPlace2, locationPlace1, locationMap } = formData;
+          const  { city, country, geofenceName, state, zipCode, locationPlace3, locationPlace2, locationPlace1, locationMap, exCode } = formData;
           const payload = {
             searchBy: 'map',
             name: geofenceName,
@@ -235,10 +241,10 @@ export class AddressComponent implements OnInit {
             address2: locationPlace2,
             address3: locationPlace3,
             city,
+            exCode,
             stateId: state?.id,
             countryId: country?.id,
             zipcode: zipCode,
-            exCode: null,
             latitude:locationPlace1.lat,
             longitude:locationPlace1.lng,
             attributes: JSON.stringify(locationPlace1)
@@ -291,13 +297,14 @@ export class AddressComponent implements OnInit {
       try {
         const response: any = await this.http.get('geortd/address/GetAddressById', {}, this.selectedRowItems[0].id);
         console.log(response, 'response');
-        const { address1, address2, address3, city, state, country, zipCode, name, attributes, id } = response.data;
+        const { address1, address2, address3, city, state, country, zipCode, name, attributes, id, exCode } = response.data;
         this.editData = {
           city,
           country,
           geofenceName: name,
           state,
           zipCode,
+          exCode,
           locationPlace3: address3,
           locationPlace2: address2,
           locationPlace1: JSON.parse(attributes),

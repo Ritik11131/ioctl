@@ -120,7 +120,8 @@ export class RtdApprovalComponent {
         { label: 'Add', value: 'add' },
         { label: 'Edit', value: 'edit' },
         { label: 'Delete', value: 'delete' },
-        { label: 'View', value: 'view' }
+        { label: 'View', value: 'view' },
+        { label: 'Approve', value: 'approve' },
     ];
 
     constructor(
@@ -138,7 +139,7 @@ export class RtdApprovalComponent {
         });
 
         // Add default permission field
-        // this.addPermissionField();
+        this.addPermissionField();
     }
 
     ngOnInit(): void {

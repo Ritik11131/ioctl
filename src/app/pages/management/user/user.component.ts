@@ -103,13 +103,6 @@ import { HttpService } from '../../service/http.service';
                 placeholder: 'Enter mobile number'
               },
               {
-                fieldId: 'employeeId',
-                type: 'text',
-                label: 'Employee ID',
-                required: true,
-                placeholder: 'Enter Employee ID'
-              },
-              {
                 fieldId: 'department',
                 type: 'dropdown',
                 apiType: 'department',
