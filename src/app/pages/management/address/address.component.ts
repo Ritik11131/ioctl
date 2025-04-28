@@ -117,7 +117,8 @@ export class AddressComponent implements OnInit {
                 {
                     fieldId: 'locationPlace1',
                     type: 'place',
-                    label: 'Enter Location 1',
+                    label: 'Search for a place or enter lat, lng',
+                    placeholder: 'Enter address or lat,lng',
                     required: true
                 },
                 {

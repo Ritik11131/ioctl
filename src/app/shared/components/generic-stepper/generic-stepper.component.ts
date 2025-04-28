@@ -150,7 +150,7 @@ export interface StepConfig {
                                                 <app-generic-location-search
                                                     #searchComponent
                                                     [apiKey]="googleMapsApiKey"
-                                                    [placeholder]="'Search'"
+                                                    [placeholder]="field.placeholder || 'Search location'"
                                                     (placeSelected)="onPlaceSelected($event, field.fieldId)"
                                                     [searchText]="placeDisplayValues[field.fieldId]"
                                                 />
