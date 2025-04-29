@@ -101,7 +101,7 @@ import { DatePipe } from '@angular/common';
                     </td>
                     @for (col of columns; track $index) {
                         <td>
-                            {{ col.subfield ? (rowData[col.field]?.[col.subfield] || '--') : ( col.date ? ((rowData[col.field] | date: 'medium') || '--') :  rowData[col.field] || '--') }}
+                            {{ col.subfield ? (rowData[col.field]?.[col.subfield] || '--') : ( col.date ? ((rowData[col.field] | date) || '--') :  rowData[col.field] || '--') }}
                         </td>
                     }
                 </tr>

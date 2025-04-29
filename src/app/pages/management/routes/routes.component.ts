@@ -17,6 +17,7 @@ export class RoutesComponent implements OnInit {
     @ViewChild('createUpdateRouteContent') createUpdateRouteContent!: TemplateRef<any>;
     @ViewChild('checkRouteTollsContent') checkRouteTollsContent!:TemplateRef<any>;
     @ViewChild('linkRtdAproval') linkRtdAproval!:TemplateRef<any>;
+    @ViewChild('approveRtdContent') approveRtdContent!:TemplateRef<any>;
 
     selectedRowItems: any[] = [];
     isEditMode = false;
@@ -51,6 +52,14 @@ export class RoutesComponent implements OnInit {
             dependentOnRow: true
         },
         {
+            key: 'approve',
+            label: 'Approve',
+            icon: 'pi pi-check-circle',
+            severity: 'primary',
+            outlined: true,
+            dependentOnRow: true
+        },
+        {
             key: 'checkTolls',
             label: 'Check Tolls',
             icon: 'pi pi-map-marker',
@@ -60,7 +69,7 @@ export class RoutesComponent implements OnInit {
         },
         {
             key: 'linkApproval',
-            label: 'Link Rtd ',
+            label: 'Link Rtd',
             icon: 'pi pi-link',
             severity: 'primary',
             outlined: true,
@@ -176,6 +185,45 @@ export class RoutesComponent implements OnInit {
         await this.handleRouteWithTolls();
       } else if(event.key === 'linkApproval') {
         await this.handleLinkApproval();
+      } else if(event.key === 'approve') {
+        this.uiService.toggleLoader(true);
+        const {id, tblRtdApproval} = this.selectedRowItems[0] || {};
+        try {
+          const response: any = await this.http.post('geortd/RtdApproval/GetCurrentStep',{rtdId: id, approvalId: tblRtdApproval?.id} );
+          this.formSteps = [
+            {
+                stepId: 'arrove_rtd',
+                title: '',
+                fields: [
+                    {
+                        fieldId: 'next_available_steps',
+                        type: 'dropdown',
+                        label: 'Available Next Steps',
+                        required: true,
+                        placeholder: 'Select a Step',
+                        dependsOn: null,
+                        options: response?.data?.steps.map((step: any) => ({
+                            name: step?.name,
+                            id: step
+                        }))
+                    },
+                    {
+                        fieldId: 'comment',
+                        type: 'text',
+                        label: 'Comment',
+                        required: true,
+                        placeholder: 'Enter a name'
+                    },
+                   
+                ]
+            }
+          ]
+          this.uiService.openDrawer(this.approveRtdContent, 'Approve Rtd');
+        } catch (error: any) {
+          this.uiService.showToast('error', 'Error', error?.error?.data);
+        } finally {
+          this.uiService.toggleLoader(false);
+        }
       }
     }
 
@@ -440,6 +488,28 @@ export class RoutesComponent implements OnInit {
         }
     }
 
+    async onApproveRtdFormSubmit(formData: any): Promise<void> {
+        this.uiService.toggleLoader(true);
+        const { comment, next_available_steps } = formData;
+        const payload = {
+            rtdId: this.selectedRowItems[0].id,
+            comment,
+            selectedStep: next_available_steps?.id
+        }
+        
+        try {
+          const response = await this.http.post('geortd/RtdApproval/MoveToNextStep', payload);
+          this.uiService.showToast('success', 'Success', 'Route approved successfully');
+          this.uiService.closeDrawer(); // Close the drawer after submission
+          await this.fetchRtdList(); // Refresh the department list after successful submission
+        } catch (error: any) {
+            console.error('Error submitting form:', error);
+            this.uiService.showToast('error', 'Error', error?.error?.data);
+          } finally {
+          this.uiService.toggleLoader(false);
+        }
+    }
+
     async onFormSubmit(formData: any): Promise<void> {
       if(this.isEditMode) {
         this.uiService.toggleLoader(true);
@@ -499,7 +569,7 @@ export class RoutesComponent implements OnInit {
     }
 
     handleRowSelectionChange(event: any): void {
-        this.selectedRowItems = event;
+        this.selectedRowItems = event || [];
     }
 
     selectedSource: any = null;

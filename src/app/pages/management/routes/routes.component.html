@@ -42,3 +42,8 @@
   <h3 class="text-xl font-semibold mb-4 text-muted-color-emphasis">Link Rtd</h3>
   <app-generic-stepper [steps]="formSteps" [validateFromApi]="false" [editMode]="isEditMode" [editData]="editData" (stepChange)="onStepChange($event)" (formSubmit)="onLinkApprovalFormSubmit($event)"></app-generic-stepper>
 </ng-template>
+
+<ng-template #approveRtdContent>
+  <h3 class="text-xl font-semibold mb-4 text-muted-color-emphasis">Approve Rtd</h3>
+  <app-generic-stepper [steps]="formSteps" [validateFromApi]="false" (stepChange)="onStepChange($event)" (formSubmit)="onApproveRtdFormSubmit($event)"></app-generic-stepper>
+</ng-template>

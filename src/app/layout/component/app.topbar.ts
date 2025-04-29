@@ -1,10 +1,11 @@
 import { Component } from '@angular/core';
 import { MenuItem } from 'primeng/api';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { StyleClassModule } from 'primeng/styleclass';
 import { AppConfigurator } from './app.configurator';
 import { LayoutService } from '../service/layout.service';
+import { AuthService } from '../../pages/service/auth.service';
 
 @Component({
     selector: 'app-topbar',
@@ -43,7 +44,7 @@ import { LayoutService } from '../service/layout.service';
                     <i [ngClass]="{ 'pi ': true, 'pi-moon': layoutService.isDarkTheme(), 'pi-sun': !layoutService.isDarkTheme() }"></i>
                 </button> -->
                 <div class="relative">
-                    <button
+                    <!-- <button
                         class="layout-topbar-action layout-topbar-action-highlight"
                         pStyleClass="@next"
                         enterFromClass="hidden"
@@ -53,7 +54,7 @@ import { LayoutService } from '../service/layout.service';
                         [hideOnOutsideClick]="true"
                     >
                         <i class="pi pi-palette"></i>
-                    </button>
+                    </button> -->
                     <app-configurator />
                 </div>
             </div>
@@ -64,17 +65,17 @@ import { LayoutService } from '../service/layout.service';
 
             <div class="layout-topbar-menu hidden lg:block">
                 <div class="layout-topbar-menu-content">
-                    <button type="button" class="layout-topbar-action">
+                    <!-- <button type="button" class="layout-topbar-action">
                         <i class="pi pi-calendar"></i>
                         <span>Calendar</span>
                     </button>
                     <button type="button" class="layout-topbar-action">
                         <i class="pi pi-inbox"></i>
                         <span>Messages</span>
-                    </button>
-                    <button type="button" class="layout-topbar-action">
-                        <i class="pi pi-user"></i>
-                        <span>Profile</span>
+                    </button> -->
+                    <button type="button" class="layout-topbar-action" (click)="handleLogout()">
+                        <i class="pi pi-sign-out text-red-500"></i>
+                        <span>Logout</span>
                     </button>
                 </div>
             </div>
@@ -84,9 +85,15 @@ import { LayoutService } from '../service/layout.service';
 export class AppTopbar {
     items!: MenuItem[];
 
-    constructor(public layoutService: LayoutService) {}
+    constructor(public layoutService: LayoutService, private authService:AuthService, private router:Router) {}
 
     toggleDarkMode() {
         this.layoutService.layoutConfig.update((state) => ({ ...state, darkTheme: !state.darkTheme }));
+    }
+
+    handleLogout() {
+        this.authService.logout(); // Call the logout method from AuthService\
+        this.router.navigate(['/auth/login']);
+        
     }
 }

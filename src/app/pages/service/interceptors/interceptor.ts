@@ -17,7 +17,7 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
   // Clone the request to add the authentication header.
   const authReq = req.clone({
     setHeaders: {
-      Authorization: authService.getToken() || 'Token Not Found' // Use Bearer token format
+      Authorization: 'Bearer ' + authService.getToken() || 'Token Not Found' // Use Bearer token format
     }
   });
 
