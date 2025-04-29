@@ -190,6 +190,22 @@ export class RoutesComponent implements OnInit {
         const {id, tblRtdApproval} = this.selectedRowItems[0] || {};
         try {
           const response: any = await this.http.post('geortd/RtdApproval/GetCurrentStep',{rtdId: id, approvalId: tblRtdApproval?.id} );
+          const routes: any = await this.http.get('geortd/rtd/GetById', {}, id);
+          const {attributes} = routes.data;
+          const parsedAttributes = JSON.parse(attributes);
+          console.log(parsedAttributes);
+          
+          this.mapObject = {
+            source: routes.data.source,
+            destination: routes.data.destination,
+            routeData: {
+              sourceToDestination: parsedAttributes.route.sourceToDestination,
+              destinationToSource: parsedAttributes.route.destinationToSource,
+              suggestedDestinationRoutes: parsedAttributes.suggestedDestinationRoutes,
+              suggestedSourceRoutes: parsedAttributes.suggestedSourceRoutes
+            },
+          }
+          
           this.formSteps = [
             {
                 stepId: 'arrove_rtd',
@@ -218,7 +234,7 @@ export class RoutesComponent implements OnInit {
                 ]
             }
           ]
-          this.uiService.openDrawer(this.approveRtdContent, 'Approve Rtd');
+          this.uiService.openDrawer(this.approveRtdContent, 'Approve Rtd','!w-[98vw] md:!w-[98vw] lg:!w-[98vw] rounded-l-2xl');
         } catch (error: any) {
           this.uiService.showToast('error', 'Error', error?.error?.data);
         } finally {

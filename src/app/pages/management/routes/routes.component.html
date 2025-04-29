@@ -45,5 +45,28 @@
 
 <ng-template #approveRtdContent>
   <h3 class="text-xl font-semibold mb-4 text-muted-color-emphasis">Approve Rtd</h3>
-  <app-generic-stepper [steps]="formSteps" [validateFromApi]="false" (stepChange)="onStepChange($event)" (formSubmit)="onApproveRtdFormSubmit($event)"></app-generic-stepper>
+  <div class="bg-gray-50 h-[calc(100vh-12rem)]">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
+      <div class="col-span-1 lg:col-span-3 flex flex-col h-full">
+        <app-generic-view-on-map 
+          [apiKey]="googleMapsApiKey" 
+          [source]="mapObject.source" 
+          [destination]="mapObject.destination" 
+          [tolls]="mapObject.tolls"
+          [routeData]="mapObject.routeData">
+        </app-generic-view-on-map>
+      </div>
+      
+      <div class="border rounded-lg shadow-md p-6 bg-white h-full overflow-y-auto">
+        <h3 class="text-lg font-semibold mb-4 text-gray-800">Approval Settings</h3>
+        <app-generic-stepper 
+          [formClass]="'grid grid-cols-1 md:grid-cols-1 gap-4'" 
+          [steps]="formSteps" 
+          [validateFromApi]="false" 
+          (stepChange)="onStepChange($event)" 
+          (formSubmit)="onApproveRtdFormSubmit($event)">
+        </app-generic-stepper>
+      </div>
+    </div>
+  </div>
 </ng-template>
