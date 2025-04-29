@@ -134,7 +134,7 @@ export class RoleComponent {
                     fieldId: 'description',
                     type: 'textarea',
                     label: 'Description',
-                    required: true,
+                    required: false,
                     placeholder: 'Enter description'
                 }
               ]

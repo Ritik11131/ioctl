@@ -2,7 +2,7 @@
 
 <ng-template #createUpdateRoleContent>
     <h3 class="text-xl font-semibold mb-4 text-muted-color-emphasis">{{isEditMode ? 'Update ' : 'Create '}}Role</h3>
-    <app-generic-stepper [steps]="formSteps" [validateFromApi]="false" [editMode]="isEditMode" [editData]="editData" (stepChange)="onStepChange($event)" (formSubmit)="onFormSubmit($event)">
+    <app-generic-stepper [formClass]="'grid grid-cols-1 md:grid-cols-1 gap-4'" [steps]="formSteps" [validateFromApi]="false" [editMode]="isEditMode" [editData]="editData" (stepChange)="onStepChange($event)" (formSubmit)="onFormSubmit($event)">
 
         <ng-template #customStep let-stepIndex let-data>
             <div class="permission-panel p-4 bg-white rounded-lg shadow-md">
@@ -13,7 +13,7 @@
                    <div class="menu-item mb-4">
                      <div class="flex items-center justify-between p-3 bg-gray-50 rounded-md">
                        <div class="flex items-center">
-                         <i [class]="item.icon" class="mr-2 text-blue-500"></i>
+                         <i [class]="item.icon" class="mr-2 text-primary"></i>
                          <span class="font-medium">{{ item.label }}</span>
                        </div>
                        
@@ -47,9 +47,9 @@
                           <div class="pl-6 mt-2">
                             @for (subItem of item.items; track $index) {
                                 <div class="sub-menu-item my-2">
-                                  <div class="flex items-center justify-between p-2 bg-gray-50 rounded border-l-4 border-blue-400">
+                                  <div class="flex items-center justify-between p-2 bg-gray-50 rounded border-l-4 border-primary">
                                     <div class="flex items-center">
-                                      <i [class]="subItem.icon" class="mr-2 text-blue-500"></i>
+                                      <i [class]="subItem.icon" class="mr-2 text-primary"></i>
                                       <span>{{ subItem.label }}</span>
                                     </div>
                                     
