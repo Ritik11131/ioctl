@@ -14,10 +14,9 @@
             [destinationLng]="selectedDestination?.position?.longitude || 0"
             [sourceGeofenceRadius]="selectedSource?.radius"
             [destinationGeofenceRadius]="selectedDestination?.radius"
-            [routeToBeEdited]="currentRoute"
-            (routeCreated)="onRouteCreated($event)"
+            [editRouteJson]="editRouteJson"
+            (routesCreated)="onRoutesCreated($event)"
             (routeSelected)="onRouteSelected($event)"
-            (suggestedRoutes)="onSuggestedRoutes($event)"
           ></app-generic-gm-route>
         </div>
         

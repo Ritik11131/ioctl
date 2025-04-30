@@ -16,14 +16,20 @@ import { PdfService } from '../../service/pdf.service';
 })
 export class RoutesComponent implements OnInit {
     @ViewChild('createUpdateRouteContent') createUpdateRouteContent!: TemplateRef<any>;
-    @ViewChild('checkRouteTollsContent') checkRouteTollsContent!:TemplateRef<any>;
-    @ViewChild('linkRtdAproval') linkRtdAproval!:TemplateRef<any>;
-    @ViewChild('approveRtdContent') approveRtdContent!:TemplateRef<any>;
+    @ViewChild('checkRouteTollsContent') checkRouteTollsContent!: TemplateRef<any>;
+    @ViewChild('linkRtdAproval') linkRtdAproval!: TemplateRef<any>;
+    @ViewChild('approveRtdContent') approveRtdContent!: TemplateRef<any>;
 
     selectedRowItems: any[] = [];
     isEditMode = false;
-
     editData: any = null;
+    selectedRouteJson: any = null;
+    tableData: any[] = [];
+    mapObject: any = null;
+    editRouteJson: any = null;
+    selectedSource: any = null;
+    selectedDestination: any = null;
+    googleMapsApiKey = environment.googleMapsApiKey;
 
     toolBarStartActions = [
         {
@@ -85,9 +91,6 @@ export class RoutesComponent implements OnInit {
           dependentOnRow: true
       }
     ];
-
-    currentRoute: any = null;
-    suggestedRoutes: any = null;
 
     tableConfig = {
         title: 'Manage Routes',
@@ -151,26 +154,26 @@ export class RoutesComponent implements OnInit {
                     dependsOn: null
                 },
                 {
-                    fieldId: 'startDate',
-                    type: 'text',
-                    label: 'Start Date',
-                    required: true,
-                    placeholder: 'Enter a date'
-                },
-                {
-                    fieldId: 'endDate',
-                    type: 'text',
-                    label: 'End Date',
-                    required: true,
-                    placeholder: 'Enter a date'
-                }
+                  fieldId: 'startDate',
+                  type: 'date',
+                  selectionMode: 'single',
+                  dateFormat: 'yy-mm-dd',
+                  label: 'Start Date',
+                  required: true,
+                  placeholder: 'Enter a date'
+              },
+              {
+                  fieldId: 'endDate',
+                  type: 'date',
+                  selectionMode: 'single',
+                  dateFormat: 'yy-mm-dd',
+                  label: 'End Date',
+                  required: true,
+                  placeholder: 'Enter a date'
+              }
             ]
         }
     ];
-
-    tableData = [];
-
-    mapObject:any = null
 
     constructor(
         private uiService: UiService,
@@ -307,83 +310,83 @@ export class RoutesComponent implements OnInit {
       }
 
     async handleEditRoute(): Promise<void> {
-      this.formSteps = [
-        {
-            stepId: 'route_management',
-            title: '',
-            fields: [
-                {
-                    fieldId: 'name',
-                    type: 'text',
-                    label: 'Route Name',
-                    required: true,
-                    placeholder: 'Enter a name'
-                },
-                {
-                    fieldId: 'source_department',
-                    type: 'dropdown',
-                    apiType: 'department',
-                    label: 'Source Department',
-                    required: true,
-                    placeholder: 'Select a Department',
-                    dependsOn: null
-                },
-                {
-                    fieldId: 'destination_department',
-                    type: 'dropdown',
-                    apiType: 'department',
-                    label: 'Department Department',
-                    required: true,
-                    placeholder: 'Select a Department',
-                    dependsOn: null
-                },
-                {
-                    fieldId: 'startDate',
-                    type: 'text',
-                    label: 'Start Date',
-                    required: true,
-                    placeholder: 'Enter a date'
-                },
-                {
-                    fieldId: 'endDate',
-                    type: 'text',
-                    label: 'End Date',
-                    required: true,
-                    placeholder: 'Enter a date'
-                }
-            ]
+        this.formSteps = [
+            {
+                stepId: 'route_management',
+                title: '',
+                fields: [
+                    {
+                        fieldId: 'name',
+                        type: 'text',
+                        label: 'Route Name',
+                        required: true,
+                        placeholder: 'Enter a name'
+                    },
+                    {
+                        fieldId: 'source_department',
+                        type: 'dropdown',
+                        apiType: 'department',
+                        label: 'Source Department',
+                        required: true,
+                        placeholder: 'Select a Department',
+                        dependsOn: null
+                    },
+                    {
+                        fieldId: 'destination_department',
+                        type: 'dropdown',
+                        apiType: 'department',
+                        label: 'Department Department',
+                        required: true,
+                        placeholder: 'Select a Department',
+                        dependsOn: null
+                    },
+                    {
+                        fieldId: 'startDate',
+                        type: 'date',
+                        selectionMode: 'single',
+                        dateFormat: 'yy-mm-dd',
+                        label: 'Start Date',
+                        required: true,
+                        placeholder: 'Enter a date'
+                    },
+                    {
+                        fieldId: 'endDate',
+                        type: 'date',
+                        selectionMode: 'single',
+                        dateFormat: 'yy-mm-dd',
+                        label: 'End Date',
+                        required: true,
+                        placeholder: 'Enter a date'
+                    }
+                ]
+            }
+        ];
+        this.isEditMode = true;
+        this.uiService.toggleLoader(true);
+        try {
+            const response: any = await this.http.get('geortd/rtd/GetById', {}, this.selectedRowItems[0].id);
+            const { source, destination, sourceDept, destinationDept, name, attributes, startDate, endDate } = response.data;
+            this.selectedSource = source;
+            this.selectedDestination = destination;
+            const route = JSON.parse(attributes);
+            
+            this.editRouteJson = route?.route;
+            
+            this.editData = {
+                name,
+                source_address: source,
+                destination_address: destination,
+                destination_department: destinationDept,
+                source_department: sourceDept,
+                endDate,
+                startDate
+            };
+            this.uiService.openDrawer(this.createUpdateRouteContent, 'Route Management', '!w-[98vw] md:!w-[98vw] lg:!w-[98vw] rounded-l-2xl');
+        } catch (error: any) {
+            this.uiService.showToast('error', 'Error', error?.error?.data);
+        } finally {
+            this.uiService.toggleLoader(false);
         }
-    ];
-      this.isEditMode = true;
-      this.uiService.toggleLoader(true);
-      try {
-        const response: any = await this.http.get('geortd/rtd/GetById', {}, this.selectedRowItems[0].id);
-        const { source,destination,sourceDept, destinationDept, name, attributes, id, startDate, endDate } = response.data;
-        this.selectedSource = source;
-        this.selectedDestination = destination;
-        const route = JSON.parse(attributes)
-        const {suggestedDestinationRoutes, suggestedSourceRoutes} = route;
-        
-        this.currentRoute = route?.route;
-        this.suggestedRoutes = {suggestedSourceRoutes, suggestedDestinationRoutes};
-        
-        this.editData = {
-         name,
-         source_address:source,
-         destination_address: destination,
-         destination_department: destinationDept,
-         source_department: sourceDept,
-         endDate,
-         startDate
-        };
-        this.uiService.openDrawer(this.createUpdateRouteContent, 'Route Management', '!w-[98vw] md:!w-[98vw] lg:!w-[98vw] rounded-l-2xl');
-        
-      } catch (error: any) {
-        this.uiService.showToast('error', 'Error',  error?.error?.data);
-      }   finally {
-        this.uiService.toggleLoader(false);
-      }
-
     }
 
     async deleteSelectedRoute(): Promise<void> {
@@ -414,12 +417,11 @@ export class RoutesComponent implements OnInit {
     }
 
     openNew() {
-        this.selectedRowItems = []; // Reset selected items when opening new form\
+        this.selectedRowItems = [];
         this.isEditMode = false;
         this.selectedSource = null;
         this.selectedDestination = null;
-        this.currentRoute = null;
-        this.suggestedRoutes = null;
+        this.selectedRouteJson = null;
         this.formSteps = [
             {
                 stepId: 'route_management',
@@ -488,6 +490,7 @@ export class RoutesComponent implements OnInit {
             }
         ];
         this.editData = null;
+        this.editRouteJson = null;
         this.uiService.openDrawer(this.createUpdateRouteContent, 'Route Management', '!w-[98vw] md:!w-[98vw] lg:!w-[98vw] rounded-l-2xl');
     }
 
@@ -552,7 +555,7 @@ export class RoutesComponent implements OnInit {
           sourceDeptId:source_department?.id,
           destinationDeptId: destination_department?.id,
           reason: "test reason",
-          attributes: JSON.stringify( { route: this.currentRoute, ...this.suggestedRoutes } )
+          attributes: JSON.stringify( { route: this.selectedRouteJson } )
         }
         
         try {
@@ -579,7 +582,7 @@ export class RoutesComponent implements OnInit {
           sourceDeptId:source_department?.id,
           destinationDeptId: destination_department?.id,
           reason: "test reason",
-          attributes:JSON.stringify({route:this.currentRoute, ...this.suggestedRoutes})
+          attributes:JSON.stringify({route:this.selectedRouteJson})
         }
 
           try {
@@ -600,26 +603,23 @@ export class RoutesComponent implements OnInit {
         this.selectedRowItems = event || [];
     }
 
-    selectedSource: any = null;
-    selectedDestination: any = null;
-    googleMapsApiKey = environment.googleMapsApiKey;
-
     onLocationChange(): void {
         // The route will be automatically created by the GoogleMapsComponent
         // when both source and destination coordinates are provided
     }
 
-    onRouteCreated(route: any): void {
-        this.currentRoute = route;
+    onRoutesCreated(event: {
+        StD: { selected: google.maps.DirectionsResult; suggested: google.maps.DirectionsResult[] };
+        DtoS: { selected: google.maps.DirectionsResult; suggested: google.maps.DirectionsResult[] };
+    }) {
+        this.selectedRouteJson = event;
     }
 
-    onRouteSelected(route: any): void {
-        this.currentRoute = route;
-    }
-
-    onSuggestedRoutes(routes: any): void {
-        // Handle suggested routes if needed
-        this.suggestedRoutes = {...this.suggestedRoutes,...routes};
+    onRouteSelected(event: {
+        StD: { selected: google.maps.DirectionsResult; suggested: google.maps.DirectionsResult[] };
+        DtoS: { selected: google.maps.DirectionsResult; suggested: google.maps.DirectionsResult[] };
+    }) {
+        this.selectedRouteJson = event;
     }
 
     handleStepperAutoComplete({ value, fieldId }: any) {
