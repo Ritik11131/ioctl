@@ -7,6 +7,7 @@ import { GenericGmRouteComponent } from "../../../shared/components/generic-gm-r
 import { environment } from '../../../../environments/environment.prod';
 import { HttpService } from '../../service/http.service';
 import { GenericViewOnMapComponent } from '../../../shared/components/generic-view-on-map/generic-view-on-map.component';
+import { PdfService } from '../../service/pdf.service';
 
 @Component({
     selector: 'app-routes',
@@ -74,7 +75,15 @@ export class RoutesComponent implements OnInit {
             severity: 'primary',
             outlined: true,
             dependentOnRow: true
-        }
+        },
+        {
+          key: 'op46Download',
+          label: 'Download',
+          icon: 'pi pi-download',
+          severity: 'primary',
+          outlined: true,
+          dependentOnRow: true
+      }
     ];
 
     currentRoute: any = null;
@@ -165,7 +174,8 @@ export class RoutesComponent implements OnInit {
 
     constructor(
         private uiService: UiService,
-        private http: HttpService
+        private http: HttpService,
+        private pdfService:PdfService
     ) {}
 
     ngOnInit(): void {
@@ -240,6 +250,8 @@ export class RoutesComponent implements OnInit {
         } finally {
           this.uiService.toggleLoader(false);
         }
+      } else if(event.key === 'op46Download') {
+        this.pdfService.generateOp46Certificate()
       }
     }
 
