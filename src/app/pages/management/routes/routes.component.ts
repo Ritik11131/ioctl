@@ -254,7 +254,21 @@ export class RoutesComponent implements OnInit {
           this.uiService.toggleLoader(false);
         }
       } else if(event.key === 'op46Download') {
-        this.pdfService.generateOp46Certificate()
+        try {
+            const response: any = await this.http.get('geortd/rtd/GetById', {}, this.selectedRowItems[0].id);
+            const { source, destination, attributes } = response.data;
+            const {route} = JSON.parse(attributes);
+            const {StD, DtoS} = route;
+            const pdfObject = {
+                source,
+                StD,
+                DtoS,
+                destination
+            }
+            this.pdfService.generateOpCertificate(pdfObject)
+        } catch (error) {
+            
+        }
       }
     }
 
