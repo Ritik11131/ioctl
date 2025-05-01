@@ -26,22 +26,23 @@ interface Toll {
   tollPriceVehicleTypes?: TollPriceVehicleType[];
 }
 
-interface Route {
-  bounds: any;
-  copyrights: string;
-  legs: any[];
-  overview_path: any[];
-  overview_polyline: string;
-  summary: string;
-  warnings: any[];
-  waypoint_order: any[];
+interface RouteOptions {
+  route: google.maps.DirectionsResult;
+  distance: string;
+  duration: string;
+  color: string;
+  isSelected: boolean;
 }
 
 interface RouteData {
-  sourceToDestination: any;
-  destinationToSource: any;
-  suggestedDestinationRoutes: Route[];
-  suggestedSourceRoutes: Route[];
+  StD: {
+    selected: google.maps.DirectionsResult;
+    suggested: google.maps.DirectionsResult[];
+  };
+  DtoS: {
+    selected: google.maps.DirectionsResult;
+    suggested: google.maps.DirectionsResult[];
+  };
 }
 
 @Component({
@@ -52,48 +53,30 @@ interface RouteData {
   <div class="flex flex-col lg:flex-row gap-6 p-4 bg-slate-50 rounded-xl shadow-sm">
     <!-- Left Panel: Route Controls -->
     <div class="lg:w-80 flex-shrink-0 bg-white rounded-xl shadow-md overflow-hidden border border-slate-200">
-      <!-- Source to Destination Routes Section -->
-      @if (routeData.suggestedSourceRoutes.length > 0) {
+      <!-- Source to Destination Routes -->
+      @if (routeData && routeData.StD?.suggested?.length) {
         <div class="route-panel">
           <div class="px-5 py-4 border-b border-slate-100">
-            <h3 class="text-lg font-medium text-slate-800">
-              <i class="pi pi-directions text-slate-400 mr-2"></i>
-              Source to Destination
-            </h3>
+            <h3 class="text-lg font-medium text-slate-800">Source to Destination</h3>
           </div>
           
           <div class="divide-y divide-slate-100">
-            @for (route of routeData.suggestedSourceRoutes; track route; let i = $index) {
+            @for (option of routeOptions; track $index) {
               <div 
-                class="p-4 transition-all hover:bg-slate-50"
-                [class.bg-blue-50]="selectedSourceRouteIndex === i">
-                <div class="flex items-center justify-between space-y-3">
-                  <!-- Route Indicator & Info -->
+                class="p-4 transition-all hover:bg-slate-50 cursor-pointer"
+                [class.bg-blue-50]="option.isSelected"
+                (click)="selectRoute($index, false)">
+                <div class="flex items-center justify-between">
                   <div class="flex items-center gap-3">
-                    <div class="w-3 h-12 rounded-full" [style.background-color]="sourceRouteColors[i]"></div>
+                    <div class="w-3 h-8 rounded-full" [style.background-color]="'#2196F3'"></div>
                     <div>
-                      <div class="flex items-center gap-2 text-sm text-slate-500">
-                        <i class="pi pi-map-marker text-sm"></i>
-                        <span>{{getRouteDistance(route)}}</span>
-                      </div>
-                      <div class="flex items-center gap-2 text-sm text-slate-500">
-                        <i class="pi pi-clock text-sm"></i>
-                        <span>{{getRouteDuration(route)}}</span>
-                      </div>
+                      <div class="text-sm text-slate-600">Route {{ $index + 1 }}</div>
+                      <div class="text-xs text-slate-500">{{ option.distance }} • {{ option.duration }}</div>
                     </div>
                   </div>
-                  
-                  <!-- Selection Button using PrimeNG -->
-                  <p-button
-                    (onClick)="selectSourceRoute(i)"
-                    [outlined]="selectedSourceRouteIndex !== i"
-                    [severity]="selectedSourceRouteIndex === i ? 'info' : 'secondary'"
-                    [label]="selectedSourceRouteIndex === i ? 'Selected' : 'Select'"
-                    styleClass="text-sm"
-                    size="small"
-                    [icon]="selectedSourceRouteIndex === i ? 'pi pi-check' : 'pi pi-arrow-right'"
-                    iconPos="right"
-                  ></p-button>
+                  @if (option.isSelected) {
+                    <i class="pi pi-check text-blue-500"></i>
+                  }
                 </div>
               </div>
             }
@@ -101,49 +84,34 @@ interface RouteData {
         </div>
       }
       
-      <!-- Destination to Source Routes Section -->
-      @if (routeData.suggestedDestinationRoutes.length > 0) {
+      <!-- Destination to Source Routes -->
+      @if (routeData && routeData.DtoS?.suggested?.length) {
         <div class="route-panel mt-4">
           <div class="px-5 py-4 border-b border-slate-100">
             <h3 class="text-lg font-medium text-slate-800">
               <i class="pi pi-reply text-slate-400 mr-2"></i>
-              Destination to Source
+              Return Routes
             </h3>
-            <p class="text-xs text-slate-500 pl-6">Return Routes</p>
+            <p class="text-xs text-slate-500 pl-6">Destination to Source</p>
           </div>
           
           <div class="divide-y divide-slate-100">
-            @for (route of routeData.suggestedDestinationRoutes; track route; let i = $index) {
+            @for (option of returnRouteOptions; track $index) {
               <div 
-                class="p-4 transition-all hover:bg-slate-50"
-                [class.bg-green-50]="selectedDestinationRouteIndex === i">
-                <div class="flex items-center justify-between space-y-3">
-                  <!-- Route Indicator & Info -->
+                class="p-4 transition-all hover:bg-slate-50 cursor-pointer"
+                [class.bg-purple-50]="option.isSelected"
+                (click)="selectRoute($index, true)">
+                <div class="flex items-center justify-between">
                   <div class="flex items-center gap-3">
-                    <div class="w-3 h-12 rounded-full" [style.background-color]="destinationRouteColors[i]"></div>
+                    <div class="w-3 h-8 rounded-full" [style.background-color]="'#9C27B0'"></div>
                     <div>
-                      <div class="flex items-center gap-2 text-sm text-slate-500">
-                        <i class="pi pi-map-marker text-sm"></i>
-                        <span>{{getRouteDistance(route)}}</span>
-                      </div>
-                      <div class="flex items-center gap-2 text-sm text-slate-500">
-                        <i class="pi pi-clock text-sm"></i>
-                        <span>{{getRouteDuration(route)}}</span>
-                      </div>
+                      <div class="text-sm text-slate-600">Route {{ $index + 1 }}</div>
+                      <div class="text-xs text-slate-500">{{ option.distance }} • {{ option.duration }}</div>
                     </div>
                   </div>
-                  
-                  <!-- Selection Button using PrimeNG -->
-                  <p-button
-                    (onClick)="selectDestinationRoute(i)"
-                    [outlined]="selectedDestinationRouteIndex !== i"
-                    [severity]="selectedDestinationRouteIndex === i ? 'success' : 'secondary'"
-                    [label]="selectedDestinationRouteIndex === i ? 'Selected' : 'Select'"
-                    styleClass="text-sm"
-                    size="small"
-                    [icon]="selectedDestinationRouteIndex === i ? 'pi pi-check' : 'pi pi-arrow-right'"
-                    iconPos="right"
-                  ></p-button>
+                  @if (option.isSelected) {
+                    <i class="pi pi-check text-purple-500"></i>
+                  }
                 </div>
               </div>
             }
@@ -152,7 +120,7 @@ interface RouteData {
       }
       
       <!-- Empty state message when no routes -->
-      @if ((!routeData.suggestedSourceRoutes.length && !routeData.suggestedDestinationRoutes.length)) {
+      @if ((!routeData?.StD?.suggested?.length && !routeData?.DtoS?.suggested?.length)) {
         <div class="p-6 flex flex-col items-center justify-center text-center gap-3">
           <i class="pi pi-map text-4xl text-slate-300"></i>
           <h4 class="text-lg font-medium text-slate-600">No Routes Available</h4>
@@ -171,7 +139,7 @@ interface RouteData {
 `,
 styles: []
 })
-export class GenericViewOnMapComponent {
+export class GenericViewOnMapComponent implements AfterViewInit {
   @ViewChild('mapContainer', { static: false }) mapContainer!: ElementRef;
   
   @Input() apiKey: string = '';
@@ -183,12 +151,7 @@ export class GenericViewOnMapComponent {
   @Input() sourceGeofenceColor = '#4285F4';
   @Input() destinationGeofenceColor = '#EA4335';
   @Input() tolls: Toll[] = [];
-  @Input() routeData: RouteData = { 
-    sourceToDestination: {}, 
-    destinationToSource: {},
-    suggestedDestinationRoutes: [],
-    suggestedSourceRoutes: []
-  };
+  @Input() routeData: RouteData | null = null;
   
   @Output() mapReady = new EventEmitter<google.maps.Map>();
   
@@ -197,52 +160,14 @@ export class GenericViewOnMapComponent {
   destinationMarker!: google.maps.marker.AdvancedMarkerElement;
   sourceGeofence!: google.maps.Circle;
   destinationGeofence!: google.maps.Circle;
-  directionsService!: google.maps.DirectionsService;
-  
-  // Separate renderers for each direction
-  sourceToDestRenderer!: google.maps.DirectionsRenderer;
-  destToSourceRenderer!: google.maps.DirectionsRenderer;
-  
   tollMarkers: google.maps.marker.AdvancedMarkerElement[] = [];
   infoWindow!: google.maps.InfoWindow;
 
-  // Route selection properties
-  selectedSourceRouteIndex: number = 0;
-  selectedDestinationRouteIndex: number = 0;
-  routePolylines: google.maps.Polyline[] = [];
-
-  // Route colors
-  ROUTE_COLORS = [
-    '#4CAF50', // Green for shortest route
-    '#FFC107', // Yellow for medium distance routes
-    '#F44336', // Red for longest route
-    '#9C27B0', // Purple for shortest return route
-    '#BA68C8', // Light purple for medium distance return routes
-    '#E91E63'  // Pink for longest return route
-  ];
-
-  sourceRouteColors: string[] = [];
-  destinationRouteColors: string[] = [];
-
-  private calculateRouteColors() {
-    // Calculate source route colors
-    this.sourceRouteColors = this.routeData.suggestedSourceRoutes.map((_, index) => {
-      const totalRoutes = this.routeData.suggestedSourceRoutes.length;
-      if (totalRoutes === 1) return '#4CAF50';
-      if (index === 0) return '#4CAF50';
-      if (index === totalRoutes - 1) return '#F44336';
-      return '#FFC107';
-    });
-
-    // Calculate destination route colors
-    this.destinationRouteColors = this.routeData.suggestedDestinationRoutes.map((_, index) => {
-      const totalRoutes = this.routeData.suggestedDestinationRoutes.length;
-      if (totalRoutes === 1) return '#9C27B0';
-      if (index === 0) return '#9C27B0';
-      if (index === totalRoutes - 1) return '#E91E63';
-      return '#BA68C8';
-    });
-  }
+  // Route related properties
+  routeOptions: RouteOptions[] = [];
+  returnRouteOptions: RouteOptions[] = [];
+  routeRenderers: google.maps.DirectionsRenderer[] = [];
+  returnRouteRenderers: google.maps.DirectionsRenderer[] = [];
 
   async ngAfterViewInit() {
     await this.initMap();
@@ -264,8 +189,6 @@ export class GenericViewOnMapComponent {
       // Get source and destination coordinates
       const sourceAttributes = typeof this.source.attributes === 'string' ? 
         JSON.parse(this.source.attributes) : this.source.attributes;
-      const destAttributes = typeof this.destination.attributes === 'string' ? 
-        JSON.parse(this.destination.attributes) : this.destination.attributes;
       
       const sourcePosition = { 
         lat: this.source.position?.latitude || sourceAttributes.lat, 
@@ -285,27 +208,6 @@ export class GenericViewOnMapComponent {
       // Initialize InfoWindow for tooltips
       this.infoWindow = new InfoWindow();
       
-      // Initialize directions renderers - one for each direction with different colors
-      this.sourceToDestRenderer = new google.maps.DirectionsRenderer({
-        map: this.map,
-        suppressMarkers: true,
-        polylineOptions: {
-          strokeColor: '#4285F4', // Blue for source to destination
-          strokeWeight: 5,
-          strokeOpacity: 0.8
-        }
-      });
-      
-      this.destToSourceRenderer = new google.maps.DirectionsRenderer({
-        map: this.map,
-        suppressMarkers: true,
-        polylineOptions: {
-          strokeColor: '#9C27B0', // Red for destination to source
-          strokeWeight: 5,
-          strokeOpacity: 0.8
-        }
-      });
-      
       // Setup source, destination, tolls and display the routes
       await this.setupSourceAndDestination();
       await this.setupTolls();
@@ -316,6 +218,183 @@ export class GenericViewOnMapComponent {
     } catch (error) {
       console.error("Error initializing Google Maps:", error);
     }
+  }
+
+  private async displayRoutes() {
+    console.log(this.routeData);
+    
+    if (!this.routeData) return;
+
+    // Clear existing renderers
+    this.clearRouteRenderers();
+
+    // Display source to destination routes
+    if (this.routeData.StD?.suggested?.length) {
+      // First display the selected route
+      if (this.routeData.StD.selected) {
+        await this.createRouteRenderers(this.routeData.StD.selected, false, true);
+      }
+      
+      // Then display all suggested routes
+      for (const route of this.routeData.StD.suggested) {
+        if (route && route !== this.routeData.StD.selected) {
+          await this.createRouteRenderers(route, false, false);
+        }
+      }
+    }
+
+    // Display destination to source routes
+    if (this.routeData.DtoS?.suggested?.length) {
+      // First display the selected route
+      if (this.routeData.DtoS.selected) {
+        await this.createRouteRenderers(this.routeData.DtoS.selected, true, true);
+      }
+      
+      // Then display all suggested routes
+      for (const route of this.routeData.DtoS.suggested) {
+        if (route && route !== this.routeData.DtoS.selected) {
+          await this.createRouteRenderers(route, true, false);
+        }
+      }
+    }
+  }
+
+  private async createRouteRenderers(result: google.maps.DirectionsResult, isReturn: boolean, isSelected: boolean = false) {
+    if (!result || !result.routes) return null;
+
+    const { DirectionsRenderer } = await google.maps.importLibrary("routes") as google.maps.RoutesLibrary;
+    
+    // Sort routes by distance if we have multiple routes
+    const sortedRoutes = Array.isArray(result.routes) 
+      ? [...result.routes].sort((a, b) => {
+          const distanceA = a.legs?.[0]?.distance?.value || 0;
+          const distanceB = b.legs?.[0]?.distance?.value || 0;
+          return distanceA - distanceB;
+        })
+      : [result.routes];
+
+    // Reference to the appropriate arrays based on route direction
+    const routeOptionsRef = isReturn ? this.returnRouteOptions : this.routeOptions;
+    const routeRenderersRef = isReturn ? this.returnRouteRenderers : this.routeRenderers;
+
+    // Create route renderers and options
+    const newRenderers = sortedRoutes.map((route, index) => {
+      if (!route) return null;
+
+      const leg = route.legs?.[0];
+      
+      // Create a proper DirectionsResult object for the route option
+      const routeResult: google.maps.DirectionsResult = {
+        routes: [route],
+        request: result.request,
+        geocoded_waypoints: result.geocoded_waypoints || []
+      };
+      
+      // Get color based on direction
+      const color = this.getRouteColor(index, sortedRoutes.length, isReturn);
+      
+      // Add route option with isSelected flag
+      routeOptionsRef.push({
+        route: routeResult,
+        distance: leg?.distance?.text || '',
+        duration: leg?.duration?.text || '',
+        color: color,
+        isSelected: isSelected
+      });
+
+      const renderer = new DirectionsRenderer({
+        map: this.map,
+        directions: routeResult,
+        suppressMarkers: true,
+        draggable: false,
+        polylineOptions: {
+          strokeColor: color,
+          strokeWeight: isSelected ? (isReturn ? 6 : 7) : (isReturn ? 3 : 4),
+          strokeOpacity: isSelected ? 1 : 0.4,
+          zIndex: isSelected ? 1000 : 0
+        },
+        preserveViewport: true
+      });
+
+      return renderer;
+    }).filter(Boolean) as google.maps.DirectionsRenderer[];
+
+    // Add new renderers to our array
+    routeRenderersRef.push(...newRenderers);
+    return newRenderers[0];
+  }
+
+  private getRouteColor(index: number, totalRoutes: number, isReturn: boolean): string {
+    // Use blue for Source to Destination and purple for Destination to Source
+    return isReturn ? '#9C27B0' : '#2196F3';
+  }
+
+  private clearRouteRenderers() {
+    this.routeRenderers.forEach(renderer => renderer.setMap(null));
+    this.returnRouteRenderers.forEach(renderer => renderer.setMap(null));
+    this.routeRenderers = [];
+    this.returnRouteRenderers = [];
+    this.routeOptions = [];
+    this.returnRouteOptions = [];
+  }
+
+  public selectRoute(index: number, isReturn: boolean) {
+    const routeOptionsRef = isReturn ? this.returnRouteOptions : this.routeOptions;
+    const routeRenderersRef = isReturn ? this.returnRouteRenderers : this.routeRenderers;
+
+    // Update selection state for all routes in the current direction
+    routeOptionsRef.forEach((option, i) => {
+      option.isSelected = i === index;
+    });
+
+    // Update renderer styles for all routes in the current direction
+    routeRenderersRef.forEach((renderer, i) => {
+      if (renderer) {
+        const isSelected = i === index;
+        const color = routeOptionsRef[i].color;
+        
+        // Set different styles for selected vs non-selected routes
+        renderer.setOptions({
+          polylineOptions: {
+            strokeColor: color,
+            strokeWeight: isSelected ? (isReturn ? 6 : 7) : (isReturn ? 3 : 4),
+            strokeOpacity: isSelected ? 1 : 0.4,
+            zIndex: isSelected ? 1000 : 0
+          }
+        });
+
+        // Force update the renderer
+        renderer.setMap(null);
+        renderer.setMap(this.map);
+      }
+    });
+
+    // Update the routeData to reflect the new selection
+    if (isReturn) {
+      if (this.routeData?.DtoS?.suggested?.[index]) {
+        this.routeData.DtoS.selected = this.routeData.DtoS.suggested[index];
+      }
+    } else {
+      if (this.routeData?.StD?.suggested?.[index]) {
+        this.routeData.StD.selected = this.routeData.StD.suggested[index];
+      }
+    }
+
+    // Force map update by triggering a resize event
+    setTimeout(() => {
+      if (this.map) {
+        google.maps.event.trigger(this.map, 'resize');
+        const bounds = new google.maps.LatLngBounds();
+        routeRenderersRef.forEach(renderer => {
+          if (renderer.getDirections()?.routes?.[0]?.bounds) {
+            bounds.union(renderer.getDirections()!.routes[0].bounds!);
+          }
+        });
+        if (!bounds.isEmpty()) {
+          this.map.fitBounds(bounds);
+        }
+      }
+    }, 100);
   }
   
   private async setupSourceAndDestination() {
@@ -504,185 +583,6 @@ export class GenericViewOnMapComponent {
       this.infoWindow.setPosition(position);
       this.infoWindow.open(this.map);
     }
-  }
-  
-  private async displayRoutes() {
-    // Clear existing polylines
-    this.clearRoutePolylines();
-
-    // Display main routes
-    this.showSourceToDestinationRoute();
-    this.showDestinationToSourceRoute();
-
-    // Display suggested routes
-    this.displaySuggestedRoutes();
-  }
-
-  private displaySuggestedRoutes() {
-    // Calculate route colors
-    this.calculateRouteColors();
-
-    // Clear existing polylines
-    this.clearRoutePolylines();
-
-    // Display suggested source routes
-    if (this.routeData?.suggestedSourceRoutes) {
-      this.routeData.suggestedSourceRoutes.forEach((route, index) => {
-        if (route?.overview_path) {
-          const isSelected = index === this.selectedSourceRouteIndex;
-          this.addRoutePolyline(route.overview_path, this.sourceRouteColors[index], isSelected);
-        }
-      });
-    }
-
-    // Display suggested destination routes
-    if (this.routeData?.suggestedDestinationRoutes) {
-      this.routeData.suggestedDestinationRoutes.forEach((route, index) => {
-        if (route?.overview_path) {
-          const isSelected = index === this.selectedDestinationRouteIndex;
-          this.addRoutePolyline(route.overview_path, this.destinationRouteColors[index], isSelected);
-        }
-      });
-    }
-  }
-
-  private addRoutePolyline(path: any[], color: string, isSelected: boolean) {
-    if (!path || !Array.isArray(path) || path.length === 0) return;
-
-    try {
-      const polyline = new google.maps.Polyline({
-        path: path.map(point => {
-          if (point && typeof point.lat === 'number' && typeof point.lng === 'number') {
-            return new google.maps.LatLng(point.lat, point.lng);
-          }
-          return null;
-        }).filter(Boolean) as google.maps.LatLng[],
-        geodesic: true,
-        strokeColor: color,
-        strokeOpacity: isSelected ? 1.0 : 0.3, // Reduced opacity for non-selected routes
-        strokeWeight: isSelected ? 5 : 3, // Thinner lines for non-selected routes
-        map: this.map
-      });
-
-      this.routePolylines.push(polyline);
-    } catch (error) {
-      console.error('Error creating polyline:', error);
-    }
-  }
-
-  private clearRoutePolylines() {
-    this.routePolylines.forEach(polyline => polyline.setMap(null));
-    this.routePolylines = [];
-  }
-
-  public selectSourceRoute(index: number) {
-    if (this.routeData?.suggestedSourceRoutes && index >= 0 && index < this.routeData.suggestedSourceRoutes.length) {
-      this.selectedSourceRouteIndex = index;
-      this.displayRoutes();
-    }
-  }
-
-  public selectDestinationRoute(index: number) {
-    if (this.routeData?.suggestedDestinationRoutes && index >= 0 && index < this.routeData.suggestedDestinationRoutes.length) {
-      this.selectedDestinationRouteIndex = index;
-      this.displayRoutes();
-    }
-  }
-
-  public getRouteDistance(route: Route): string {
-    if (!route) return 'Unknown distance';
-    if (route.legs && route.legs.length > 0 && route.legs[0].distance) {
-      return route.legs[0].distance.text || 'Unknown distance';
-    }
-    return 'Unknown distance';
-  }
-
-  public getRouteDuration(route: Route): string {
-    if (!route) return 'Unknown duration';
-    if (route.legs && route.legs.length > 0 && route.legs[0].duration) {
-      return route.legs[0].duration.text || 'Unknown duration';
-    }
-    return 'Unknown duration';
-  }
-  
-  // Public methods that can be called from parent component
-  
-  public showSourceToDestinationRoute() {
-    if (!this.routeData?.sourceToDestination) return;
-    
-    try {
-      const path = this.routeData.sourceToDestination.polylinePath;
-      if (!path || !Array.isArray(path)) return;
-
-      const color = this.ROUTE_COLORS[0]; // Use first color for main route
-      this.addRoutePolyline(path, color, true);
-    } catch (error) {
-      console.error("Error displaying source to destination route:", error);
-    }
-  }
-  
-  public showDestinationToSourceRoute() {
-    if (!this.routeData?.destinationToSource) return;
-    
-    try {
-      const path = this.routeData.destinationToSource.polylinePath;
-      if (!path || !Array.isArray(path)) return;
-
-      const color = this.ROUTE_COLORS[1]; // Use second color for main route
-      this.addRoutePolyline(path, color, true);
-    } catch (error) {
-      console.error("Error displaying destination to source route:", error);
-    }
-  }
-  
-  // Helper method to decode path from route data
-  private decodePath(routeData: any): google.maps.LatLng[] {
-    const path: google.maps.LatLng[] = [];
-    
-    // If route data contains encoded polyline
-    if (routeData.overview_polyline && routeData.overview_polyline.points) {
-      return google.maps.geometry.encoding.decodePath(routeData.overview_polyline.points);
-    }
-    
-    // If route data contains path as array of point objects
-    if (routeData.path && Array.isArray(routeData.path)) {
-      return routeData.path.map((point: any) => 
-        new google.maps.LatLng(point.lat, point.lng)
-      );
-    }
-    
-    // If route data contains steps with path
-    if (routeData.steps && Array.isArray(routeData.steps)) {
-      routeData.steps.forEach((step: any) => {
-        if (step.path && Array.isArray(step.path)) {
-          step.path.forEach((point: any) => {
-            path.push(new google.maps.LatLng(point.lat, point.lng));
-          });
-        }
-      });
-      return path;
-    }
-    
-    // If we don't have path data, create a simple line from source to destination
-    const sourceAttributes = typeof this.source.attributes === 'string' ? 
-      JSON.parse(this.source.attributes) : this.source.attributes;
-    const destAttributes = typeof this.destination.attributes === 'string' ? 
-      JSON.parse(this.destination.attributes) : this.destination.attributes;
-    
-    const sourcePosition = { 
-      lat: this.source.position?.latitude || sourceAttributes.lat, 
-      lng: this.source.position?.longitude || sourceAttributes.lng 
-    };
-    
-    const destPosition = { 
-      lat: this.destination.position?.latitude || destAttributes.lat, 
-      lng: this.destination.position?.longitude || destAttributes.lng 
-    };
-    
-    return [
-      new google.maps.LatLng(sourcePosition.lat, sourcePosition.lng),
-      new google.maps.LatLng(destPosition.lat, destPosition.lng)
-    ];
   }
   
   public async addMarker(markerData: { 

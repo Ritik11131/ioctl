@@ -211,12 +211,7 @@ export class RoutesComponent implements OnInit {
           this.mapObject = {
             source: routes.data.source,
             destination: routes.data.destination,
-            routeData: {
-              sourceToDestination: parsedAttributes.route.sourceToDestination,
-              destinationToSource: parsedAttributes.route.destinationToSource,
-              suggestedDestinationRoutes: parsedAttributes.suggestedDestinationRoutes,
-              suggestedSourceRoutes: parsedAttributes.suggestedSourceRoutes
-            },
+            routeData: parsedAttributes?.route,
           }
           
           this.formSteps = [
