@@ -11,7 +11,36 @@ export class PdfService {
 
   constructor() { }
 
-  generateOp46Certificate(): void {
+  generateOpCertificate(pdfObject: any): void {
+    const parseHtmlInstruction = (html: string) => {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const textArray: any[] = [];
+      
+      doc.body.childNodes.forEach(node => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          textArray.push({ text: node.textContent });
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+          const element = node as HTMLElement;
+          if (element.tagName.toLowerCase() === 'b') {
+            textArray.push({ text: element.textContent, bold: true });
+          } else {
+            textArray.push({ text: element.textContent });
+          }
+        }
+      });
+      
+      return textArray;
+    };
+
+    const calculateTotalDistance = (distanceStr: string) => {
+      return parseFloat(distanceStr.replace(' km', ''));
+    };
+
+    const totalStD = calculateTotalDistance(pdfObject.StD.selected.routes[0].legs[0].distance.text);
+    const totalDtoS = calculateTotalDistance(pdfObject.DtoS.selected.routes[0].legs[0].distance.text);
+    const totalCombined = totalStD + totalDtoS;
+
     const docDefinition: any = {
       content: [
         // First Row - Header with images and text
@@ -52,16 +81,16 @@ export class PdfService {
             {
               columns: [
                 { text: 'Ref. No.: MAD-RTD/3385/Bulk/2018-19/1868', style: 'rowText', alignment: 'left', margin: [0, 2, 0, 2] },
-                { text: 'Ref. No.: MAD-RTD/3385/Bulk/2018-19/1868', style: 'rowText', alignment: 'center', margin: [0, 2, 0, 2] },
-                { text: 'Ref. No.: MAD-RTD/3385/Bulk/2018-19/1868', style: 'rowText', alignment: 'right', margin: [0, 2, 0, 2] }
+                { text: 'Effective date of implementation: 24/03/2025', style: 'rowText', alignment: 'center', margin: [0, 2, 0, 2] },
+                { text: 'SUPPLY LOCATION : GCPTCL DAHEJ Parking', style: 'rowText', alignment: 'right', margin: [0, 2, 0, 2] }
               ],
               margin: [0, 0, 0, 0]
             },
             {
               columns: [
-                { text: 'Ref. No.: MAD-RTD/3385/Bulk/2018-19/1868', style: 'rowText', alignment: 'left', margin: [0, 2, 0, 2] },
-                { text: 'Ref. No.: MAD-RTD/3385/Bulk/2018-19/1868', style: 'rowText', alignment: 'center', margin: [0, 2, 0, 2] },
-                { text: 'Ref. No.: MAD-RTD/3385/Bulk/2018-19/1868', style: 'rowText', alignment: 'right', margin: [0, 2, 0, 2] }
+                { text: 'Location Code : 3385', style: 'rowText', alignment: 'left', margin: [0, 2, 0, 2] },
+                { text: 'Type : LPG Bulk', style: 'rowText', alignment: 'center', margin: [0, 2, 0, 2] },
+                { text: 'Sales Area :', style: 'rowText', alignment: 'right', margin: [0, 2, 0, 2] }
               ],
               margin: [0, 0, 0, 0]
             },
@@ -69,7 +98,7 @@ export class PdfService {
           ],
           margin: [0, 0, 0, 20]
         },
-
+        
         // Third Row - Table
         {
           table: {
@@ -108,22 +137,22 @@ export class PdfService {
               ],
               [
                 { text: '1', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
-                { text: '', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
-                { text: '', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
-                { text: '', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
-                { text: '', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
-                { text: '', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
-                { text: '', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
-                { text: '', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
-                { text: '', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
-                { text: '', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
-                { text: '', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
-                { text: '', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
-                { text: '', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] }
+                { text: 'Sample LPG Bulk Plant, New Delhi', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
+                { text: 'DEL001', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
+                { text: '150', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
+                { text: '01/01/2023', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
+                { text: '200', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
+                { text: '120', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
+                { text: '20', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
+                { text: '10', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
+                { text: '160', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
+                { text: '01/01/2024', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
+                { text: '250', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
+                { text: 'Route optimization and new highway construction', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] }
               ]
             ]
           },
-          margin: [0, 5, 0, 20],
+          margin: [0, 0, 0, 0],
           layout: {
             hLineWidth: function(i: number, node: any) { return 0.5; },
             vLineWidth: function(i: number, node: any) { return 0.5; },
@@ -131,8 +160,8 @@ export class PdfService {
             vLineColor: function(i: number, node: any) { return '#aaa'; },
             paddingLeft: function(i: number, node: any) { return 0; },
             paddingRight: function(i: number, node: any) { return 0; },
-            paddingTop: function(i: number, node: any) { return 2; },
-            paddingBottom: function(i: number, node: any) { return 2; }
+            paddingTop: function(i: number, node: any) { return 0; },
+            paddingBottom: function(i: number, node: any) { return 0; }
           }
         },
         {
@@ -238,7 +267,7 @@ export class PdfService {
                   style: 'box'
                 }
               ],
-              margin: [0, 0, 0, 20]
+          margin: [0, 0, 0, 20]
             }
           ]
         },
@@ -259,7 +288,12 @@ export class PdfService {
           margin: [0, 0, 0, 10]
         },
         {
-          text: 'From: [Source Address]\nTo: [Destination Address]',
+          text: [
+            { text: 'From: ' },
+            { text: pdfObject.StD.selected.routes[0].legs[0].start_address, bold: true },
+            { text: '\nTo: ' },
+            { text: pdfObject.StD.selected.routes[0].legs[0].end_address, bold: true }
+          ],
           style: 'addressText',
           margin: [0, 0, 0, 10]
         },
@@ -273,25 +307,22 @@ export class PdfService {
                 { text: 'Instructions', style: 'tableHeader', alignment: 'center' },
                 { text: 'Distance (km)', style: 'tableHeader', alignment: 'center' }
               ],
-              [
-                { text: '1', style: 'tableCell', alignment: 'center' },
-                { text: '', style: 'tableCell', alignment: 'left' },
-                { text: '', style: 'tableCell', alignment: 'right' }
-              ],
-              [
-                { text: '2', style: 'tableCell', alignment: 'center' },
-                { text: '', style: 'tableCell', alignment: 'left' },
-                { text: '', style: 'tableCell', alignment: 'right' }
-              ],
-              [
-                { text: '3', style: 'tableCell', alignment: 'center' },
-                { text: '', style: 'tableCell', alignment: 'left' },
-                { text: '', style: 'tableCell', alignment: 'right' }
-              ],
+              ...pdfObject.StD.selected.routes[0].legs[0].steps
+                .filter((step: any) => step.instructions && step.instructions.trim() !== '')
+                .map((step: any, index: number) => [
+                  { text: (index + 1).toString(), style: 'tableCell', alignment: 'center' },
+                  { 
+                    text: parseHtmlInstruction(step.instructions),
+                    style: 'tableCell',
+                    alignment: 'left',
+                    margin: [2, 2, 2, 2]
+                  },
+                  { text: step.distance.text, style: 'tableCell', alignment: 'right' }
+                ]),
               [
                 { text: 'Total', style: 'tableHeader', alignment: 'right', colSpan: 2 },
                 {},
-                { text: '0.00', style: 'tableHeader', alignment: 'right' }
+                { text: pdfObject.StD.selected.routes[0].legs[0].distance.text, style: 'tableHeader', alignment: 'right' }
               ]
             ]
           },
@@ -300,8 +331,8 @@ export class PdfService {
             vLineWidth: function(i: number, node: any) { return 0.5; },
             hLineColor: function(i: number, node: any) { return '#aaa'; },
             vLineColor: function(i: number, node: any) { return '#aaa'; },
-            paddingLeft: function(i: number, node: any) { return 5; },
-            paddingRight: function(i: number, node: any) { return 5; },
+            paddingLeft: function(i: number, node: any) { return 2; },
+            paddingRight: function(i: number, node: any) { return 2; },
             paddingTop: function(i: number, node: any) { return 2; },
             paddingBottom: function(i: number, node: any) { return 2; }
           },
@@ -314,7 +345,12 @@ export class PdfService {
           margin: [0, 20, 0, 10]
         },
         {
-          text: 'From: [Destination Address]\nTo: [Source Address]',
+          text: [
+            { text: 'From: ' },
+            { text: pdfObject.DtoS.selected.routes[0].legs[0].start_address, bold: true },
+            { text: '\nTo: ' },
+            { text: pdfObject.DtoS.selected.routes[0].legs[0].end_address, bold: true }
+          ],
           style: 'addressText',
           margin: [0, 0, 0, 10]
         },
@@ -328,25 +364,22 @@ export class PdfService {
                 { text: 'Instructions', style: 'tableHeader', alignment: 'center' },
                 { text: 'Distance (km)', style: 'tableHeader', alignment: 'center' }
               ],
-              [
-                { text: '1', style: 'tableCell', alignment: 'center' },
-                { text: '', style: 'tableCell', alignment: 'left' },
-                { text: '', style: 'tableCell', alignment: 'right' }
-              ],
-              [
-                { text: '2', style: 'tableCell', alignment: 'center' },
-                { text: '', style: 'tableCell', alignment: 'left' },
-                { text: '', style: 'tableCell', alignment: 'right' }
-              ],
-              [
-                { text: '3', style: 'tableCell', alignment: 'center' },
-                { text: '', style: 'tableCell', alignment: 'left' },
-                { text: '', style: 'tableCell', alignment: 'right' }
-              ],
+              ...pdfObject.DtoS.selected.routes[0].legs[0].steps
+                .filter((step: any) => step.instructions && step.instructions.trim() !== '')
+                .map((step: any, index: number) => [
+                  { text: (index + 1).toString(), style: 'tableCell', alignment: 'center' },
+                  { 
+                    text: parseHtmlInstruction(step.instructions),
+                    style: 'tableCell',
+                    alignment: 'left',
+                    margin: [2, 2, 2, 2]
+                  },
+                  { text: step.distance.text, style: 'tableCell', alignment: 'right' }
+                ]),
               [
                 { text: 'Total', style: 'tableHeader', alignment: 'right', colSpan: 2 },
                 {},
-                { text: '0.00', style: 'tableHeader', alignment: 'right' }
+                { text: pdfObject.DtoS.selected.routes[0].legs[0].distance.text, style: 'tableHeader', alignment: 'right' }
               ]
             ]
           },
@@ -355,12 +388,20 @@ export class PdfService {
             vLineWidth: function(i: number, node: any) { return 0.5; },
             hLineColor: function(i: number, node: any) { return '#aaa'; },
             vLineColor: function(i: number, node: any) { return '#aaa'; },
-            paddingLeft: function(i: number, node: any) { return 5; },
-            paddingRight: function(i: number, node: any) { return 5; },
+            paddingLeft: function(i: number, node: any) { return 2; },
+            paddingRight: function(i: number, node: any) { return 2; },
             paddingTop: function(i: number, node: any) { return 2; },
             paddingBottom: function(i: number, node: any) { return 2; }
           },
           margin: [0, 0, 0, 20]
+        },
+        {
+          text: [
+            { text: 'Total Combined Distance: ', bold: true },
+            { text: `${totalCombined} km`, bold: true }
+          ],
+          style: 'totalDistance',
+          margin: [0, 10, 0, 0]
         }
       ],
       styles: {
@@ -409,7 +450,8 @@ export class PdfService {
         },
         tableCell: {
           fontSize: 7,
-          color: 'black'
+          color: 'black',
+          margin: [2, 2, 2, 2]
         },
         bulletText: {
           fontSize: 7,
@@ -449,13 +491,18 @@ export class PdfService {
         addressText: {
           fontSize: 8,
           margin: [0, 0, 0, 0]
+        },
+        totalDistance: {
+          fontSize: 9,
+          alignment: 'right',
+          margin: [0, 10, 0, 0]
         }
       },
       defaultStyle: {
         fontSize: 8
       }
     };
-
+  
     // For testing purposes, show what would be created
     pdfMake.createPdf(docDefinition).download('Certificate.pdf');
   }
