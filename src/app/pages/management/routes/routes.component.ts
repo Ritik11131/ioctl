@@ -296,7 +296,7 @@ export class RoutesComponent implements OnInit {
           // First get the route data
           const routeResponse: any = await this.http.get('geortd/rtd/GetById', {}, this.selectedRowItems[0].id);
           const { source, destination, attributes } = routeResponse.data;
-          
+          const parsedAttributes = JSON.parse(attributes);
           // Then get the tolls data
           const tollsResponse: any = await this.http.get('geortd/rtdtoll/list', {}, this.selectedRowItems[0]?.id);
           
@@ -304,7 +304,7 @@ export class RoutesComponent implements OnInit {
           this.mapObject = {
             source,
             destination,
-            routeData: JSON.parse(attributes),
+            routeData: parsedAttributes?.route,
             tolls: tollsResponse?.data
           };
           
