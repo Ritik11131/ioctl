@@ -652,64 +652,47 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   private getRouteColor(index: number, totalRoutes: number, isReturn: boolean): string {
-    if (isReturn) {
-      // Use purple hues for return routes
-      if (totalRoutes === 1) return '#9C27B0';
-      if (index === 0) return '#9C27B0';
-      if (index === totalRoutes - 1) return '#E91E63';
-      return '#BA68C8';
-    } else {
-      // Use blue hues for source to destination routes
-      if (totalRoutes === 1) return '#4285F4';
-      if (index === 0) return '#4285F4';
-      if (index === totalRoutes - 1) return '#EA4335';
-      return '#34A853';
-    }
+    // Use blue for Source to Destination and purple for Destination to Source
+    return isReturn ? '#9C27B0' : '#2196F3';
   }
 
   public selectRoute(index: number, isReturn: boolean) {
     const routeOptionsRef = isReturn ? this.returnRouteOptions : this.routeOptions;
     const routeRenderersRef = isReturn ? this.returnRouteRenderers : this.routeRenderers;
-    
-    if (routeOptionsRef.length <= index) {
-      console.error(`Invalid route index: ${index}`);
-      return;
-    }
 
-    // Update selection state
-    routeOptionsRef.forEach(option => option.isSelected = false);
-    routeOptionsRef[index].isSelected = true;
-    
+    // Update selection state for all routes in the current direction
+    routeOptionsRef.forEach((option, i) => {
+      option.isSelected = i === index;
+    });
+
+    // Update renderer styles for all routes in the current direction
+    routeRenderersRef.forEach((renderer, i) => {
+      if (renderer) {
+        const isSelected = i === index;
+        const color = routeOptionsRef[i].color;
+        
+        // Set different styles for selected vs non-selected routes
+        renderer.setOptions({
+          polylineOptions: {
+            strokeColor: color,
+            strokeWeight: isSelected ? (isReturn ? 6 : 7) : (isReturn ? 3 : 4),
+            strokeOpacity: isSelected ? 1 : 0.4,
+            zIndex: isSelected ? 1000 : 0
+          }
+        });
+
+        // Force update the renderer
+        renderer.setMap(null);
+        renderer.setMap(this.map);
+      }
+    });
+
+    // Update the selection indices
     if (isReturn) {
       this.selectedReturnRouteIndex = index;
     } else {
       this.selectedRouteIndex = index;
     }
-
-    // Update route renderers to show selection
-    routeRenderersRef.forEach((renderer, i) => {
-      const isSelected = i === index;
-      const color = this.getRouteColor(i, routeRenderersRef.length, isReturn);
-      
-      // Set z-index to bring selected route to front
-      const zIndex = isSelected ? 1000 : 0;
-      
-      // Update polyline options with more distinct styling for selected route
-      renderer.setOptions({
-        polylineOptions: {
-          strokeColor: color,
-          strokeWeight: isSelected ? (isReturn ? 6 : 7) : (isReturn ? 3 : 4),
-          strokeOpacity: isSelected ? 1 : 0.4,
-          zIndex: zIndex
-        }
-      });
-
-      // Force a redraw of the route
-      const directions = renderer.getDirections();
-      if (directions) {
-        renderer.setDirections(directions);
-      }
-    });
 
     // Get all routes for both directions, filtering out null values
     const allStDRoutes = this.routeRenderers
@@ -732,10 +715,15 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
       }
     });
 
-    // Fit map to show the selected route
-    const selectedRoute = routeOptionsRef[index].route;
-    if (selectedRoute && selectedRoute.bounds) {
-      this.map.fitBounds(selectedRoute.bounds);
+    // Update map bounds to show all routes
+    const bounds = new google.maps.LatLngBounds();
+    routeRenderersRef.forEach(renderer => {
+      if (renderer.getDirections()?.routes?.[0]?.bounds) {
+        bounds.union(renderer.getDirections()!.routes[0].bounds!);
+      }
+    });
+    if (!bounds.isEmpty()) {
+      this.map.fitBounds(bounds);
     }
   }
 
