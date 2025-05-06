@@ -31,10 +31,130 @@
 
 <ng-template #checkRouteTollsContent>
   <h3 class="text-xl font-semibold mb-4 text-muted-color-emphasis">Showing Route With Available Tolls</h3>
-
-  <app-generic-view-on-map [apiKey]="googleMapsApiKey" [source]="mapObject.source" [destination]="mapObject.destination" [tolls]="mapObject.tolls"
-    [routeData]="mapObject.routeData">
-  </app-generic-view-on-map>
+  <div class="bg-gray-50 h-[calc(100vh-12rem)]">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
+      <div class="col-span-1 lg:col-span-3 flex flex-col h-full">
+        <app-generic-view-on-map 
+          [apiKey]="googleMapsApiKey" 
+          [source]="mapObject.source" 
+          [destination]="mapObject.destination" 
+          [tolls]="mapObject.tolls"
+          [routeData]="mapObject.routeData">
+        </app-generic-view-on-map>
+      </div>
+      
+      <div class="border rounded-lg shadow-md p-6 bg-white h-full overflow-y-auto">
+        <h3 class="text-lg font-semibold mb-4 text-gray-800 flex items-center">
+          <i class="pi pi-info-circle mr-2 text-blue-600"></i>
+          Route Information
+        </h3>
+        
+        <!-- Route Details -->
+        <div class="space-y-5">
+          <!-- Location Info -->
+          <div class="space-y-3">
+            <div class="bg-blue-50 rounded-lg p-4">
+              <div class="flex items-start">
+                <div class="flex-shrink-0">
+                  <i class="pi pi-map-marker text-xl text-blue-600"></i>
+                </div>
+                <div class="ml-3 flex-1">
+                  <h4 class="text-sm font-medium text-blue-800">Source</h4>
+                  <p class="mt-1 text-sm text-gray-700">{{ mapObject.source?.name || 'N/A' }}</p>
+                  <p class="mt-1 text-xs text-gray-500">{{ mapObject.sourceDept?.name || 'N/A' }}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="flex justify-center">
+              <i class="pi pi-arrow-down text-gray-400"></i>
+            </div>
+            
+            <div class="bg-red-50 rounded-lg p-4">
+              <div class="flex items-start">
+                <div class="flex-shrink-0">
+                  <i class="pi pi-flag text-xl text-red-600"></i>
+                </div>
+                <div class="ml-3 flex-1">
+                  <h4 class="text-sm font-medium text-red-800">Destination</h4>
+                  <p class="mt-1 text-sm text-gray-700">{{ mapObject.destination?.name || 'N/A' }}</p>
+                  <p class="mt-1 text-xs text-gray-500">{{ mapObject.destinationDept?.name || 'N/A' }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Schedule Info -->
+          <div class="bg-gray-50 rounded-lg p-4">
+            <h4 class="text-sm font-medium text-gray-800 flex items-center mb-3">
+              <i class="pi pi-calendar mr-2 text-indigo-600"></i>
+              Schedule
+            </h4>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <p class="text-xs text-gray-500">Start Date</p>
+                <p class="text-sm text-gray-700">{{ (mapObject.startDate | date)  || 'N/A' }}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500">End Date</p>
+                <p class="text-sm text-gray-700">{{( mapObject.endDate | date)  || 'N/A' }}</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Toll Information -->
+           @if(mapObject.tolls && mapObject.tolls.length > 0) {
+             <div class="border-t pt-4">
+               <h4 class="text-sm font-medium text-gray-800 flex items-center mb-3">
+                 <i class="pi pi-ticket mr-2 text-yellow-600"></i>
+                 Toll Information
+               </h4>
+               <div class="space-y-2">
+                @for (toll of mapObject.tolls; track $index) {
+                  <div class="bg-yellow-50 rounded-lg p-4 shadow-sm">
+                    <!-- Toll Name Header -->
+                    <div class="border-b border-yellow-200 pb-2 mb-3">
+                      <div class="flex items-center">
+                        <i class="pi pi-map-marker text-yellow-600 mr-2"></i>
+                        <span class="text-sm font-semibold text-yellow-800">{{ toll.name || 'Unnamed Toll' }}</span>
+                      </div>
+                    </div>
+                    
+                    <!-- Vehicle Types and Prices -->
+                    <div class="grid grid-cols-1 gap-2">
+                      @for (item of toll.tollPriceVehicleTypes; track $index) {
+                        <div class="flex justify-between items-center bg-white p-2 rounded border-l-4 border-yellow-400">
+                          <div class="flex items-center">
+                            <i class="pi pi-car text-gray-600 mr-2"></i>
+                            <span class="text-sm font-medium text-gray-700">{{ item?.vehicleType?.name || 'Unknown Vehicle' }}</span>
+                          </div>
+                          <div class="bg-yellow-100 px-3 py-1 rounded-full">
+                            <span class="text-sm font-bold text-yellow-700">{{ item?.price | currency:'INR':'symbol':'1.2-2' }}</span>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+               </div>
+               <!-- <div class="mt-3 text-right">
+                 <p class="text-sm font-semibold text-gray-800">
+                   Total: 
+                 </p>
+               </div> -->
+             </div>
+           }
+          
+          @if(!mapObject.tolls || mapObject.tolls.length === 0) {
+          <div class="text-center p-4">
+            <i class="pi pi-info-circle text-2xl text-gray-400"></i>
+            <p class="text-sm text-gray-500 mt-2">No toll information available</p>
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
 </ng-template>
 
 <ng-template #linkRtdAproval>

@@ -8,10 +8,11 @@ import { environment } from '../../../../environments/environment.prod';
 import { HttpService } from '../../service/http.service';
 import { GenericViewOnMapComponent } from '../../../shared/components/generic-view-on-map/generic-view-on-map.component';
 import { PdfService } from '../../service/pdf.service';
+import { DatePipe, CurrencyPipe } from '@angular/common';
 
 @Component({
     selector: 'app-routes',
-    imports: [GenericTableComponent, FormsModule, GenericGmRouteComponent, GenericStepperComponent, GenericViewOnMapComponent],
+    imports: [GenericTableComponent, FormsModule,DatePipe,CurrencyPipe, GenericGmRouteComponent, GenericStepperComponent, GenericViewOnMapComponent],
     templateUrl: './routes.component.html',
 })
 export class RoutesComponent implements OnInit {
@@ -68,7 +69,7 @@ export class RoutesComponent implements OnInit {
         },
         {
             key: 'checkTolls',
-            label: 'Check Tolls',
+            label: 'View Route with Tolls',
             icon: 'pi pi-map-marker',
             severity: 'primary',
             outlined: true,
@@ -93,7 +94,7 @@ export class RoutesComponent implements OnInit {
     ];
 
     tableConfig = {
-        title: 'Manage Routes',
+        title: 'Manage RTD',
         columns: [
             { field: 'name', header: 'Name', minWidth: '12rem' },
             { field: 'source', header: 'Source Name', subfield: 'name', minWidth: '15rem' },
@@ -170,7 +171,29 @@ export class RoutesComponent implements OnInit {
                   label: 'End Date',
                   required: true,
                   placeholder: 'Enter a date'
-              }
+              },
+              {
+                fieldId: 'reason',
+                type: 'dropdown',
+                options: [
+                    { name: 'First Time Geo-RTD', id: 'First Time Geo-RTD' },
+                    { name: 'Renew of Geo-RTD', id: 'Renew of Geo-RTD' },
+                    { name: 'Route Not utilized for 1 year or more', id: 'Route Not utilized for 1 year or more' },
+                    { name: 'New Route Identified', id: 'New Route Identified' },
+                    { name: 'Any Other', id: 'Any Other' }
+
+                ],
+                label: 'Reason for New RTD',
+                required: true,
+                placeholder: 'Select a Reason',
+            },
+              {
+                fieldId: 'comment',
+                type: 'textarea',
+                label: 'Comment',
+                required: false,
+                placeholder: 'Enter description'
+            }
             ]
         }
     ];
@@ -292,27 +315,70 @@ export class RoutesComponent implements OnInit {
 
     async handleRouteWithTolls(): Promise<void> {
         this.uiService.toggleLoader(true);
+        
         try {
           // First get the route data
-          const routeResponse: any = await this.http.get('geortd/rtd/GetById', {}, this.selectedRowItems[0].id);
-          const { source, destination, attributes } = routeResponse.data;
-          const parsedAttributes = JSON.parse(attributes);
-          // Then get the tolls data
-          const tollsResponse: any = await this.http.get('geortd/rtdtoll/list', {}, this.selectedRowItems[0]?.id);
+          const routeResponse: any = await this.http.get('geortd/rtd/GetById', {}, this.selectedRowItems[0]?.id)
+            .catch(error => {
+              console.error('Error fetching route data:', error);
+              throw new Error('Failed to fetch route data');
+            });
           
-          // Combine all data into mapObject
+          if (!routeResponse?.data) {
+            throw new Error('Invalid route data received');
+          }
+          
+          const { source,sourceDept, destination,destinationDept, attributes, startDate,endDate } = routeResponse.data;
+          
+          // Handle potential JSON parsing errors
+          let parsedAttributes: any = {};
+          try {
+            parsedAttributes = attributes ? JSON.parse(attributes) : {};
+          } catch (jsonError) {
+            console.error('Error parsing route attributes:', jsonError);
+            // Continue with empty attributes rather than failing
+          }
+          
+          // Then get the tolls data
+          const tollsResponse: any = await this.http.get('geortd/rtdtoll/list', {}, this.selectedRowItems[0]?.id)
+            .catch(error => {
+              console.error('Error fetching tolls data:', error);
+              // Return an object with empty data array instead of failing
+              return { data: [] };
+            });
+          
+          // Combine all data into mapObject with fallbacks for missing data
           this.mapObject = {
-            source,
-            destination,
-            routeData: parsedAttributes?.route,
-            tolls: tollsResponse?.data
+            source: source || '',
+            sourceDept,
+            destination: destination || '',
+            destinationDept,
+            routeData: parsedAttributes?.route || [],
+            tolls: tollsResponse?.data || [],
+            startDate,
+            endDate,
           };
           
           // Open drawer with combined data
-          this.uiService.openDrawer(this.checkRouteTollsContent, 'View Route', '!w-[98vw] md:!w-[98vw] lg:!w-[98vw] rounded-l-2xl');
-          
+          this.uiService.openDrawer(
+            this.checkRouteTollsContent, 
+            'View Route', 
+            '!w-[98vw] md:!w-[98vw] lg:!w-[98vw] rounded-l-2xl'
+          );
         } catch (error: any) {
-          this.uiService.showToast('error', 'Error', error?.error?.data);
+          console.error('Error in handleRouteWithTolls:', error);
+          
+          // Set empty defaults to prevent UI issues
+          this.mapObject = {
+            source: '',
+            destination: '',
+            routeData: [],
+            tolls: []
+          };
+          
+          // Show user-friendly error message
+          const errorMessage = error?.error?.data || error?.message || 'An unexpected error occurred';
+          this.uiService.showToast('error', 'Error', errorMessage);
         } finally {
           this.uiService.toggleLoader(false);
         }
@@ -366,6 +432,27 @@ export class RoutesComponent implements OnInit {
                         label: 'End Date',
                         required: true,
                         placeholder: 'Enter a date'
+                    },
+                    {
+                        fieldId: 'reason',
+                        type: 'dropdown',
+                        options: [
+                            { name: 'First Time Geo-RTD', id: 'First Time Geo-RTD' },
+                            { name: 'Renew of Geo-RTD', id: 'Renew of Geo-RTD' },
+                            { name: 'Route Not utilized for 1 year or more', id: 'Route Not utilized for 1 year or more' },
+                            { name: 'New Route Identified', id: 'New Route Identified' },
+                            { name: 'Any Other', id: 'Any Other' }
+                        ],
+                        label: 'Reason for New RTD',
+                        required: true,
+                        placeholder: 'Select a Reason',
+                    },
+                      {
+                        fieldId: 'comment',
+                        type: 'textarea',
+                        label: 'Comment',
+                        required: false,
+                        placeholder: 'Enter description'
                     }
                 ]
             }
@@ -494,6 +581,28 @@ export class RoutesComponent implements OnInit {
                         label: 'End Date',
                         required: true,
                         placeholder: 'Enter a date'
+                    },
+                    {
+                        fieldId: 'reason',
+                        type: 'dropdown',
+                        options: [
+                            { name: 'First Time Geo-RTD', id: 'First Time Geo-RTD' },
+                            { name: 'Renew of Geo-RTD', id: 'Renew of Geo-RTD' },
+                            { name: 'Route Not utilized for 1 year or more', id: 'Route Not utilized for 1 year or more' },
+                            { name: 'New Route Identified', id: 'New Route Identified' },
+                            { name: 'Any Other', id: 'Any Other' }
+        
+                        ],
+                        label: 'Reason for New RTD',
+                        required: true,
+                        placeholder: 'Select a Reason',
+                    },
+                      {
+                        fieldId: 'comment',
+                        type: 'textarea',
+                        label: 'Comment',
+                        required: false,
+                        placeholder: 'Enter description'
                     }
                 ]
             }
@@ -553,7 +662,7 @@ export class RoutesComponent implements OnInit {
     async onFormSubmit(formData: any): Promise<void> {
       if(this.isEditMode) {
         this.uiService.toggleLoader(true);
-        const { name, startDate, endDate, destination_department, source_department } = formData;
+        const { name, startDate, endDate, destination_department, source_department, reason,comment } = formData;
         const payload = {
           id: this.selectedRowItems[0].id,
           name,
@@ -563,7 +672,8 @@ export class RoutesComponent implements OnInit {
           destinationId: this.editData.destination_address?.id,
           sourceDeptId:source_department?.id,
           destinationDeptId: destination_department?.id,
-          reason: "test reason",
+          reason: reason,
+          comment,
           attributes: JSON.stringify( { route: this.selectedRouteJson } )
         }
         
@@ -581,7 +691,7 @@ export class RoutesComponent implements OnInit {
 
       } else {
         this.uiService.toggleLoader(true);
-        const { name, startDate, endDate, destination_address, destination_department, source_address, source_department } = formData;
+        const { name, startDate, endDate, destination_address, destination_department, source_address, source_department, reason, comment } = formData;
         const payload = {
           name,
           startDate,
@@ -590,7 +700,8 @@ export class RoutesComponent implements OnInit {
           destinationId: destination_address?.id,
           sourceDeptId:source_department?.id,
           destinationDeptId: destination_department?.id,
-          reason: "test reason",
+          reason: reason,
+          comment,
           attributes:JSON.stringify({route:this.selectedRouteJson})
         }
 

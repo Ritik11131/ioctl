@@ -129,9 +129,9 @@ import { HttpService } from '../../service/http.service';
               {
                 fieldId: 'loginId',
                 type: 'text',
-                label: 'Login ID',
+                label: 'Username',
                 required: true,
-                placeholder: 'Enter login ID'
+                placeholder: 'Enter username'
               },
               {
                 fieldId: 'password',
