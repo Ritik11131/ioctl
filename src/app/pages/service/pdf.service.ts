@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import * as pdfMake from "pdfmake/build/pdfmake";
 import * as pdfFonts from 'pdfmake/build/vfs_fonts';
+import { AuthService } from './auth.service';
 
 (<any>pdfMake).addVirtualFileSystem(pdfFonts);
 
@@ -9,9 +10,101 @@ import * as pdfFonts from 'pdfmake/build/vfs_fonts';
 })
 export class PdfService {
 
-  constructor() { }
+  constructor(private authService:AuthService) { }
 
-  generateOpCertificate(pdfObject: any): void {
+
+  /**
+ * Function to fetch the map image from the local API and convert it to a base64 string for pdfMake
+ * @param sourceCoords - Source coordinates [lat, lng]
+ * @param destCoords - Destination coordinates [lat, lng]
+ * @param authToken - Authorization token for the API
+ * @returns Promise<string> - Base64 encoded image data
+ */
+  async fetchMapImage(sourceCoords: number[], destCoords: number[], authToken: string | null, sourcePath: string, destinationPath: string, sourceBounds: any): Promise<string> {
+    try {
+      console.log(sourceCoords, destCoords);
+      
+      // Build the markers parameters
+      const sourceMarker = `color:blue|label:S|${sourceCoords.join(',')}`;
+      const destMarker = `color:red|label:D|${destCoords.join(',')}`;
+      
+      // Calculate optimal center and zoom based on provided bounds
+      const bounds = this.calculateMapBounds(sourceBounds);
+      
+      // Build the URL with all parameters
+      const url = new URL('http://localhost:3000/api/map');
+      url.searchParams.append('size', '600x300');  // Larger size for better visibility
+      url.searchParams.append('path', sourcePath);
+      // url.searchParams.append('path', destinationPath);
+      url.searchParams.append('center', bounds.center);
+      url.searchParams.append('zoom', bounds.zoom);
+      url.searchParams.append('maptype', 'roadmap');  // Options: roadmap, satellite, hybrid, terrain
+      url.searchParams.append('markers', sourceMarker);
+      url.searchParams.append('markers', destMarker);
+      
+      // Make the fetch request with authorization header if provided
+      const headers: Record<string, string> = {};
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
+      const response = await fetch(url.toString(), { headers });
+      
+      if (!response.ok) {
+        throw new Error(`Error fetching map: ${response.status} ${response.statusText}`);
+      }
+      
+      // Get the response as blob
+      const blob = await response.blob();
+      
+      // Convert blob to base64 for PDF
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (error) {
+      console.error('Error fetching map image:', error);
+      throw error;
+    }
+  }
+  
+  calculateMapBounds(sourceBounds: any): { center: string, zoom: string } {
+    // Calculate center from bounds
+    const centerLat = (sourceBounds.north + sourceBounds.south) / 2;
+    const centerLng = (sourceBounds.east + sourceBounds.west) / 2;
+    
+    // Calculate appropriate zoom level based on the distance
+    const latSpan = sourceBounds.north - sourceBounds.south;
+    const lngSpan = sourceBounds.east - sourceBounds.west;
+    
+    // Use the larger span to determine zoom
+    const maxSpan = Math.max(latSpan, lngSpan);
+    
+    // Constants for zoom calculation (adjust as needed)
+    const WORLD_DIM = { height: 256, width: 256 };
+    const ZOOM_MAX = 18;
+    
+    // Calculate zoom based on the formula:
+    // zoom = log2(mapDimension / worldDimension * 360 / angleSpan)
+    const latZoom = Math.floor(Math.log2(600 / WORLD_DIM.height * 360 / latSpan));
+    const lngZoom = Math.floor(Math.log2(400 / WORLD_DIM.width * 360 / lngSpan));
+    
+    // Use the smaller zoom level to ensure both coordinates fit
+    let zoom = Math.min(latZoom, lngZoom, ZOOM_MAX);
+    
+    // Ensure reasonable zoom bounds
+    zoom = Math.max(1, Math.min(zoom, 15)); // I've adjusted the max zoom to 15 for better visibility
+    
+    return {
+      center: `${centerLat},${centerLng}`,
+      zoom: (zoom - 1 ).toString()
+    };
+  }
+
+
+  async generateOpCertificate(pdfObject: any): Promise<void> {
     const parseHtmlInstruction = (html: string) => {
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, 'text/html');
@@ -36,6 +129,25 @@ export class PdfService {
     const calculateTotalDistance = (distanceStr: string) => {
       return parseFloat(distanceStr.replace(' km', ''));
     };
+
+     // Extract coordinates from pdfObject
+     const sourceCoords = [
+      pdfObject.StD.selected.routes[0].legs[0].start_location.lat,
+      pdfObject.StD.selected.routes[0].legs[0].start_location.lng
+    ];
+    
+    const destCoords = [
+      pdfObject.DtoS.selected.routes[0].legs[0].start_location.lat,
+      pdfObject.DtoS.selected.routes[0].legs[0].start_location.lng
+    ];
+
+    const sourcePath = `enc:${pdfObject.StD.selected.routes[0].overview_polyline}`;
+    const sourceBounds = pdfObject.StD.selected.routes[0].bounds;
+    const destinationPath = pdfObject.StD.selected.routes[0].overview_polyline;
+
+
+    // Fetch the map image
+    const mapImageBase64 = await this.fetchMapImage(sourceCoords, destCoords, this.authService.getToken(),sourcePath,destinationPath,sourceBounds);
 
     const totalStD = calculateTotalDistance(pdfObject.StD.selected.routes[0].legs[0].distance.text);
     const totalDtoS = calculateTotalDistance(pdfObject.DtoS.selected.routes[0].legs[0].distance.text);
@@ -273,12 +385,10 @@ export class PdfService {
         },
         // Map Image Row
         {
-          stack: [
-            { text: '[MAP IMAGE]', style: 'mapPlaceholder', alignment: 'center' },
-            { text: 'Placeholder for Route Map', style: 'mapText', alignment: 'center' }
-          ],
-          width: '100%',
+          image: mapImageBase64,
+          width: 600,
           height: 300,
+          // alignment: 'center',
           margin: [0, 20, 0, 20]
         },
         // Source to Destination Table

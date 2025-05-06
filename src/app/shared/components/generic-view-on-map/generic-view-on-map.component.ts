@@ -54,7 +54,7 @@ interface RouteData {
     <!-- Left Panel: Route Controls -->
     <div class="lg:w-80 flex-shrink-0 bg-white rounded-xl shadow-md overflow-hidden border border-slate-200">
       <!-- Source to Destination Routes -->
-      @if (routeData && routeData.StD?.suggested?.length) {
+      @if (routeData && routeData.StD.suggested.length) {
         <div class="route-panel">
           <div class="px-5 py-4 border-b border-slate-100">
             <h3 class="text-lg font-medium text-slate-800">Source to Destination</h3>
@@ -85,7 +85,7 @@ interface RouteData {
       }
       
       <!-- Destination to Source Routes -->
-      @if (routeData && routeData.DtoS?.suggested?.length) {
+      @if (routeData && routeData.DtoS.suggested.length) {
         <div class="route-panel mt-4">
           <div class="px-5 py-4 border-b border-slate-100">
             <h3 class="text-lg font-medium text-slate-800">
