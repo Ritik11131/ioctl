@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import * as pdfMake from "pdfmake/build/pdfmake";
 import * as pdfFonts from 'pdfmake/build/vfs_fonts';
 import { AuthService } from './auth.service';
+import { environment } from '../../../environments/environment.prod';
 
 (<any>pdfMake).addVirtualFileSystem(pdfFonts);
 
@@ -32,7 +33,7 @@ export class PdfService {
       const bounds = this.calculateMapBounds(sourceBounds);
       
       // Build the URL with all parameters
-      const url = new URL('http://localhost:3000/api/map');
+      const url = new URL(environment.googleMapStaticApiURl);
       url.searchParams.append('size', '600x300');  // Larger size for better visibility
       url.searchParams.append('path', sourcePath);
       // url.searchParams.append('path', destinationPath);

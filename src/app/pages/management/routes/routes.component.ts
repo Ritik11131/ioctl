@@ -275,6 +275,7 @@ export class RoutesComponent implements OnInit {
         }
       } else if(event.key === 'op46Download') {
         try {
+          this.uiService.toggleLoader(true);
             const response: any = await this.http.get('geortd/rtd/GetById', {}, this.selectedRowItems[0].id);
             const { source, destination, attributes } = response.data;
             const {route} = JSON.parse(attributes);
@@ -286,8 +287,11 @@ export class RoutesComponent implements OnInit {
                 destination
             }
             this.pdfService.generateOpCertificate(pdfObject)
-        } catch (error) {
-            
+        } catch (error: any) {
+          console.error('Error in handleToolBarActions:', error);
+          this.uiService.showToast('error', 'Error', error?.error?.data);
+        } finally{
+          this.uiService.toggleLoader(false);
         }
       }
     }
