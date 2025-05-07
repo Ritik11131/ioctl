@@ -1,6 +1,6 @@
-<app-generic-table [selectedItems]="selectedRowItems" [toolBarStartActions]="toolBarStartActions" [tableConfig]="tableConfig" [tableData]="tableData" (onToolBarStartAction)="handleToolBarActions($event)" (onSelectionChange)="handleRowSelectionChange($event)" />
+<app-generic-table [selectedItems]="selectedRowItems" [toolBarStartActions]="toolBarStartActions" [tableConfig]="tableConfig" [tableFilterByStatusConfig]="tableFilterByStatusConfig" [tableData]="tableData" (onToolBarStartAction)="handleToolBarActions($event)" (onSelectionChange)="handleRowSelectionChange($event)" (onTableFilterByStatus)="handleTableFilterByStatus($event)" />
 <ng-template #createUpdateRouteContent>
-    <h3 class="text-xl font-semibold mb-4 text-muted-color-emphasis">{{isEditMode ? 'Update ' : 'Create '}}Route</h3>
+    <h3 class="text-xl font-semibold mb-4 text-muted-color-emphasis">{{isEditMode ? 'Update ' : 'Create '}}RTD</h3>
 
     <div class=" bg-gray-50">
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -21,7 +21,7 @@
         </div>
         
         <div class="border rounded-lg shadow-md p-6 bg-white">
-          <h3 class="text-lg font-semibold mb-4 text-gray-800">Route Settings</h3>
+          <h3 class="text-lg font-semibold mb-4 text-gray-800">RTD Settings</h3>
           <app-generic-stepper [formClass]="'grid grid-cols-1 md:grid-cols-1 gap-4'" [steps]="formSteps" [validateFromApi]="false" [editMode]="isEditMode" [editData]="editData" (stepChange)="onStepChange($event)" (formSubmit)="onFormSubmit($event)" (autoCompleteValue)="handleStepperAutoComplete($event)"></app-generic-stepper>
         </div>
       </div>
@@ -30,7 +30,7 @@
 
 
 <ng-template #checkRouteTollsContent>
-  <h3 class="text-xl font-semibold mb-4 text-muted-color-emphasis">Showing Route With Available Tolls</h3>
+  <h3 class="text-xl font-semibold mb-4 text-muted-color-emphasis">Showing RTD With Available Tolls</h3>
   <div class="bg-gray-50 h-[calc(100vh-12rem)]">
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
       <div class="col-span-1 lg:col-span-3 flex flex-col h-full">
@@ -46,7 +46,7 @@
       <div class="border rounded-lg shadow-md p-6 bg-white h-full overflow-y-auto">
         <h3 class="text-lg font-semibold mb-4 text-gray-800 flex items-center">
           <i class="pi pi-info-circle mr-2 text-blue-600"></i>
-          Route Information
+          RTD Information
         </h3>
         
         <!-- Route Details -->

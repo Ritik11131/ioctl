@@ -6,13 +6,15 @@ import { InputTextModule } from 'primeng/inputtext';
 import { RippleModule } from 'primeng/ripple';
 import { Table, TableModule } from 'primeng/table';
 import { ToolbarModule } from 'primeng/toolbar';
+import { SelectButtonModule } from 'primeng/selectbutton';
 import { SplitButtonModule } from 'primeng/splitbutton';
 import { GenericDropdownComponent } from '../generic-dropdown/generic-dropdown.component';
 import { DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'app-generic-table',
-    imports: [ToolbarModule, ButtonModule, RippleModule, TableModule, IconFieldModule, InputIconModule, SplitButtonModule, InputTextModule, GenericDropdownComponent, DatePipe],
+    imports: [ToolbarModule, ButtonModule, RippleModule,FormsModule, TableModule, IconFieldModule, SelectButtonModule, InputIconModule, SplitButtonModule, InputTextModule, GenericDropdownComponent, DatePipe],
     template: `
         <p-toolbar styleClass="mb-6">
             <ng-template #start>
@@ -37,6 +39,10 @@ import { DatePipe } from '@angular/common';
                 <p-button label="Export" icon="pi pi-upload" severity="secondary" />
             </ng-template>
         </p-toolbar>
+
+        @if(tableFilterByStatusConfig.length) {
+            <p-selectbutton class="mb-6" [options]="tableFilterByStatusConfig" [(ngModel)]="selectedRouteStatusType" (onChange)="handleTableFilterByStatusChange($event)" [allowEmpty]="false" />
+        }
 
         <p-table
             #dt
@@ -126,12 +132,18 @@ export class GenericTableComponent {
     @Input() selectedItems: any[] = [];
     @Input() toolBarStartActions: any[] = [];
     @Input() toolBarSplitActions: any[] = [];
+    @Input() tableFilterByStatusConfig: any[] = []; // Filter by status config for the table
     @Input() tableConfig!: any;
     @Input() tableData!: any[];
 
     @Output() onToolBarStartAction = new EventEmitter<any>();
     @Output() onSelectionChange = new EventEmitter<any>(); // Event emitter for row select
     @Output() onTableDropdownFilter = new EventEmitter<any>();
+    @Output() onTableFilterByStatus = new EventEmitter<any>(); // Event emitter for filter by status
+
+
+    selectedRouteStatusType: any = 'all';
+
 
     onSearch(dt: Table, event: Event) {
         const input = event.target as HTMLInputElement;
@@ -151,5 +163,9 @@ export class GenericTableComponent {
 
     handleTableDropdownFilter(event: any) {
         this.onTableDropdownFilter.emit(event);
+    }
+
+    handleTableFilterByStatusChange(event: any) {
+        this.onTableFilterByStatus.emit(event.value);
     }
 }

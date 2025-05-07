@@ -30,8 +30,8 @@ export class RoutesComponent implements OnInit {
     editRouteJson: any = null;
     selectedSource: any = null;
     selectedDestination: any = null;
+    currentSelectedTableFilterStatus: any = 'all'; 
     googleMapsApiKey = environment.googleMapsApiKey;
-
     toolBarStartActions = [
         {
             key: 'new',
@@ -69,8 +69,8 @@ export class RoutesComponent implements OnInit {
         },
         {
             key: 'checkTolls',
-            label: 'View Route with Tolls',
-            icon: 'pi pi-map-marker',
+            label: 'View',
+            icon: 'pi pi-eye',
             severity: 'primary',
             outlined: true,
             dependentOnRow: true
@@ -107,6 +107,8 @@ export class RoutesComponent implements OnInit {
         globalFilterFields: [],
         dataKey: 'id'
     };
+
+    tableFilterByStatusConfig = [{ label: 'All', value: 'all' },{ label: 'Pending', value: 'pending' },{ label: 'Completed', value: 'completed' }];
 
     formSteps: StepConfig[] = [
         {
@@ -207,7 +209,7 @@ export class RoutesComponent implements OnInit {
     ngOnInit(): void {
         //Called after the constructor, initializing input properties, and the first call to ngOnChanges.
         //Add 'implements OnInit' to the class.
-        this.fetchRtdList();
+        this.fetchRtdList(this.currentSelectedTableFilterStatus);
     }
 
     async handleToolBarActions(event: any): Promise<void> {
@@ -362,7 +364,7 @@ export class RoutesComponent implements OnInit {
           // Open drawer with combined data
           this.uiService.openDrawer(
             this.checkRouteTollsContent, 
-            'View Route', 
+            'View RTD', 
             '!w-[98vw] md:!w-[98vw] lg:!w-[98vw] rounded-l-2xl'
           );
         } catch (error: any) {
@@ -477,7 +479,7 @@ export class RoutesComponent implements OnInit {
                 endDate,
                 startDate
             };
-            this.uiService.openDrawer(this.createUpdateRouteContent, 'Route Management', '!w-[98vw] md:!w-[98vw] lg:!w-[98vw] rounded-l-2xl');
+            this.uiService.openDrawer(this.createUpdateRouteContent, 'RTD Management', '!w-[98vw] md:!w-[98vw] lg:!w-[98vw] rounded-l-2xl');
         } catch (error: any) {
             this.uiService.showToast('error', 'Error', error?.error?.data);
         } finally {
@@ -490,7 +492,7 @@ export class RoutesComponent implements OnInit {
       try {
         const response: any = await this.http.delete('geortd/rtd/delete', this.selectedRowItems[0].id);
         this.uiService.showToast('success', 'Success', 'Route deleted successfully');
-        await this.fetchRtdList(); // Refresh the address list after deletion
+        await this.fetchRtdList(this.currentSelectedTableFilterStatus); // Refresh the address list after deletion
       } catch (error: any) {
         this.uiService.showToast('error', 'Error',  error?.error?.data);
       } finally {
@@ -498,10 +500,10 @@ export class RoutesComponent implements OnInit {
       }
     }
 
-    async fetchRtdList(): Promise<void> {
+    async fetchRtdList(status:string): Promise<void> {
         this.uiService.toggleLoader(true);
         try {
-            const response: any = await this.http.get('geortd/rtd/list');
+            const response: any = await this.http.get('geortd/rtd/list',{ statusType: status });
             this.tableData = response.data; // Assuming the response has a 'data' property containing the list of departments
             // Handle the response data as needed
             this.selectedRowItems = []; // Reset selected items after fetching new data
@@ -609,7 +611,7 @@ export class RoutesComponent implements OnInit {
         ];
         this.editData = null;
         this.editRouteJson = null;
-        this.uiService.openDrawer(this.createUpdateRouteContent, 'Route Management', '!w-[98vw] md:!w-[98vw] lg:!w-[98vw] rounded-l-2xl');
+        this.uiService.openDrawer(this.createUpdateRouteContent, 'RTD Management', '!w-[98vw] md:!w-[98vw] lg:!w-[98vw] rounded-l-2xl');
     }
 
     onStepChange(event: { stepIndex: number; data: any }) {
@@ -628,7 +630,7 @@ export class RoutesComponent implements OnInit {
           const response = await this.http.post('geortd/RtdApproval/LinkApprovalToRtd', payload);
           this.uiService.showToast('success', 'Success', 'Route linked successfully');
           this.uiService.closeDrawer(); // Close the drawer after submission
-          await this.fetchRtdList(); // Refresh the department list after successful submission
+          await this.fetchRtdList(this.currentSelectedTableFilterStatus); // Refresh the department list after successful submission
         } catch (error: any) {
             console.error('Error submitting form:', error);
             this.uiService.showToast('error', 'Error', error?.error?.data);
@@ -650,7 +652,7 @@ export class RoutesComponent implements OnInit {
           const response = await this.http.post('geortd/RtdApproval/MoveToNextStep', payload);
           this.uiService.showToast('success', 'Success', 'Route approved successfully');
           this.uiService.closeDrawer(); // Close the drawer after submission
-          await this.fetchRtdList(); // Refresh the department list after successful submission
+          await this.fetchRtdList(this.currentSelectedTableFilterStatus); // Refresh the department list after successful submission
         } catch (error: any) {
             console.error('Error submitting form:', error);
             this.uiService.showToast('error', 'Error', error?.error?.data);
@@ -681,7 +683,7 @@ export class RoutesComponent implements OnInit {
           const response = await this.http.put('geortd/rtd/modify', this.selectedRowItems[0].id, payload);
           this.uiService.showToast('success', 'Success', 'Route updated successfully');
           this.uiService.closeDrawer(); // Close the drawer after submission
-          await this.fetchRtdList(); // Refresh the department list after successful submission
+          await this.fetchRtdList(this.currentSelectedTableFilterStatus); // Refresh the department list after successful submission
         } catch (error: any) {
             console.error('Error submitting form:', error);
             this.uiService.showToast('error', 'Error', error?.error?.data);
@@ -709,7 +711,7 @@ export class RoutesComponent implements OnInit {
               const response = await this.http.post('geortd/rtd/create', payload);
               this.uiService.showToast('success', 'Success', 'Route created successfully');
               this.uiService.closeDrawer(); // Close the drawer after submission
-              await this.fetchRtdList(); // Refresh the department list after successful submission
+              await this.fetchRtdList(this.currentSelectedTableFilterStatus); // Refresh the department list after successful submission
             } catch (error: any) {
                 console.error('Error submitting form:', error);
                 this.uiService.showToast('error', 'Error', error?.error?.data);
@@ -748,5 +750,11 @@ export class RoutesComponent implements OnInit {
         } else {
             this.selectedDestination = value;
         }
+    }
+
+    async handleTableFilterByStatus(event: any): Promise<void> {
+      this.currentSelectedTableFilterStatus = event
+      await this.fetchRtdList(this.currentSelectedTableFilterStatus);
+      
     }
 }

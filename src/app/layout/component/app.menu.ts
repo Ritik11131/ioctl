@@ -100,7 +100,7 @@ export class AppMenu {
                                 routerLink: ['/pages/management/address']
                             },
                             {
-                                label: 'Routes',
+                                label: 'RTD',
                                 icon: 'pi pi-fw pi-map',
                                 routerLink: ['/pages/management/routes']
                             },
