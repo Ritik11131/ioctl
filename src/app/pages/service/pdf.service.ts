@@ -389,7 +389,7 @@ export class PdfService {
           image: mapImageBase64,
           width: 600,
           height: 300,
-          // alignment: 'center',
+          alignment: 'center',
           margin: [0, 20, 0, 20]
         },
         // Source to Destination Table
