@@ -9,6 +9,7 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
 import { InputNumberModule } from 'primeng/inputnumber';
+import { CheckboxModule } from 'primeng/checkbox';
 import { GenericGoogleMapComponent } from '../generic-google-map/generic-google-map.component';
 import { environment } from '../../../../environments/environment.prod';
 import { GenericLocationSearchComponent } from '../generic-location-search/generic-location-search.component';
@@ -32,6 +33,10 @@ export interface StepFieldConfig {
     placeholder?: string;
     selectionMode?: any;
     dateFormat?: any; // For date fields
+    hasLinkedCheckbox?: boolean;      // Whether this field has a checkbox beside its label
+    checkboxLabel?: any;           // Label for the checkbox (defaults to field label if not provided)
+    linkedFieldId?: any;           // The ID of another field that this checkbox links to
+    sourceFieldId?: any;    
 }
 
 export interface StepConfig {
@@ -51,6 +56,7 @@ export interface StepConfig {
         InputTextModule,
         TextareaModule,
         SelectModule,
+        CheckboxModule,
         ButtonModule,
         DatePickerModule,
         InputNumberModule,
@@ -69,16 +75,16 @@ export interface StepConfig {
 
             <div class="mt-4">
                 <h2 class="text-xl font-semibold mb-4">{{ steps[activeIndex].title }}</h2>
-                
+
                 <!-- Custom template step -->
                 @if (steps[activeIndex].customTemplate) {
                     <!-- Render custom template using content projection -->
                     <ng-container *ngTemplateOutlet="customStepTemplate; context: { $implicit: activeIndex, data: getStepData() }"></ng-container>
-                    
+
                     <!-- Navigation buttons for custom template step -->
                     <div class="flex justify-between mt-6">
                         <button pButton type="button" label="Previous" [disabled]="activeIndex === 0" (click)="prevStep()" class="p-button-outlined"></button>
-                        <button pButton type="button" label="{{isLastStep ? 'Submit' : 'Next'}}" (click)="onCustomStepContinue()" class="p-button-primary"></button>
+                        <button pButton type="button" label="{{ isLastStep ? 'Submit' : 'Next' }}" (click)="onCustomStepContinue()" class="p-button-primary"></button>
                     </div>
                 } @else {
                     <!-- Default form-based step -->
@@ -87,12 +93,28 @@ export interface StepConfig {
                             <ng-container>
                                 @for (field of currentStepFields; track field.fieldId) {
                                     <div [ngClass]="getFieldColumnClass(field)">
-                                        <label [for]="field.fieldId" class="block mb-2 font-medium">
-                                            {{ field.label }}
-                                            @if (field.required) {
-                                                <span class="text-red-500">*</span>
+                                        <div class="flex items-center justify-between mb-2">
+                                            <!-- Field Label -->
+                                            <label [for]="field.fieldId" class="font-medium">
+                                                {{ field.label }}
+                                                <span *ngIf="field.required" class="text-red-500">*</span>
+                                            </label>
+
+                                            <!-- Linked Checkbox using PrimeNG 19 (if applicable) -->
+                                            @if (field.hasLinkedCheckbox) {
+                                                <div class="flex items-center">
+                                                    <p-checkbox
+                                                        [inputId]="field.fieldId + '_checkbox'"
+                                                        [formControlName]="field.fieldId + '_checkbox'"
+                                                        [binary]="true"
+                                                        (onChange)="onCheckboxChange($event, field.sourceFieldId, field.linkedFieldId || field.fieldId)"
+                                                    ></p-checkbox>
+                                                    <label [for]="field.fieldId + '_checkbox'" class="ml-2 text-sm text-gray-700">
+                                                        {{ field.checkboxLabel || 'Same as ' + field.sourceFieldId }}
+                                                    </label>
+                                                </div>
                                             }
-                                        </label>
+                                        </div>
                                         @switch (field.type) {
                                             @case ('map') {
                                                 @if (field.mode === 'address') {
@@ -170,7 +192,16 @@ export interface StepConfig {
                                             }
 
                                             @case ('date') {
-                                                <p-datepicker [id]="field.fieldId" [formControlName]="field.fieldId" [iconDisplay]="'input'" [showIcon]="true" inputId="icondisplay" [selectionMode]="field?.selectionMode" [dateFormat]="field?.dateFormat" styleClass="w-full" />
+                                                <p-datepicker
+                                                    [id]="field.fieldId"
+                                                    [formControlName]="field.fieldId"
+                                                    [iconDisplay]="'input'"
+                                                    [showIcon]="true"
+                                                    inputId="icondisplay"
+                                                    [selectionMode]="field?.selectionMode"
+                                                    [dateFormat]="field?.dateFormat"
+                                                    styleClass="w-full"
+                                                />
                                             }
                                         }
                                     </div>
@@ -200,7 +231,7 @@ export class GenericStepperComponent implements OnInit, OnChanges {
     @Input() editMode = false;
     @Input() editData: any = null;
     @Input() customStepData: any = {}; // Data for custom template steps
-    
+
     @Output() stepChange = new EventEmitter<{ stepIndex: number; data: any }>();
     @Output() autoCompleteValue = new EventEmitter<any>();
     @Output() formSubmit = new EventEmitter<any>();
@@ -213,6 +244,7 @@ export class GenericStepperComponent implements OnInit, OnChanges {
     formGroup!: FormGroup;
     isLastStep = false;
     googleMapsApiKey = environment.googleMapsApiKey;
+    linkedCheckboxes: { [key: string]: boolean } = {};
 
     // Location state object to manage location related properties
     locationState = {
@@ -244,6 +276,9 @@ export class GenericStepperComponent implements OnInit, OnChanges {
         if (this.editMode && this.editData) {
             this.populateFormWithEditData();
         }
+
+        // Setup linked field subscriptions after form initialization
+        this.setupLinkedFieldSubscriptions();
     }
 
     ngOnChanges(changes: SimpleChanges) {
@@ -271,6 +306,13 @@ export class GenericStepperComponent implements OnInit, OnChanges {
                     }
 
                     formGroupConfig[field.fieldId] = [field.defaultValue || '', validators];
+
+                    // Add checkbox controls for fields with linkedCheckbox functionality
+                    if (field.hasLinkedCheckbox) {
+                        formGroupConfig[`${field.fieldId}_checkbox`] = [false];
+                        // Initialize linkedCheckboxes tracking object
+                        this.linkedCheckboxes[field.linkedFieldId || field.fieldId] = false;
+                    }
                 });
             }
         });
@@ -293,6 +335,78 @@ export class GenericStepperComponent implements OnInit, OnChanges {
         });
     }
 
+    /**
+     * Sets up subscriptions to watch source field values and update target fields
+     * when linked checkboxes are checked
+     */
+    private setupLinkedFieldSubscriptions() {
+        // Find all fields with linkedCheckbox configuration
+        this.steps.forEach((step) => {
+            if (!step.customTemplate) {
+                step.fields.forEach((field: any) => {
+                    if (field.hasLinkedCheckbox && field.sourceFieldId && field.linkedFieldId) {
+                        // Get the checkbox control
+                        const checkboxControl = this.formGroup.get(`${field.fieldId}_checkbox`);
+
+                        // Get the source field control
+                        const sourceControl = this.formGroup.get(field.sourceFieldId);
+
+                        if (checkboxControl && sourceControl) {
+                            // Watch checkbox changes
+                            checkboxControl.valueChanges.subscribe((isChecked) => {
+                                this.linkedCheckboxes[field.linkedFieldId] = isChecked;
+
+                                if (isChecked) {
+                                    // Copy source value to target field
+                                    const sourceValue = sourceControl.value;
+                                    this.formGroup.get(field.linkedFieldId)?.setValue(sourceValue);
+
+                                    // Optional: disable the target field
+                                    // this.formGroup.get(field.linkedFieldId)?.disable();
+                                } else {
+                                    // Optional: re-enable the target field
+                                    // this.formGroup.get(field.linkedFieldId)?.enable();
+                                }
+                            });
+
+                            // Watch source field changes to keep target field in sync
+                            sourceControl.valueChanges.subscribe((value) => {
+                                // If checkbox is checked, update linked field
+                                if (this.linkedCheckboxes[field.linkedFieldId]) {
+                                    this.formGroup.get(field.linkedFieldId)?.setValue(value);
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    /**
+     * Handles checkbox change events
+     * @param event Change event from checkbox
+     * @param sourceFieldId ID of the source field to copy value from
+     * @param targetFieldId ID of the target field to copy value to
+     */
+    onCheckboxChange(event: any, sourceFieldId: string, targetFieldId: string) {
+        const isChecked = event.target.checked;
+        this.linkedCheckboxes[targetFieldId] = isChecked;
+
+        if (isChecked) {
+            // Copy value from source field to target field
+            const sourceValue = this.formGroup.get(sourceFieldId)?.value;
+            this.formGroup.get(targetFieldId)?.setValue(sourceValue);
+
+            // Optional: disable the target field when checkbox is checked
+            // this.formGroup.get(targetFieldId)?.disable();
+        } else {
+            // Optional: clear value and re-enable field
+            // this.formGroup.get(targetFieldId)?.setValue('');
+            // this.formGroup.get(targetFieldId)?.enable();
+        }
+    }
+
     private initializeFieldClasses() {
         // Pre-compute CSS classes for fields
         this.steps.forEach((step) => {
@@ -313,6 +427,9 @@ export class GenericStepperComponent implements OnInit, OnChanges {
 
         // Loop through all form fields and set values from editData
         Object.keys(this.formGroup.controls).forEach((controlName) => {
+            // Skip checkbox controls when populating from edit data
+            if (controlName.endsWith('_checkbox')) return;
+
             if (this.editData[controlName] !== undefined) {
                 this.formGroup.get(controlName)?.setValue(this.editData[controlName]);
 
@@ -330,6 +447,32 @@ export class GenericStepperComponent implements OnInit, OnChanges {
 
         // Handle location data for map
         this.setupLocationData();
+
+        // Handle linked checkboxes in edit mode
+        this.setupLinkedCheckboxesForEditMode();
+    }
+
+    /**
+     * Sets up linked checkboxes based on edit data
+     * If fields with the same values are found, check the checkbox
+     */
+    private setupLinkedCheckboxesForEditMode() {
+        this.steps.forEach((step) => {
+            if (!step.customTemplate) {
+                step.fields.forEach((field) => {
+                    if (field.hasLinkedCheckbox && field.sourceFieldId && field.linkedFieldId) {
+                        const sourceValue = this.editData[field.sourceFieldId];
+                        const targetValue = this.editData[field.linkedFieldId];
+
+                        // If values match and not empty, check the checkbox
+                        if (sourceValue && targetValue && JSON.stringify(sourceValue) === JSON.stringify(targetValue)) {
+                            this.formGroup.get(`${field.fieldId}_checkbox`)?.setValue(true);
+                            this.linkedCheckboxes[field.linkedFieldId] = true;
+                        }
+                    }
+                });
+            }
+        });
     }
 
     private setupDependentDropdowns() {
@@ -481,14 +624,14 @@ export class GenericStepperComponent implements OnInit, OnChanges {
             stepIndex: this.activeIndex,
             data: this.customStepData
         });
-        
+
         if (this.isLastStep) {
             // Combine form data with custom step data
             const finalData = {
                 ...this.formGroup.value,
                 ...this.customStepData
             };
-            
+
             // Emit the final combined data
             this.formSubmit.emit(finalData);
         } else {

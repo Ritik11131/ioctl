@@ -131,7 +131,11 @@ import { HttpService } from '../../service/http.service';
                 type: 'text',
                 label: 'Username',
                 required: true,
-                placeholder: 'Enter username'
+                placeholder: 'Enter username',
+                hasLinkedCheckbox: true,               // This field has a checkbox
+                checkboxLabel: 'Same as email',        // Custom label for the checkbox
+                linkedFieldId: 'loginId',             // Target field ID (itself in this case)
+                sourceFieldId: 'emailId' 
               },
               {
                 fieldId: 'password',
