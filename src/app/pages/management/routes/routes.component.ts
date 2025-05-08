@@ -487,8 +487,8 @@ export class RoutesComponent implements OnInit {
                 destination_address: destination,
                 destination_department: destinationDept,
                 source_department: sourceDept,
-                endDate,
-                startDate,
+                startDate: new Date(startDate),
+                endDate: new Date(endDate),
                 reason,
                 comment
             };
