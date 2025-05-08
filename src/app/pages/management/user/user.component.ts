@@ -147,9 +147,9 @@ import { HttpService } from '../../service/http.service';
               {
                 fieldId: 'employeeId',
                 type: 'text',
-                label: 'Employee ID',
+                label: 'Employee ID/Code',
                 required: true,
-                placeholder: 'Enter employee ID'
+                placeholder: 'Enter employee ID/Code'
               }
             ]
           }

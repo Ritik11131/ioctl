@@ -96,13 +96,20 @@ export class RoutesComponent implements OnInit {
     tableConfig = {
         title: 'Manage RTD',
         columns: [
-            { field: 'name', header: 'Name', minWidth: '12rem' },
-            { field: 'source', header: 'Source Name', subfield: 'name', minWidth: '15rem' },
-            { field: 'destination', header: 'Destination Name', subfield: 'name', minWidth: '15rem' },
-            { field: 'sourceDept', header: 'Source Dept', subfield: 'name', minWidth: '15rem' },
-            { field: 'destinationDept', header: 'Destination Name', subfield: 'name', minWidth: '15rem' },
-            { field: 'startDate', header: 'Start Date', minWidth: '15rem', date: true },
-            { field: 'endDate', header: 'End Date', minWidth: '15rem', date: true },
+          { field: 'name', header: 'Route Name', minWidth: '12rem' },
+          { field: 'source', header: 'Source Address', subfield: 'name', minWidth: '15rem' },
+          { field: 'destination', header: 'Destination Address', subfield: 'name', minWidth: '15rem' },
+          { field: 'selectedRoute', header: 'Suggested Route', minWidth: '15rem' },
+          { field: 'status', header: 'Status', minWidth: '15rem', date: true },
+          { field: 'approvedBy', header: 'Approved by', minWidth: '15rem', date: true }, //tblRtdApproval parse id.APPROVEDBY
+          // { field: 'endDate', header: 'Toll Price', minWidth: '15rem', date: true },
+          { field: 'totalDistanceKm', header: 'Total RTD (Km)', minWidth: '15rem'},
+          { field: 'startDate', header: 'Start Date', minWidth: '15rem', date: true },
+          { field: 'endDate', header: 'End Date', minWidth: '15rem', date: true },
+          { field: 'version', header: 'Version', minWidth: '15rem' },
+          { field: 'creationTime', header: 'Created On', minWidth: '15rem', date: true },
+
+
         ],
         globalFilterFields: [],
         dataKey: 'id'
@@ -467,7 +474,7 @@ export class RoutesComponent implements OnInit {
         this.uiService.toggleLoader(true);
         try {
             const response: any = await this.http.get('geortd/rtd/GetById', {}, this.selectedRowItems[0].id);
-            const { source, destination, sourceDept, destinationDept, name, attributes, startDate, endDate } = response.data;
+            const { source, destination, sourceDept, destinationDept, name, attributes, startDate, endDate, reason,comment } = response.data;
             this.selectedSource = source;
             this.selectedDestination = destination;
             const route = JSON.parse(attributes);
@@ -481,7 +488,9 @@ export class RoutesComponent implements OnInit {
                 destination_department: destinationDept,
                 source_department: sourceDept,
                 endDate,
-                startDate
+                startDate,
+                reason,
+                comment
             };
             this.uiService.openDrawer(this.createUpdateRouteContent, 'RTD Management', '!w-[98vw] md:!w-[98vw] lg:!w-[98vw] rounded-l-2xl');
         } catch (error: any) {
@@ -678,7 +687,9 @@ export class RoutesComponent implements OnInit {
           destinationId: this.editData.destination_address?.id,
           sourceDeptId:source_department?.id,
           destinationDeptId: destination_department?.id,
-          reason: reason,
+          reason: typeof reason === 'string' ? reason : reason?.id,
+          version:'0',
+          selectedRoute: this.selectedRouteJson?.DtoS.selected?.routes[0]?.summary,
           comment,
           attributes: JSON.stringify( { route: this.selectedRouteJson } )
         }
@@ -706,8 +717,10 @@ export class RoutesComponent implements OnInit {
           destinationId: destination_address?.id,
           sourceDeptId:source_department?.id,
           destinationDeptId: destination_department?.id,
-          reason: reason,
+          reason: reason?.id,
+          selectedRoute: this.selectedRouteJson?.DtoS.selected?.routes[0]?.summary,
           comment,
+          version:'0',
           attributes:JSON.stringify({route:this.selectedRouteJson})
         }
 
