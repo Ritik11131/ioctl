@@ -341,7 +341,7 @@ export class RoutesComponent implements OnInit {
             throw new Error('Invalid route data received');
           }
           
-          const { source,sourceDept, destination,destinationDept, attributes, startDate,endDate } = routeResponse.data;
+          const { source,sourceDept, destination,destinationDept, attributes, startDate,endDate, reason,totalDistanceKm } = routeResponse.data;
           
           // Handle potential JSON parsing errors
           let parsedAttributes: any = {};
@@ -370,6 +370,9 @@ export class RoutesComponent implements OnInit {
             tolls: tollsResponse?.data || [],
             startDate,
             endDate,
+            reason,
+            totalDistanceKm
+
           };
           
           // Open drawer with combined data
@@ -675,6 +678,7 @@ export class RoutesComponent implements OnInit {
     }
 
     async onFormSubmit(formData: any): Promise<void> {
+      const totalRTDKm = parseFloat(this.selectedRouteJson?.DtoS.selected?.routes[0]?.legs[0]?.distance?.text) + parseFloat(this.selectedRouteJson?.StD.selected?.routes[0]?.legs[0]?.distance?.text)
       if(this.isEditMode) {
         this.uiService.toggleLoader(true);
         const { name, startDate, endDate, destination_department, source_department, reason,comment } = formData;
@@ -691,6 +695,7 @@ export class RoutesComponent implements OnInit {
           version:'0',
           selectedRoute: this.selectedRouteJson?.DtoS.selected?.routes[0]?.summary,
           comment,
+          totalDistanceKm: totalRTDKm,
           attributes: JSON.stringify( { route: this.selectedRouteJson } )
         }
         
@@ -720,6 +725,7 @@ export class RoutesComponent implements OnInit {
           reason: reason?.id,
           selectedRoute: this.selectedRouteJson?.DtoS.selected?.routes[0]?.summary,
           comment,
+          totalDistanceKm: totalRTDKm,
           version:'0',
           attributes:JSON.stringify({route:this.selectedRouteJson})
         }

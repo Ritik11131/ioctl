@@ -455,15 +455,24 @@ export class RtdApprovalComponent {
             this.uiService.showToast('error', 'Validation Error', 'Please fill in all required fields.');
             return;
         }
-
+        const stepsWithUsername = this.permissionForm.value.steps.map((step: any) => {
+            const user = this.users.find((user) => user.value === step.user);
+            return {
+                ...step,
+                userName: user ? user.label : step.user // Use label if user is found
+            };
+        }
+        );
+        console.log(stepsWithUsername,'usernamess');
+        
         // Format data for submission
         const formData = {
             ...this.permissionForm.value.basicDetails,
-            steps: JSON.stringify(this.permissionForm.value.steps),
+            steps: JSON.stringify(stepsWithUsername),
             transitions: JSON.stringify(this.permissionForm.value.transitions)
         };
 
-        console.log('Form submitted:', formData);
+        console.log('Form submitted:', this.permissionForm.value.steps);
 
         const payload = {
             ...formData,

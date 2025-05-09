@@ -101,6 +101,29 @@
               </div>
             </div>
           </div>
+
+          <!-- Route Summary -->
+<div class="bg-green-50 rounded-lg p-4">
+  <h4 class="text-sm font-medium text-green-800 flex items-center mb-3">
+    <i class="pi pi-compass mr-2 text-green-600"></i>
+    Route Summary
+  </h4>
+  <div class="grid grid-cols-2 gap-3">
+    <div>
+      <p class="text-xs text-gray-500">Total Distance</p>
+      <p class="text-sm text-gray-700">{{ mapObject.totalDistanceKm ? (mapObject.totalDistanceKm) + ' km' : 'N/A' }}</p>
+    </div>
+    <div>
+      <p class="text-xs text-gray-500">Total Time</p>
+      <p class="text-sm text-gray-700">{{ mapObject.totalTime || 'N/A' }}</p>
+    </div>
+  </div>
+  <div class="mt-3">
+    <p class="text-xs text-gray-500">Reason</p>
+    <p class="text-sm text-gray-700">{{ mapObject.reason || 'N/A' }}</p>
+  </div>
+</div>
+
           
           <!-- Toll Information -->
            @if(mapObject.tolls && mapObject.tolls.length > 0) {
