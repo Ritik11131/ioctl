@@ -40,7 +40,7 @@ import { FormsModule } from '@angular/forms';
             </ng-template>
         </p-toolbar>
 
-        @if(tableFilterByStatusConfig.length) {
+        @if (tableFilterByStatusConfig.length) {
             <p-selectbutton class="mb-6" [options]="tableFilterByStatusConfig" [(ngModel)]="selectedRouteStatusType" (onChange)="handleTableFilterByStatusChange($event)" [allowEmpty]="false" />
         }
 
@@ -74,16 +74,16 @@ import { FormsModule } from '@angular/forms';
                         <p-button label="Clear" outlined icon="pi pi-filter-slash" (click)="clearFilter(dt)"></p-button>
                     </div>
                 </div>
-                @if(tableConfig?.filterTableDrpdown) {
+                @if (tableConfig?.filterTableDrpdown) {
                     <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mt-3 mb-3">
                         <app-generic-dropdown
-                                                [id]="tableConfig.filterTableDrpdown.fieldId"
-                                                [type]="tableConfig.filterTableDrpdown.apiType"
-                                                [placeholder]="tableConfig.filterTableDrpdown.placeholder || 'Select'"
-                                                [autoFetch]="tableConfig.filterTableDrpdown.autoFetch"
-                                                (selected)="handleTableDropdownFilter($event)"
-                                            />
-                        </div>
+                            [id]="tableConfig.filterTableDrpdown.fieldId"
+                            [type]="tableConfig.filterTableDrpdown.apiType"
+                            [placeholder]="tableConfig.filterTableDrpdown.placeholder || 'Select'"
+                            [autoFetch]="tableConfig.filterTableDrpdown.autoFetch"
+                            (selected)="handleTableDropdownFilter($event)"
+                        />
+                    </div>
                 }
             </ng-template>
 
@@ -107,7 +107,13 @@ import { FormsModule } from '@angular/forms';
                     </td>
                     @for (col of columns; track $index) {
                         <td>
-                            {{ col.subfield ? (rowData[col.field]?.[col.subfield] || '--') : ( col.date ? ((rowData[col.field] | date) || '--') :  rowData[col.field] || '--') }}
+                            @if (col.download) {
+                                <a [href]="rowData[col.field]" [target]="'_blank'" class="p-button p-button-text p-button-sm">
+                                    <i class="pi pi-download" style="font-size: 1rem"></i>
+                                </a>
+                            } @else {
+                                {{ col.subfield ? rowData[col.field]?.[col.subfield] || '--' : col.date ? (rowData[col.field] | date) || '--' : rowData[col.field] || '--' }}
+                            }
                         </td>
                     }
                 </tr>
@@ -141,9 +147,7 @@ export class GenericTableComponent {
     @Output() onTableDropdownFilter = new EventEmitter<any>();
     @Output() onTableFilterByStatus = new EventEmitter<any>(); // Event emitter for filter by status
 
-
     selectedRouteStatusType: any = 'all';
-
 
     onSearch(dt: Table, event: Event) {
         const input = event.target as HTMLInputElement;

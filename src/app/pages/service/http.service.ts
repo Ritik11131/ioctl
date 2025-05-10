@@ -31,6 +31,14 @@ export class HttpService {
     return firstValueFrom(this.http.post<T>(`${this.apiUrl}/${endpoint}`, data, this.getHttpOptions()));
   }
 
+
+
+  postFile<T>(endpoint: string, formData: FormData): Promise<T> {
+  return firstValueFrom( this.http.post<T>(`${this.apiUrl}/${endpoint}`, formData));
+}
+
+
+
   /**
    * Send a PUT request to the given endpoint with the given data.
    *

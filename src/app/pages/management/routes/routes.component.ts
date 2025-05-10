@@ -105,6 +105,7 @@ export class RoutesComponent implements OnInit {
           { field: 'tblRtdApproval',subfield: 'nextApprovedBy', header: 'Next To Approved By', minWidth: '15rem', date: true },
           // { field: 'endDate', header: 'Toll Price', minWidth: '15rem', date: true },
           { field: 'totalDistanceKm', header: 'Total RTD (Km)', minWidth: '15rem'},
+          { field: 'tollPrice', header: 'Toll Price (Rs)', minWidth: '15rem'},
           { field: 'startDate', header: 'Start Date', minWidth: '15rem', date: true },
           { field: 'endDate', header: 'End Date', minWidth: '15rem', date: true },
           { field: 'version', header: 'Version', minWidth: '15rem' },

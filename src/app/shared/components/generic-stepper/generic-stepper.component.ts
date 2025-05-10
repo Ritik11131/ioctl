@@ -7,6 +7,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { DatePickerModule } from 'primeng/datepicker';
 import { ButtonModule } from 'primeng/button';
+import { FileUploadModule } from 'primeng/fileupload';
 import { SelectModule } from 'primeng/select';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { CheckboxModule } from 'primeng/checkbox';
@@ -17,10 +18,12 @@ import { GenericDropdownComponent } from '../generic-dropdown/generic-dropdown.c
 import { GenericGmAddressComponent } from '../generic-gm-address/generic-gm-address.component';
 import { GenericAutocompleteComponent } from '../generic-autocomplete/generic-autocomplete.component';
 import { GenericMultiselectComponent } from '../generic-multiselect/generic-multiselect.component';
+import { HttpService } from '../../../pages/service/http.service';
+import { UiService } from '../../../layout/service/ui.service';
 
 export interface StepFieldConfig {
     fieldId: string;
-    type: 'text' | 'dropdown' | 'map' | 'place' | 'textarea' | 'number' | 'autocomplete' | 'multiselect' | 'checkbox' | 'radio' | 'date' | 'time';
+    type: 'text' | 'dropdown' | 'map' | 'place' | 'textarea' | 'number' | 'autocomplete' | 'multiselect' | 'checkbox' | 'radio' | 'date' | 'time' | 'fileupload';
     label: string;
     apiType?: string; // For API integration
     dependsOn?: any; // For conditional rendering\
@@ -36,7 +39,16 @@ export interface StepFieldConfig {
     hasLinkedCheckbox?: boolean;      // Whether this field has a checkbox beside its label
     checkboxLabel?: any;           // Label for the checkbox (defaults to field label if not provided)
     linkedFieldId?: any;           // The ID of another field that this checkbox links to
-    sourceFieldId?: any;    
+    sourceFieldId?: any;
+    fileUploadConfig?: {
+        url?: string;               // URL to upload to (if server-side upload)
+        accept?: string;            // Accepted file types (e.g., 'image/*')
+        maxFileSize?: number;       // Max file size in bytes
+        multiple?: boolean;         // Allow multiple file selection
+        auto?: boolean;             // Auto upload on file selection
+        customUpload?: boolean;     // Use custom upload handler vs server upload
+        fileLimit?: number;         // Max number of files
+    };    
 }
 
 export interface StepConfig {
@@ -58,6 +70,7 @@ export interface StepConfig {
         SelectModule,
         CheckboxModule,
         ButtonModule,
+        FileUploadModule,
         DatePickerModule,
         InputNumberModule,
         GenericLocationSearchComponent,
@@ -203,6 +216,33 @@ export interface StepConfig {
                                                     styleClass="w-full"
                                                 />
                                             }
+                                            
+                                            @case ('fileupload') {
+                                                <p-fileUpload
+                                                    [id]="field.fieldId"
+                                                    [name]="field.fieldId"
+                                                    [url]="field.fileUploadConfig?.url || ''"
+                                                    [accept]="field.fileUploadConfig?.accept || '*'"
+                                                    [maxFileSize]="field.fileUploadConfig?.maxFileSize || 10000000"
+                                                    [multiple]="field.fileUploadConfig?.multiple || false"
+                                                    [auto]="field.fileUploadConfig?.auto || false"
+                                                    [fileLimit]="field.fileUploadConfig?.fileLimit"
+                                                    [customUpload]="field.fileUploadConfig?.customUpload || false"
+                                                    (uploadHandler)="onFileUpload($event, field.fieldId)"
+                                                    (onSelect)="onFileSelect($event, field.fieldId)"
+                                                    (onRemove)="onFileRemove($event, field.fieldId)"
+                                                    (onClear)="onFileClear(field.fieldId)"
+                                                    [showCancelButton]="true"
+                                                    chooseLabel="Browse"
+                                                    cancelLabel="Cancel"
+                                                    uploadLabel="Upload"
+                                                    styleClass="w-full"
+                                                >
+                        
+                                                </p-fileUpload>
+                                            }
+
+                                          
                                         }
                                     </div>
                                 }
@@ -236,6 +276,7 @@ export class GenericStepperComponent implements OnInit, OnChanges {
     @Output() autoCompleteValue = new EventEmitter<any>();
     @Output() formSubmit = new EventEmitter<any>();
     @Output() customStepContinue = new EventEmitter<{ stepIndex: number; data: any }>();
+    @Output() fileUploadEvent = new EventEmitter<{ fieldId: string; files: File[], action: 'select' | 'upload' | 'remove' | 'clear' }>();
 
     [key: string]: any;
 
@@ -264,8 +305,11 @@ export class GenericStepperComponent implements OnInit, OnChanges {
     dropdownParams: { [key: string]: any } = {};
     placeDisplayValues: { [key: string]: string } = {};
     fieldColumnClasses: { [key: string]: string } = {};
+    
+    // File upload storage
+    uploadedFiles: { [key: string]: File[] } = {};
 
-    constructor(private fb: FormBuilder) {}
+    constructor(private fb: FormBuilder, private http:HttpService, private uiService:UiService) {}
 
     ngOnInit() {
         this.initializeForm();
@@ -312,6 +356,11 @@ export class GenericStepperComponent implements OnInit, OnChanges {
                         formGroupConfig[`${field.fieldId}_checkbox`] = [false];
                         // Initialize linkedCheckboxes tracking object
                         this.linkedCheckboxes[field.linkedFieldId || field.fieldId] = false;
+                    }
+                    
+                    // Initialize fileUpload storage if it's a file upload field
+                    if (field.type === 'fileupload') {
+                        this.uploadedFiles[field.fieldId] = [];
                     }
                 });
             }
@@ -439,6 +488,13 @@ export class GenericStepperComponent implements OnInit, OnChanges {
 
                     this.updatePlaceDisplayValue(controlName, this.editData[controlName]);
                 }
+                
+                // Handle file upload data if present
+                if (this.uploadedFiles.hasOwnProperty(controlName) && Array.isArray(this.editData[controlName])) {
+                    // For file uploads, we might have file metadata in editData
+                    // We can't restore actual File objects but we can display their info
+                    this.handleEditModeFileData(controlName, this.editData[controlName]);
+                }
             }
         });
 
@@ -450,6 +506,22 @@ export class GenericStepperComponent implements OnInit, OnChanges {
 
         // Handle linked checkboxes in edit mode
         this.setupLinkedCheckboxesForEditMode();
+    }
+    
+    /**
+     * Handles file data in edit mode
+     * Since we can't restore actual File objects from data, we'll store metadata
+     */
+    private handleEditModeFileData(fieldId: string, fileData: any[]) {
+        if (!Array.isArray(fileData)) return;
+        
+        // Create placeholder File objects or handle metadata
+        // This depends on how your backend sends file data
+        // For now, we'll just log it
+        console.log(`File data for ${fieldId}:`, fileData);
+        
+        // Set form value with file metadata for reference
+        this.formGroup.get(fieldId)?.setValue(fileData);
     }
 
     /**
@@ -776,5 +848,100 @@ export class GenericStepperComponent implements OnInit, OnChanges {
                 });
             }
         });
+    }
+
+    // File upload methods
+    async onFileUpload(event: any, fieldId: string): Promise<void> {
+        console.log(event, fieldId);
+        this.uiService.toggleLoader(true)
+        try {
+            const fileData = new FormData();
+            fileData.append('file', event.files[0]); // selectedFile is a File object
+            const response: any = await this.http.postFile('geortd/file/upload', fileData);
+            console.log('File uploaded successfully:', response);
+            this.formGroup.get(fieldId)?.setValue(response?.data?.fileUrl);
+        } catch (error) {
+            console.error('File upload failed:', error);
+        } finally{
+            this.uiService.toggleLoader(false)
+        }
+
+
+        // Handle file upload
+        this.fileUploadEvent.emit({
+            fieldId,
+            files: event.files,
+            action: 'upload'
+        });
+    }
+
+    async onFileSelect(event: any, fieldId: string): Promise<void> {
+        console.log(event, fieldId);
+        
+        // Store selected files
+        this.uploadedFiles[fieldId] = event.currentFiles;        
+        // Update form control
+        // this.formGroup.get(fieldId)?.setValue(event?.currentFiles);
+        
+        // Emit event to parent
+        this.fileUploadEvent.emit({
+            fieldId,
+            files: event.currentFiles,
+            action: 'select'
+        });
+    }
+
+    onFileRemove(event: any, fieldId: string) {
+        // Remove file from stored files
+        const fileIndex = this.uploadedFiles[fieldId].findIndex(
+            (f: File) => f.name === event.file.name
+        );
+        
+        if (fileIndex !== -1) {
+            this.uploadedFiles[fieldId].splice(fileIndex, 1);
+            
+            // Update form control
+            this.formGroup.get(fieldId)?.setValue(this.uploadedFiles[fieldId]);
+        }
+        
+        // Emit event to parent
+        this.fileUploadEvent.emit({
+            fieldId,
+            files: [event.file],
+            action: 'remove'
+        });
+    }
+
+    onFileClear(fieldId: string) {
+        // Clear files
+        this.uploadedFiles[fieldId] = [];
+        
+        // Update form control
+        this.formGroup.get(fieldId)?.setValue([]);
+        
+        // Emit event to parent
+        this.fileUploadEvent.emit({
+            fieldId,
+            files: [],
+            action: 'clear'
+        });
+    }
+
+    hasUploadedFiles(fieldId: string): boolean {
+        return this.uploadedFiles[fieldId] && this.uploadedFiles[fieldId].length > 0;
+    }
+
+    getUploadedFiles(fieldId: string): File[] {
+        return this.uploadedFiles[fieldId] || [];
+    }
+
+    formatFileSize(bytes: number): string {
+        if (bytes === 0) return '0 Bytes';
+        
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 }

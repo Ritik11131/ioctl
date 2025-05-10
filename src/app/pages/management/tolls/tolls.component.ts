@@ -104,7 +104,8 @@ export class TollsComponent {
             { field: 'latitude', header: 'Latitude', minWidth: '12rem' },
             { field: 'longitude', header: 'Longitude', minWidth: '12rem' },
             { field: 'description', header: 'Description', minWidth: '12rem' },
-            { field: 'rtd', header: 'Route', minWidth: '10rem', subfield: 'name' }
+            { field: 'rtd', header: 'Route', minWidth: '10rem', subfield: 'name' },
+            { field: 'gazetteDocument', header: 'Gazette Document', minWidth: '10rem', download: true },
         ],
         globalFilterFields: ['name'],
         filterTableDrpdown: {
@@ -133,13 +134,13 @@ export class TollsComponent {
                     required: true,
                     placeholder: 'Enter toll name'
                 },
-                {
-                    fieldId: 'exCode',
-                    type: 'text',
-                    label: 'External Code',
-                    required: true,
-                    placeholder: 'Enter code'
-                },
+                // {
+                //     fieldId: 'exCode',
+                //     type: 'text',
+                //     label: 'External Code',
+                //     required: true,
+                //     placeholder: 'Enter code'
+                // },
                 {
                     fieldId: 'rtd',
                     type: 'dropdown',
@@ -150,14 +151,14 @@ export class TollsComponent {
                     dependsOn: null
                 },
                 {
-                    fieldId: 'upTollAmount',
+                    fieldId: 'upTollPrice',
                     type: 'number',
                     label: 'Up Toll Amount',
                     required: true,
                     placeholder: 'Enter a toll amount',
                 },
                  {
-                    fieldId: 'downTollAmount',
+                    fieldId: 'downTollPrice',
                     type: 'number',
                     label: 'Down Toll Amount',
                     required: true,
@@ -188,13 +189,26 @@ export class TollsComponent {
                     required: true,
                     placeholder: 'Enter tol longitude'
                 },
-                {
+                   {
                     fieldId: 'description',
                     type: 'textarea',
                     label: 'Description',
                     required: false,
                     placeholder: 'Enter description'
-                }
+                },
+                {
+                    fieldId: "gazetteDocument",
+                    type: "fileupload",
+                    label: "Gazette Document",
+                    fileUploadConfig: {
+                        accept: ".pdf,.txt,image/*",
+                        maxFileSize: 5000000,
+                        multiple: false,
+                        customUpload: true
+                    },
+                    required: false,
+                },
+             
             ]
         }
     ];
@@ -229,17 +243,17 @@ export class TollsComponent {
         console.log('Form submitted with data:', formData);
         if (this.isEditMode) {
             this.uiService.toggleLoader(true);
-            const { name, latitude, longitude, rtd, exCode, rtdDirection, description, upTollAmount, downTollAmount } = formData;
+            const { name, latitude, longitude, rtd, rtdDirection, description, upTollPrice, downTollPrice,gazetteDocument } = formData;
             const payload = {
                 id: this.selectedRowItems[0]?.id,
                 name,
-                exCode,
                 latitude,
                 longitude,
                 description,
                 rtdId: rtd?.id,
-                upTollAmount,
-                downTollAmount,
+                upTollPrice,
+                downTollPrice,
+                gazetteDocument: !gazetteDocument ? this.selectedRowItems[0]?.gazetteDocument : gazetteDocument,
                 
             };
             try {
@@ -256,16 +270,16 @@ export class TollsComponent {
             }
         } else {
             this.uiService.toggleLoader(true);
-            const { name, latitude, longitude, rtd, rtdDirection, exCode, description, upTollAmount, downTollAmount } = formData;
+            const { name, latitude, longitude, rtd, rtdDirection, description, upTollPrice, downTollPrice, gazetteDocument } = formData;
             const payload = {
                 name,
-                exCode,
                 latitude,
                 longitude,
                 description,
                 rtdId: rtd?.id,
-                upTollAmount,
-                downTollAmount,
+                upTollPrice,
+                downTollPrice,
+                gazetteDocument
             };
             try {
                 const response = await this.http.post('geortd/rtdtoll/create', payload);
@@ -496,4 +510,15 @@ export class TollsComponent {
             this.uiService.showToast('error','Error','Failed to update toll prices')
         }
       }
+
+
+      handleUIFileUpload(event: any): void {
+        console.log(event,'event');
+        if(event.action === 'upload') {
+            this.uiService.showToast('success','Success','File uploaded successfully');
+        } else if(event.action === 'clear') {
+            this.uiService.showToast('success','Success','File cleared successfully');
+        }
+      }
+
 }
