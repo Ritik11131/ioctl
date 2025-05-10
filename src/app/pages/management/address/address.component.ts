@@ -57,13 +57,13 @@ export class AddressComponent implements OnInit {
     tableConfig = {
         title: 'Manage Address',
         columns: [
+          { field: 'name', header: 'GeofSence Name', minWidth: '12rem' },
             { field: 'address1', header: 'Address Line 1', minWidth: '15rem' },
             { field: 'address2', header: 'Address Line 2', minWidth: '12rem' },
             { field: 'address3', header: 'Address Line 3', minWidth: '12rem' },
             { field: 'city', header: 'City', minWidth: '8rem' },
             { field: 'state', header: 'State', minWidth: '10rem', subfield: 'name' },
             { field: 'country', header: 'Country', minWidth: '10rem', subfield: 'name' },
-            { field: 'name', header: 'Geofence Name', minWidth: '12rem' },
             { field: 'zipCode', header: 'Zip Code', minWidth: '10rem' }
             // { field: 'geofenceColor', header: 'Geofence Color', minWidth: '12rem' },
             // { field: 'geofenceCode', header: 'Geofence Code', minWidth: '12rem' },

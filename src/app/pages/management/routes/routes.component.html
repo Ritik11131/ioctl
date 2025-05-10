@@ -39,7 +39,9 @@
           [source]="mapObject.source" 
           [destination]="mapObject.destination" 
           [tolls]="mapObject.tolls"
-          [routeData]="mapObject.routeData">
+          [routeData]="mapObject.routeData"
+          (emitSelectedRoute)="onViewRouteSelected($event)"
+          >
         </app-generic-view-on-map>
       </div>
       

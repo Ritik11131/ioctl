@@ -154,6 +154,7 @@ export class GenericViewOnMapComponent implements AfterViewInit {
   @Input() routeData: RouteData | null = null;
   
   @Output() mapReady = new EventEmitter<google.maps.Map>();
+  @Output() emitSelectedRoute = new EventEmitter<any>();
   
   map!: google.maps.Map;
   sourceMarker!: google.maps.marker.AdvancedMarkerElement;
@@ -168,6 +169,9 @@ export class GenericViewOnMapComponent implements AfterViewInit {
   returnRouteOptions: RouteOptions[] = [];
   routeRenderers: google.maps.DirectionsRenderer[] = [];
   returnRouteRenderers: google.maps.DirectionsRenderer[] = [];
+
+  public selectedRouteIndex = 0;
+  public selectedReturnRouteIndex = 0;
 
   async ngAfterViewInit() {
     await this.initMap();
@@ -369,32 +373,44 @@ export class GenericViewOnMapComponent implements AfterViewInit {
       }
     });
 
-    // Update the routeData to reflect the new selection
+    // Update the selection indices
     if (isReturn) {
-      if (this.routeData?.DtoS?.suggested?.[index]) {
-        this.routeData.DtoS.selected = this.routeData.DtoS.suggested[index];
-      }
+      this.selectedReturnRouteIndex = index;
     } else {
-      if (this.routeData?.StD?.suggested?.[index]) {
-        this.routeData.StD.selected = this.routeData.StD.suggested[index];
-      }
+      this.selectedRouteIndex = index;
     }
 
-    // Force map update by triggering a resize event
-    setTimeout(() => {
-      if (this.map) {
-        google.maps.event.trigger(this.map, 'resize');
-        const bounds = new google.maps.LatLngBounds();
-        routeRenderersRef.forEach(renderer => {
-          if (renderer.getDirections()?.routes?.[0]?.bounds) {
-            bounds.union(renderer.getDirections()!.routes[0].bounds!);
-          }
-        });
-        if (!bounds.isEmpty()) {
-          this.map.fitBounds(bounds);
-        }
+    // Get all routes for both directions, filtering out null values
+    const allStDRoutes = this.routeRenderers
+      .map(renderer => renderer.getDirections())
+      .filter((route): route is google.maps.DirectionsResult => route !== null);
+
+    const allDtoSRoutes = this.returnRouteRenderers
+      .map(renderer => renderer.getDirections())
+      .filter((route): route is google.maps.DirectionsResult => route !== null);
+
+    // Emit the selected and suggested routes
+    this.emitSelectedRoute.emit({
+      StD: {
+        selected: allStDRoutes[this.selectedRouteIndex],
+        suggested: allStDRoutes.filter((_, i) => i !== this.selectedRouteIndex)
+      },
+      DtoS: {
+        selected: allDtoSRoutes[this.selectedReturnRouteIndex],
+        suggested: allDtoSRoutes.filter((_, i) => i !== this.selectedReturnRouteIndex)
       }
-    }, 100);
+    });
+
+    // Update map bounds to show all routes
+    const bounds = new google.maps.LatLngBounds();
+    routeRenderersRef.forEach(renderer => {
+      if (renderer.getDirections()?.routes?.[0]?.bounds) {
+        bounds.union(renderer.getDirections()!.routes[0].bounds!);
+      }
+    });
+    if (!bounds.isEmpty()) {
+      this.map.fitBounds(bounds);
+    }
   }
   
   private async setupSourceAndDestination() {

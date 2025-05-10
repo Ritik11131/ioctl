@@ -110,6 +110,7 @@ export class RoutesComponent implements OnInit {
           { field: 'endDate', header: 'End Date', minWidth: '15rem', date: true },
           { field: 'version', header: 'Version', minWidth: '15rem' },
           { field: 'creationTime', header: 'Created On', minWidth: '15rem', date: true },
+          { field: 'document', header: 'Document', minWidth: '10rem', download: true },
 
 
         ],
@@ -472,7 +473,19 @@ export class RoutesComponent implements OnInit {
                         label: 'Comment',
                         required: false,
                         placeholder: 'Enter description'
-                    }
+                    },
+                    {
+                    fieldId: "document",
+                    type: "fileupload",
+                    label: "Document",
+                    fileUploadConfig: {
+                        accept: ".pdf,.txt,image/*",
+                        maxFileSize: 5000000,
+                        multiple: false,
+                        customUpload: true
+                    },
+                    required: false,
+                },
                 ]
             }
         ];
@@ -625,7 +638,19 @@ export class RoutesComponent implements OnInit {
                         label: 'Comment',
                         required: false,
                         placeholder: 'Enter description'
-                    }
+                    },
+                     {
+                    fieldId: "document",
+                    type: "fileupload",
+                    label: "Gazette Document",
+                    fileUploadConfig: {
+                        accept: ".pdf,.txt,image/*",
+                        maxFileSize: 5000000,
+                        multiple: false,
+                        customUpload: true
+                    },
+                    required: false,
+                },
                 ]
             }
         ];
@@ -707,7 +732,7 @@ export class RoutesComponent implements OnInit {
 
       if(this.isEditMode) {
         this.uiService.toggleLoader(true);
-        const { name, startDate, endDate, destination_department, source_department, reason,comment } = formData;
+        const { name, startDate, endDate, destination_department, source_department, reason,comment,document } = formData;
         const payload = {
           id: this.selectedRowItems[0].id,
           name,
@@ -723,6 +748,7 @@ export class RoutesComponent implements OnInit {
           comment,
           totalDistanceKm: totalRTDKm,
           totalTime: totalRTDDurationInMinutes,
+          document: !document ? this.selectedRowItems[0]?.document : document,
           attributes: JSON.stringify( { route: this.selectedRouteJson } )
         }
         
@@ -740,7 +766,7 @@ export class RoutesComponent implements OnInit {
 
       } else {
         this.uiService.toggleLoader(true);
-        const { name, startDate, endDate, destination_address, destination_department, source_address, source_department, reason, comment } = formData;
+        const { name, startDate, endDate, destination_address, destination_department, source_address, source_department, reason, comment, document } = formData;
         const payload = {
           name,
           startDate,
@@ -753,6 +779,7 @@ export class RoutesComponent implements OnInit {
           selectedRoute: this.selectedRouteJson?.DtoS.selected?.routes[0]?.summary,
           comment,
           totalDistanceKm: totalRTDKm,
+          document,
           totalTime: totalRTDDurationInMinutes,
           attributes:JSON.stringify({route:this.selectedRouteJson})
         }
@@ -803,8 +830,23 @@ export class RoutesComponent implements OnInit {
     }
 
     async handleTableFilterByStatus(event: any): Promise<void> {
-      this.currentSelectedTableFilterStatus = event
+      this.currentSelectedTableFilterStatus = event;
+      this.toolBarStartActions.map((action: any)=>{
+        if(action.key === 'approve') {
+          action.depen;
+        }
+      })
       await this.fetchRtdList(this.currentSelectedTableFilterStatus);
+    }
+
+    onViewRouteSelected(event: any): void {
+      console.log(event);
+       const totalRTDKm = parseFloat(event?.DtoS.selected?.routes[0]?.legs[0]?.distance?.text) + parseFloat(event?.StD.selected?.routes[0]?.legs[0]?.distance?.text)
+      const totalMins = [event?.DtoS?.selected?.routes[0]?.legs[0]?.duration?.text, event?.StD?.selected?.routes[0]?.legs[0]?.duration?.text]
+        .reduce((sum, t) => sum + this.parseDurationToMinutes(t || ''), 0);
+      const totalRTDDurationInMinutes = this.formatMinutesToDurationText(totalMins);
+      this.mapObject.totalDistanceKm = totalRTDKm;
+      this.mapObject.totalTime = totalRTDDurationInMinutes;
       
     }
 }
