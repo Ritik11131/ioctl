@@ -151,6 +151,22 @@ export class TollsComponent {
                     dependsOn: null
                 },
                 {
+                    fieldId: 'vehicleCategory',
+                    type: 'dropdown',
+                    options: [
+                        { name: 'Car/Jeep/Van', id: 'Car/Jeep/Van' },
+                        { name: 'LCV', id: 'LCV' },
+                        { name: 'Bus/truck', id: 'BBus/truckus' },
+                        { name: 'Upto 3 Axle Vehicle', id: 'Upto 3 Axle Vehicle' },
+                        { name: '4 to 6 Axle', id: '4 to 6 Axle' },
+                        { name: 'HCM/EME', id: 'HCM/EME' },
+                        { name: '7 or more Axle', id: '7 or more Axle' },
+                    ],
+                    label: 'Vehicle Type',
+                    required: true,
+                    placeholder: 'Select a Route Type',
+                },
+                {
                     fieldId: 'upTollPrice',
                     type: 'number',
                     label: 'Up Toll Amount',
@@ -243,7 +259,7 @@ export class TollsComponent {
         console.log('Form submitted with data:', formData);
         if (this.isEditMode) {
             this.uiService.toggleLoader(true);
-            const { name, latitude, longitude, rtd, rtdDirection, description, upTollPrice, downTollPrice,gazetteDocument } = formData;
+            const { name, latitude, longitude, rtd, rtdDirection, description, upTollPrice, downTollPrice,gazetteDocument, vehicleCategory } = formData;
             const payload = {
                 id: this.selectedRowItems[0]?.id,
                 name,
@@ -253,6 +269,7 @@ export class TollsComponent {
                 rtdId: rtd?.id,
                 upTollPrice,
                 downTollPrice,
+                vehicleCategory:vehicleCategory?.id ?? vehicleCategory,
                 gazetteDocument: !gazetteDocument ? this.selectedRowItems[0]?.gazetteDocument : gazetteDocument,
                 
             };
@@ -270,13 +287,14 @@ export class TollsComponent {
             }
         } else {
             this.uiService.toggleLoader(true);
-            const { name, latitude, longitude, rtd, rtdDirection, description, upTollPrice, downTollPrice, gazetteDocument } = formData;
+            const { name, latitude, longitude, rtd, rtdDirection, description, upTollPrice, downTollPrice, gazetteDocument, vehicleCategory } = formData;
             const payload = {
                 name,
                 latitude,
                 longitude,
                 description,
                 rtdId: rtd?.id,
+                vehicleCategory:vehicleCategory?.id,
                 upTollPrice,
                 downTollPrice,
                 gazetteDocument
