@@ -9,10 +9,11 @@ import { HttpService } from '../../service/http.service';
 import { GenericViewOnMapComponent } from '../../../shared/components/generic-view-on-map/generic-view-on-map.component';
 import { PdfService } from '../../service/pdf.service';
 import { DatePipe, CurrencyPipe } from '@angular/common';
+import { ButtonModule } from 'primeng/button';
 
 @Component({
     selector: 'app-routes',
-    imports: [GenericTableComponent, FormsModule,DatePipe,CurrencyPipe, GenericGmRouteComponent, GenericStepperComponent, GenericViewOnMapComponent],
+    imports: [GenericTableComponent, FormsModule,DatePipe,CurrencyPipe,ButtonModule, GenericGmRouteComponent, GenericStepperComponent, GenericViewOnMapComponent],
     templateUrl: './routes.component.html',
 })
 export class RoutesComponent implements OnInit {
@@ -284,7 +285,13 @@ export class RoutesComponent implements OnInit {
           this.uiService.toggleLoader(false);
         }
       } else if(event.key === 'op46Download') {
-        try {
+       await this.handleOp46Download();
+      }
+    }
+
+
+    async handleOp46Download(): Promise<void> {
+      try {
           this.uiService.toggleLoader(true);
             const response: any = await this.http.get('geortd/rtd/GetById', {}, this.selectedRowItems[0].id);
             const { source, destination, attributes } = response.data;
@@ -303,7 +310,6 @@ export class RoutesComponent implements OnInit {
         } finally{
           this.uiService.toggleLoader(false);
         }
-      }
     }
 
     async handleLinkApproval(): Promise<void> {

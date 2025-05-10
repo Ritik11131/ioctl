@@ -46,11 +46,20 @@
       </div>
       
       <div class="border rounded-lg shadow-md p-6 bg-white h-full overflow-y-auto">
-        <h3 class="text-lg font-semibold mb-4 text-gray-800 flex items-center">
-          <i class="pi pi-info-circle mr-2 text-blue-600"></i>
-          RTD Information
-        </h3>
-        
+        <div class="flex justify-between">
+
+          <h3 class="text-lg font-semibold mb-4 text-gray-800 flex items-center">
+            <i class="pi pi-info-circle mr-2 text-blue-600"></i>
+            RTD Information
+          </h3>
+          
+          <p-button 
+          outlined
+          text
+          icon="pi pi-download"
+          (onClick)="handleOp46Download()"/>
+        </div>
+          
         <!-- Route Details -->
         <div class="space-y-5">
           <!-- Location Info -->
