@@ -86,14 +86,14 @@ export class TollsComponent {
             outlined: false,
             dependentOnRow: true
         },
-        {
-            key: 'setTollPrice',
-            label: 'Set Toll Price',
-            icon: 'pi pi-sync',
-            severity: 'secondary',
-            outlined: true,
-            dependentOnRow: true
-        }
+        // {
+        //     key: 'setTollPrice',
+        //     label: 'Set Toll Price',
+        //     icon: 'pi pi-sync',
+        //     severity: 'secondary',
+        //     outlined: true,
+        //     dependentOnRow: true
+        // }
     ];
 
     tableConfig = {
@@ -150,16 +150,30 @@ export class TollsComponent {
                     dependsOn: null
                 },
                 {
-                    fieldId: 'rtdDirection',
-                    type: 'dropdown',
-                    options: [
-                        { name: 'Sorce To Destination', id: 'sourceToDestination' },
-                        { name: 'Destination To Source', id: 'destinationToSource' }
-                    ],
-                    label: 'Route Type',
+                    fieldId: 'upTollAmount',
+                    type: 'number',
+                    label: 'Up Toll Amount',
                     required: true,
-                    placeholder: 'Select a Route Type',
+                    placeholder: 'Enter a toll amount',
                 },
+                 {
+                    fieldId: 'downTollAmount',
+                    type: 'number',
+                    label: 'Down Toll Amount',
+                    required: true,
+                    placeholder: 'Enter a toll amount',
+                },
+                // {
+                //     fieldId: 'rtdDirection',
+                //     type: 'dropdown',
+                //     options: [
+                //         { name: 'Sorce To Destination', id: 'sourceToDestination' },
+                //         { name: 'Destination To Source', id: 'destinationToSource' }
+                //     ],
+                //     label: 'Route Type',
+                //     required: true,
+                //     placeholder: 'Select a Route Type',
+                // },
                 {
                     fieldId: 'latitude',
                     type: 'number',
@@ -215,7 +229,7 @@ export class TollsComponent {
         console.log('Form submitted with data:', formData);
         if (this.isEditMode) {
             this.uiService.toggleLoader(true);
-            const { name, latitude, longitude, rtd, exCode, rtdDirection, description } = formData;
+            const { name, latitude, longitude, rtd, exCode, rtdDirection, description, upTollAmount, downTollAmount } = formData;
             const payload = {
                 id: this.selectedRowItems[0]?.id,
                 name,
@@ -224,7 +238,9 @@ export class TollsComponent {
                 longitude,
                 description,
                 rtdId: rtd?.id,
-                rtdDirection: rtdDirection?.id ?? rtdDirection
+                upTollAmount,
+                downTollAmount,
+                
             };
             try {
                 const response = await this.http.put('geortd/rtdtoll/modify', this.selectedRowItems[0].id, payload);
@@ -240,7 +256,7 @@ export class TollsComponent {
             }
         } else {
             this.uiService.toggleLoader(true);
-            const { name, latitude, longitude, rtd, rtdDirection, exCode, description } = formData;
+            const { name, latitude, longitude, rtd, rtdDirection, exCode, description, upTollAmount, downTollAmount } = formData;
             const payload = {
                 name,
                 exCode,
@@ -248,7 +264,8 @@ export class TollsComponent {
                 longitude,
                 description,
                 rtdId: rtd?.id,
-                rtdDirection: rtdDirection?.id
+                upTollAmount,
+                downTollAmount,
             };
             try {
                 const response = await this.http.post('geortd/rtdtoll/create', payload);

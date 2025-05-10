@@ -101,7 +101,8 @@ export class RoutesComponent implements OnInit {
           { field: 'destination', header: 'Destination Address', subfield: 'name', minWidth: '15rem' },
           { field: 'selectedRoute', header: 'Suggested Route', minWidth: '15rem' },
           { field: 'status', header: 'Status', minWidth: '15rem', date: true },
-          { field: 'approvedBy', header: 'Approved by', minWidth: '15rem', date: true }, //tblRtdApproval parse id.APPROVEDBY
+          { field: 'tblRtdApproval',subfield: 'aprrovedBy', header: 'Approved by', minWidth: '15rem', date: true },
+          { field: 'tblRtdApproval',subfield: 'nextApprovedBy', header: 'Next To Approved By', minWidth: '15rem', date: true },
           // { field: 'endDate', header: 'Toll Price', minWidth: '15rem', date: true },
           { field: 'totalDistanceKm', header: 'Total RTD (Km)', minWidth: '15rem'},
           { field: 'startDate', header: 'Start Date', minWidth: '15rem', date: true },
@@ -341,7 +342,7 @@ export class RoutesComponent implements OnInit {
             throw new Error('Invalid route data received');
           }
           
-          const { source,sourceDept, destination,destinationDept, attributes, startDate,endDate, reason,totalDistanceKm } = routeResponse.data;
+          const { source,sourceDept, destination,destinationDept, attributes, startDate,endDate, reason,totalDistanceKm, totalTime } = routeResponse.data;
           
           // Handle potential JSON parsing errors
           let parsedAttributes: any = {};
@@ -371,7 +372,8 @@ export class RoutesComponent implements OnInit {
             startDate,
             endDate,
             reason,
-            totalDistanceKm
+            totalDistanceKm,
+            totalTime
 
           };
           
@@ -477,7 +479,7 @@ export class RoutesComponent implements OnInit {
         this.uiService.toggleLoader(true);
         try {
             const response: any = await this.http.get('geortd/rtd/GetById', {}, this.selectedRowItems[0].id);
-            const { source, destination, sourceDept, destinationDept, name, attributes, startDate, endDate, reason,comment } = response.data;
+            const { source, destination, sourceDept, destinationDept, name, attributes, startDate, endDate, reason,comment,version } = response.data;
             this.selectedSource = source;
             this.selectedDestination = destination;
             const route = JSON.parse(attributes);
@@ -493,7 +495,8 @@ export class RoutesComponent implements OnInit {
                 startDate: new Date(startDate),
                 endDate: new Date(endDate),
                 reason,
-                comment
+                comment,
+                version
             };
             this.uiService.openDrawer(this.createUpdateRouteContent, 'RTD Management', '!w-[98vw] md:!w-[98vw] lg:!w-[98vw] rounded-l-2xl');
         } catch (error: any) {
@@ -677,8 +680,30 @@ export class RoutesComponent implements OnInit {
         }
     }
 
+  parseDurationToMinutes(durationText: string): number {
+    if (!durationText) return 0;
+
+    const hourMatch = durationText.match(/(\d+)\s*hour/);
+    const minMatch = durationText.match(/(\d+)\s*min/);
+
+    const hours = hourMatch ? parseInt(hourMatch[1]) : 0;
+    const minutes = minMatch ? parseInt(minMatch[1]) : 0;
+
+    return (hours * 60) + minutes;
+  }
+
+  formatMinutesToDurationText(totalMinutes: number): string {
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return `${hours > 0 ? `${hours} hour${hours > 1 ? 's' : ''}` : ''}${hours && minutes ? ' ' : ''}${minutes ? `${minutes} min${minutes > 1 ? 's' : ''}` : ''}`.trim();
+  }
+
     async onFormSubmit(formData: any): Promise<void> {
       const totalRTDKm = parseFloat(this.selectedRouteJson?.DtoS.selected?.routes[0]?.legs[0]?.distance?.text) + parseFloat(this.selectedRouteJson?.StD.selected?.routes[0]?.legs[0]?.distance?.text)
+      const totalMins = [this.selectedRouteJson?.DtoS?.selected?.routes[0]?.legs[0]?.duration?.text, this.selectedRouteJson?.StD?.selected?.routes[0]?.legs[0]?.duration?.text]
+        .reduce((sum, t) => sum + this.parseDurationToMinutes(t || ''), 0);
+      const totalRTDDurationInMinutes = this.formatMinutesToDurationText(totalMins);
+
       if(this.isEditMode) {
         this.uiService.toggleLoader(true);
         const { name, startDate, endDate, destination_department, source_department, reason,comment } = formData;
@@ -692,10 +717,11 @@ export class RoutesComponent implements OnInit {
           sourceDeptId:source_department?.id,
           destinationDeptId: destination_department?.id,
           reason: typeof reason === 'string' ? reason : reason?.id,
-          version:'0',
+          version:this.editData.version,
           selectedRoute: this.selectedRouteJson?.DtoS.selected?.routes[0]?.summary,
           comment,
           totalDistanceKm: totalRTDKm,
+          totalTime: totalRTDDurationInMinutes,
           attributes: JSON.stringify( { route: this.selectedRouteJson } )
         }
         
@@ -726,7 +752,7 @@ export class RoutesComponent implements OnInit {
           selectedRoute: this.selectedRouteJson?.DtoS.selected?.routes[0]?.summary,
           comment,
           totalDistanceKm: totalRTDKm,
-          version:'0',
+          totalTime: totalRTDDurationInMinutes,
           attributes:JSON.stringify({route:this.selectedRouteJson})
         }
 
