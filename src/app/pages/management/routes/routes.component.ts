@@ -100,7 +100,7 @@ export class RoutesComponent implements OnInit {
           { field: 'source', header: 'Source Address', subfield: 'name', minWidth: '15rem' },
           { field: 'destination', header: 'Destination Address', subfield: 'name', minWidth: '15rem' },
           { field: 'selectedRoute', header: 'Suggested Route', minWidth: '15rem' },
-          { field: 'status', header: 'Status', minWidth: '15rem', date: true },
+          { field: 'status', header: 'Status', minWidth: '15rem' },
           { field: 'tblRtdApproval',subfield: 'aprrovedBy', header: 'Approved by', minWidth: '15rem', date: true },
           { field: 'tblRtdApproval',subfield: 'nextApprovedBy', header: 'Next To Approved By', minWidth: '15rem', date: true },
           // { field: 'endDate', header: 'Toll Price', minWidth: '15rem', date: true },
