@@ -58,7 +58,7 @@ export interface GeofenceOptions {
               <div class="flex items-center gap-3">
                 <div class="w-3 h-8 rounded-full" [style.background-color]="option.color"></div>
                 <div>
-                  <div class="text-sm text-slate-600">Route {{ $index + 1 }}</div>
+                  <div class="text-sm text-slate-600">{{ option.route.summary }}</div>
                   <div class="text-xs text-slate-500">{{ option.distance }} • {{ option.duration }}</div>
                 </div>
               </div>
@@ -91,7 +91,7 @@ export interface GeofenceOptions {
               <div class="flex items-center gap-3">
                 <div class="w-3 h-8 rounded-full" [style.background-color]="option.color"></div>
                 <div>
-                  <div class="text-sm text-slate-600">Route {{ $index + 1 }}</div>
+                  <div class="text-sm text-slate-600">{{ option.route.summary }}</div>
                   <div class="text-xs text-slate-500">{{ option.distance }} • {{ option.duration }}</div>
                 </div>
               </div>
