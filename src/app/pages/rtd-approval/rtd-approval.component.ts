@@ -155,8 +155,9 @@ export class RtdApprovalComponent {
             const response: any = await this.http.get('geortd/rtduser/list');
             console.log(response);
             this.users = response.data.map((user: any) => ({
-                label: [user.fName, user.mName, user.lName].filter(Boolean).join(' '),
-                value: user.id
+                label: user.roles.name + ' - ' + user.name,
+                value: user.id,
+                userName: user.name,
             }));
             console.log(this.users);
         } catch (error) {}
@@ -456,10 +457,10 @@ export class RtdApprovalComponent {
             return;
         }
         const stepsWithUsername = this.permissionForm.value.steps.map((step: any) => {
-            const user = this.users.find((user) => user.value === step.user);
+            const user: any = this.users.find((user) => user.value === step.user);
             return {
                 ...step,
-                userName: user ? user.label : step.user // Use label if user is found
+                userName: user ? user.userName : step.user // Use label if user is found
             };
         }
         );
