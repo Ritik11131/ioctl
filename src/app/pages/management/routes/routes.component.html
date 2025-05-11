@@ -1,7 +1,6 @@
 <app-generic-table [selectedItems]="selectedRowItems" [toolBarStartActions]="toolBarStartActions" [tableConfig]="tableConfig" [tableFilterByStatusConfig]="tableFilterByStatusConfig" [tableData]="tableData" (onToolBarStartAction)="handleToolBarActions($event)" (onSelectionChange)="handleRowSelectionChange($event)" (onTableFilterByStatus)="handleTableFilterByStatus($event)" />
 <ng-template #createUpdateRouteContent>
     <h3 class="text-xl font-semibold mb-4 text-muted-color-emphasis">{{isEditMode ? 'Update ' : 'Create '}}RTD</h3>
-
     <div class=" bg-gray-50">
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div class="col-span-1 lg:col-span-3 flex flex-col">

@@ -529,14 +529,4 @@ export class TollsComponent {
         }
       }
 
-
-      handleUIFileUpload(event: any): void {
-        console.log(event,'event');
-        if(event.action === 'upload') {
-            this.uiService.showToast('success','Success','File uploaded successfully');
-        } else if(event.action === 'clear') {
-            this.uiService.showToast('success','Success','File cleared successfully');
-        }
-      }
-
 }

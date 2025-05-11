@@ -859,9 +859,11 @@ export class GenericStepperComponent implements OnInit, OnChanges {
             fileData.append('file', event.files[0]); // selectedFile is a File object
             const response: any = await this.http.postFile('geortd/file/upload', fileData);
             console.log('File uploaded successfully:', response);
+            this.uiService.showToast('success','Success','File uploaded successfully');
             this.formGroup.get(fieldId)?.setValue(response?.data?.fileUrl);
         } catch (error) {
             console.error('File upload failed:', error);
+            this.uiService.showToast('error','Error','File upload failed');
         } finally{
             this.uiService.toggleLoader(false)
         }
