@@ -337,31 +337,44 @@ export class RoutesComponent implements OnInit {
         }
     }
 
-    async handleOp46Download(): Promise<void> {
-        try {
-            this.uiService.toggleLoader(true);
-            const response: any = await this.http.get('geortd/rtd/GetById', {}, this.selectedRowItems[0].id);
-            const { source, destination, attributes, name, startDate, endDate,totalDistanceKm } = response.data;
-            const { route } = JSON.parse(attributes);
-            const { StD, DtoS } = route;
-            const pdfObject = {
-                source,
-                StD,
-                DtoS,
-                destination,
-                rtdName: name,
-                totalDistanceKm,
-                startDate: new Date(startDate).toLocaleDateString('en-US'),
-                endDate: new Date(endDate).toLocaleDateString('en-US')
-            };
-            this.pdfService.generateOpCertificate(pdfObject);
-        } catch (error: any) {
-            console.error('Error in handleToolBarActions:', error);
-            this.uiService.showToast('error', 'Error', error?.error?.data);
-        } finally {
-            this.uiService.toggleLoader(false);
-        }
+async handleOp46Download(): Promise<void> {
+  this.uiService.toggleLoader(true);
+  try {
+    const selectedId = this.selectedRowItems?.[0]?.id;
+    if (!selectedId) {
+      throw new Error('No row selected');
     }
+
+    const [routeResponse, tollsResponse]: any[] = await Promise.all([
+      this.http.get('geortd/rtd/GetById', {}, selectedId),
+      this.http.get('geortd/rtdtoll/list', {}, selectedId).catch(() => ({ data: [] }))
+    ]);
+
+    const { source, destination, attributes, name, startDate, endDate, totalDistanceKm } = routeResponse?.data;
+    const { route } = JSON.parse(attributes || '{}');
+    const { StD, DtoS } = route || {};
+
+    const pdfData = {
+      source,
+      destination,
+      StD,
+      DtoS,
+      rtdName: name,
+      totalDistanceKm,
+      startDate: new Date(startDate).toLocaleDateString('en-US'),
+      endDate: new Date(endDate).toLocaleDateString('en-US'),
+      tolls: tollsResponse?.data || []
+    };
+
+    this.pdfService.generateOpCertificate(pdfData);
+  } catch (error: any) {
+    console.error('Error in handleOp46Download:', error);
+    this.uiService.showToast('error', 'Download Error', error?.error?.data || 'Something went wrong');
+  } finally {
+    this.uiService.toggleLoader(false);
+  }
+}
+
 
     async handleLinkApproval(): Promise<void> {
         this.uiService.openDrawer(this.linkRtdAproval, 'View Route');
