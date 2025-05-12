@@ -3,6 +3,7 @@ import * as pdfMake from "pdfmake/build/pdfmake";
 import * as pdfFonts from 'pdfmake/build/vfs_fonts';
 import { AuthService } from './auth.service';
 import { environment } from '../../../environments/environment.prod';
+import { HttpClient } from '@angular/common/http';
 
 (<any>pdfMake).addVirtualFileSystem(pdfFonts);
 
@@ -11,7 +12,7 @@ import { environment } from '../../../environments/environment.prod';
 })
 export class PdfService {
 
-  constructor(private authService:AuthService) { }
+  constructor(private authService:AuthService, private httpClient:HttpClient) { }
 
 
   /**
@@ -107,6 +108,9 @@ export class PdfService {
 
   async generateOpCertificate(pdfObject: any): Promise<void> {
     console.log(pdfObject);
+    const image1$ : any = this.httpClient.get('assets/images/MargDarshak.png', { responseType: 'blob' }).toPromise();
+    // Fetch the second image and convert it to base64
+    const image2$ : any = this.httpClient.get('assets/images/Indane.png', { responseType: 'blob' }).toPromise();
     const parseHtmlInstruction = (html: string) => {
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, 'text/html');
@@ -155,17 +159,25 @@ export class PdfService {
     const totalDtoS = calculateTotalDistance(pdfObject.DtoS.selected.routes[0].legs[0].distance.text);
     const totalCombined = totalStD + totalDtoS;
 
-    const docDefinition: any = {
-      content: [
+
+    Promise.all([image1$, image2$]).then(([blob1, blob2]) => {
+      const reader1 = new FileReader();
+      const reader2 = new FileReader();
+  
+      reader1.onloadend = () => {
+        const base64data1 = reader1.result as string;
+  
+        reader2.onloadend = () => {
+          const base64data2 = reader2.result as string;
+  
+          const docDefinition: any = {
+           content: [
         // First Row - Header with images and text
         {
           columns: [
             {
-              stack: [
-                { text: '[LOGO]', style: 'logoPlaceholder', alignment: 'center' },
-                { text: 'Placeholder for IOCL Logo', style: 'logoText', alignment: 'center' }
-              ],
-              width: 100,
+              image: base64data1,
+              width: 50,
               alignment: 'center'
             },
             {
@@ -179,11 +191,8 @@ export class PdfService {
               margin: [0, 10, 0, 0]
             },
             {
-              stack: [
-                { text: '[LOGO]', style: 'logoPlaceholder', alignment: 'center' },
-                { text: 'Placeholder for IOCL Logo', style: 'logoText', alignment: 'center' }
-              ],
-              width: 100,
+              image: base64data2,
+              width: 50,
               alignment: 'center'
             }
           ],
@@ -603,9 +612,13 @@ export class PdfService {
       defaultStyle: {
         fontSize: 8
       }
-    };
+          };
   
-    // For testing purposes, show what would be created
-    pdfMake.createPdf(docDefinition).download('Certificate.pdf');
+          pdfMake.createPdf(docDefinition).download('Certificate.pdf');
+        };
+        reader2.readAsDataURL(blob2); // Convert second blob to base64
+      };
+      reader1.readAsDataURL(blob1); // Convert first blob to base64
+    });
   }
 }
