@@ -341,14 +341,17 @@ export class RoutesComponent implements OnInit {
         try {
             this.uiService.toggleLoader(true);
             const response: any = await this.http.get('geortd/rtd/GetById', {}, this.selectedRowItems[0].id);
-            const { source, destination, attributes } = response.data;
+            const { source, destination, attributes, name, startDate, endDate } = response.data;
             const { route } = JSON.parse(attributes);
             const { StD, DtoS } = route;
             const pdfObject = {
                 source,
                 StD,
                 DtoS,
-                destination
+                destination,
+                rtdName: name,
+                startDate: new Date(startDate).toLocaleDateString('en-US'),
+                endDate: new Date(endDate).toLocaleDateString('en-US')
             };
             this.pdfService.generateOpCertificate(pdfObject);
         } catch (error: any) {

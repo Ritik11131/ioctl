@@ -106,6 +106,7 @@ export class PdfService {
 
 
   async generateOpCertificate(pdfObject: any): Promise<void> {
+    console.log(pdfObject);
     const parseHtmlInstruction = (html: string) => {
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, 'text/html');
@@ -169,8 +170,9 @@ export class PdfService {
             },
             {
               stack: [
+                { text: pdfObject.rtdName, style: 'headerTextSmallWithoutBold', alignment: 'center' },
                 { text: 'Indian Oil Corporation Limited(Marketing Division)', style: 'headerText', alignment: 'center' },
-                { text: 'Madhya Pradesh State Office (LPG Bulk)', style: 'headerTextSmall', alignment: 'center' },
+                { text: `${pdfObject?.destination?.state?.name} State Office (LPG Packed)`, style: 'headerTextSmall', alignment: 'center' },
                 { text: 'Round Trip Distance(TRANSPORTATION RTD)', style: 'headerTextUnderline', alignment: 'center' }
               ],
               width: '*',
@@ -194,14 +196,14 @@ export class PdfService {
             {
               columns: [
                 { text: 'Ref. No.: MAD-RTD/3385/Bulk/2018-19/1868', style: 'rowText', alignment: 'left', margin: [0, 2, 0, 2] },
-                { text: 'Effective date of implementation: 24/03/2025', style: 'rowText', alignment: 'center', margin: [0, 2, 0, 2] },
-                { text: 'SUPPLY LOCATION : GCPTCL DAHEJ Parking', style: 'rowText', alignment: 'right', margin: [0, 2, 0, 2] }
+                { text: `Effective date of implementation: ${pdfObject.startDate} ; Valid till: ${pdfObject.endDate}`, style: 'rowText', alignment: 'center', margin: [0, 2, 0, 2] },
+                { text: `SUPPLY LOCATION : ${pdfObject?.source?.name}\nPlant Code/Location Code: ${pdfObject?.source?.exCode}`, style: 'rowText', alignment: 'right', margin: [0, 2, 0, 2] }
               ],
               margin: [0, 0, 0, 0]
             },
             {
               columns: [
-                { text: 'Location Code : 3385', style: 'rowText', alignment: 'left', margin: [0, 2, 0, 2] },
+                { text: `Sap Code: ${pdfObject.destination.exCode} `, style: 'rowText', alignment: 'left', margin: [0, 2, 0, 2] },
                 { text: 'Type : LPG Bulk', style: 'rowText', alignment: 'center', margin: [0, 2, 0, 2] },
                 { text: 'Sales Area :', style: 'rowText', alignment: 'right', margin: [0, 2, 0, 2] }
               ],
@@ -216,67 +218,51 @@ export class PdfService {
         {
           table: {
             headerRows: 2,
-            widths: ['5%', '10%', '8%', '8%', '8%', '8%', '4%', '3%', '5%', '8%', '8%', '8%', '15%'],
+            widths: ['5%', '30%', '10%', '8%', '8%', '8%', '10%', '10%', '8%', '13%'],
             body: [
               [
                 { text: 'Sr No', style: 'tableHeader', alignment: 'center', rowSpan: 2, margin: [0, 2, 0, 2] },
                 { text: 'Name and Address of LPG Bulk', style: 'tableHeader', alignment: 'center', rowSpan: 2, margin: [0, 2, 0, 2] },
-                { text: 'ERP Reference Code', style: 'tableHeader', alignment: 'center', rowSpan: 2, margin: [0, 2, 0, 2] },
-                { text: 'Old RTD', style: 'tableHeader', alignment: 'center', colSpan: 3, margin: [0, 2, 0, 2] },
-                {},
-                {},
-                { text: 'New RTD', style: 'tableHeader', alignment: 'center', colSpan: 6, margin: [0, 2, 0, 2] },
-                {},
-                {},
-                {},
-                {},
-                {},
-                { text: 'Reason for New RTD', style: 'tableHeader', alignment: 'center', rowSpan: 2, margin: [0, 2, 0, 2] }
+                { text: 'SAP Reference Code', style: 'tableHeader', alignment: 'center', rowSpan: 2, margin: [0, 2, 0, 2] },
+                { text: 'Old RTD', style: 'tableHeader', alignment: 'center', colSpan: 3, margin: [0, 2, 0, 2] }, {}, {},
+                { text: 'New RTD', style: 'tableHeader', alignment: 'center', colSpan: 3, margin: [0, 2, 0, 2] }, {}, {},
               ],
               [
-                {},
-                {},
-                {},
+                {}, {}, {},
                 { text: 'Total Rtd(km)', style: 'tableSubHeader', alignment: 'center', margin: [0, 2, 0, 2] },
                 { text: 'Verification Date', style: 'tableSubHeader', alignment: 'center', margin: [0, 2, 0, 2] },
-                { text: 'One Way Toll Charges X 2', style: 'tableSubHeader', alignment: 'center', margin: [0, 2, 0, 2] },
-                { text: 'Plain(km)', style: 'tableSubHeader', alignment: 'center', margin: [0, 2, 0, 2] },
-                { text: 'Hill(km)', style: 'tableSubHeader', alignment: 'center', margin: [0, 2, 0, 2] },
-                { text: 'High Hill(km)', style: 'tableSubHeader', alignment: 'center', margin: [0, 2, 0, 2] },
+                { text: 'Toll Charges', style: 'tableSubHeader', alignment: 'center', margin: [0, 2, 0, 2] },
                 { text: 'Total Rtd(km)', style: 'tableSubHeader', alignment: 'center', margin: [0, 2, 0, 2] },
                 { text: 'Verification Date', style: 'tableSubHeader', alignment: 'center', margin: [0, 2, 0, 2] },
-                { text: 'One Way Toll Charges X 2', style: 'tableSubHeader', alignment: 'center', margin: [0, 2, 0, 2] },
-                {}
+                { text: 'Toll Charges', style: 'tableSubHeader', alignment: 'center', margin: [0, 2, 0, 2] },
               ],
               [
                 { text: '1', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
-                { text: 'Sample LPG Bulk Plant, New Delhi', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
-                { text: 'DEL001', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
+                { text: `${pdfObject?.destination?.name}, ${pdfObject?.destination?.address1}`, style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
+                { text: `${pdfObject.destination.exCode}`, style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
                 { text: '150', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
                 { text: '01/01/2023', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
                 { text: '200', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
-                { text: '120', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
-                { text: '20', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
-                { text: '10', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
                 { text: '160', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
-                { text: '01/01/2024', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
+                { text: `${pdfObject.startDate}`, style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
                 { text: '250', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
-                { text: 'Route optimization and new highway construction', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] }
               ]
             ]
           },
           margin: [0, 0, 0, 0],
           layout: {
-            hLineWidth: function(i: number, node: any) { return 0.5; },
-            vLineWidth: function(i: number, node: any) { return 0.5; },
-            hLineColor: function(i: number, node: any) { return '#aaa'; },
-            vLineColor: function(i: number, node: any) { return '#aaa'; },
-            paddingLeft: function(i: number, node: any) { return 0; },
-            paddingRight: function(i: number, node: any) { return 0; },
-            paddingTop: function(i: number, node: any) { return 0; },
-            paddingBottom: function(i: number, node: any) { return 0; }
+            hLineWidth: function (i: number, node: any) { return 0.5; },
+            vLineWidth: function (i: number, node: any) { return 0.5; },
+            hLineColor: function (i: number, node: any) { return '#aaa'; },
+            vLineColor: function (i: number, node: any) { return '#aaa'; },
+            paddingLeft: function (i: number, node: any) { return 0; },
+            paddingRight: function (i: number, node: any) { return 0; },
+            paddingTop: function (i: number, node: any) { return 0; },
+            paddingBottom: function (i: number, node: any) { return 0; }
           }
         },
+
+
         {
           text: '1. Certified that the pricing RTD recommended for approval is through all weather shortest motorable route. Policy Applicable: HO/Indane Ops/02/2018-19; dated 09.07.2018.',
           style: 'bulletText',
@@ -524,6 +510,11 @@ export class PdfService {
         headerTextSmall: {
           fontSize: 12,
           bold: true,
+          margin: [0, 2, 0, 2]
+        },
+        headerTextSmallWithoutBold: {
+          fontSize: 12,
+          bold: false,
           margin: [0, 2, 0, 2]
         },
         headerTextUnderline: {
