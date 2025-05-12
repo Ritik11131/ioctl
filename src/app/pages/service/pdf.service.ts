@@ -22,13 +22,17 @@ export class PdfService {
  * @param authToken - Authorization token for the API
  * @returns Promise<string> - Base64 encoded image data
  */
-  async fetchMapImage(sourceCoords: number[], destCoords: number[], authToken: string | null, sourcePath: string, destinationPath: string, sourceBounds: any): Promise<string> {
+  async fetchMapImage(sourceCoords: number[], destCoords: number[], authToken: string | null, sourcePath: string, destinationPath: string, sourceBounds: any, tolls: any): Promise<string> {
     try {
-      console.log(sourceCoords, destCoords);
-
       // Build the markers parameters
       const sourceMarker = `color:blue|label:S|${sourceCoords.join(',')}`;
       const destMarker = `color:red|label:D|${destCoords.join(',')}`;
+
+       // Convert toll coordinates into markers
+    const tollMarkers = tolls.map((toll: any) => {
+      const {latitude, longitude} = toll; // assuming toll.coordinates = [lat, lng]
+      return `color:yellow|label:T|${latitude},${longitude}`;
+    });
 
       // Calculate optimal center and zoom based on provided bounds
       const bounds = this.calculateMapBounds(sourceBounds);
@@ -43,6 +47,13 @@ export class PdfService {
       url.searchParams.append('maptype', 'roadmap');  // Options: roadmap, satellite, hybrid, terrain
       url.searchParams.append('markers', sourceMarker);
       url.searchParams.append('markers', destMarker);
+
+       // Add each toll marker
+    tollMarkers.forEach((marker: any) => {
+      url.searchParams.append('markers', marker);
+    });
+
+    
 
       // Make the fetch request with authorization header if provided
       const headers: Record<string, string> = {};
@@ -150,10 +161,11 @@ export class PdfService {
     const sourcePath = `enc:${pdfObject.StD.selected.routes[0].overview_polyline}`;
     const sourceBounds = pdfObject.StD.selected.routes[0].bounds;
     const destinationPath = pdfObject.StD.selected.routes[0].overview_polyline;
+    const tolls = pdfObject.tolls
 
 
     // Fetch the map image
-    const mapImageBase64 = await this.fetchMapImage(sourceCoords, destCoords, this.authService.getToken(), sourcePath, destinationPath, sourceBounds);
+    const mapImageBase64 = await this.fetchMapImage(sourceCoords, destCoords, this.authService.getToken(), sourcePath, destinationPath, sourceBounds, tolls);
 
     const totalStD = calculateTotalDistance(pdfObject.StD.selected.routes[0].legs[0].distance.text);
     const totalDtoS = calculateTotalDistance(pdfObject.DtoS.selected.routes[0].legs[0].distance.text);
