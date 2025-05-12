@@ -341,7 +341,7 @@ export class RoutesComponent implements OnInit {
         try {
             this.uiService.toggleLoader(true);
             const response: any = await this.http.get('geortd/rtd/GetById', {}, this.selectedRowItems[0].id);
-            const { source, destination, attributes, name, startDate, endDate } = response.data;
+            const { source, destination, attributes, name, startDate, endDate,totalDistanceKm } = response.data;
             const { route } = JSON.parse(attributes);
             const { StD, DtoS } = route;
             const pdfObject = {
@@ -350,6 +350,7 @@ export class RoutesComponent implements OnInit {
                 DtoS,
                 destination,
                 rtdName: name,
+                totalDistanceKm,
                 startDate: new Date(startDate).toLocaleDateString('en-US'),
                 endDate: new Date(endDate).toLocaleDateString('en-US')
             };
