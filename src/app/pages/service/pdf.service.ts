@@ -304,81 +304,37 @@ export class PdfService {
               },
               {
                 stack: [
-                  // First row - 1 box
-                  {
-                    columns: [
-                      {
-                        stack: [
-                          { text: 'Field Officer/Plant Manager/Incharge:', style: 'boxLabel' },
-                          { text: 'Name : Ss Bajpai', style: 'boxContent' },
-                          { text: 'Employee Code : 00024811', style: 'boxContent' },
-                          { text: 'Date : 21/03/2025 02:34:26 PM', style: 'boxContent' }
-                        ],
-                        width: '100%',
-                        height: 80,
-                        style: 'box'
-                      }
-                    ],
-                    margin: [0, 20, 0, 10]
-                  },
-                  // Second row - 3 boxes
-                  {
-                    columns: [
-                      {
-                        stack: [
-                          { text: 'Field Officer/Plant Manager/Incharge:', style: 'boxLabel' },
-                          { text: 'Name : Ss Bajpai', style: 'boxContent' },
-                          { text: 'Employee Code : 00024811', style: 'boxContent' },
-                          { text: 'Date : 21/03/2025 02:34:26 PM', style: 'boxContent' }
-                        ],
-                        width: '33%',
-                        height: 80,
-                        style: 'box'
-                      },
-                      {
-                        stack: [
-                          { text: 'Field Officer/Plant Manager/Incharge:', style: 'boxLabel' },
-                          { text: 'Name : Ss Bajpai', style: 'boxContent' },
-                          { text: 'Employee Code : 00024811', style: 'boxContent' },
-                          { text: 'Date : 21/03/2025 02:34:26 PM', style: 'boxContent' }
-                        ],
-                        width: '33%',
-                        height: 80,
-                        style: 'box'
-                      },
-                      {
-                        stack: [
-                          { text: 'Field Officer/Plant Manager/Incharge:', style: 'boxLabel' },
-                          { text: 'Name : Ss Bajpai', style: 'boxContent' },
-                          { text: 'Employee Code : 00024811', style: 'boxContent' },
-                          { text: 'Date : 21/03/2025 02:34:26 PM', style: 'boxContent' }
-                        ],
-                        width: '33%',
-                        height: 80,
-                        style: 'box'
-                      }
-                    ],
-                    margin: [0, 0, 0, 10]
-                  },
-                  // Third row - 1 box
-                  {
-                    columns: [
-                      {
-                        stack: [
-                          { text: 'Field Officer/Plant Manager/Incharge:', style: 'boxLabel' },
-                          { text: 'Name : Ss Bajpai', style: 'boxContent' },
-                          { text: 'Employee Code : 00024811', style: 'boxContent' },
-                          { text: 'Date : 21/03/2025 02:34:26 PM', style: 'boxContent' }
-                        ],
-                        width: '100%',
-                        height: 80,
-                        style: 'box'
-                      }
-                    ],
-                    margin: [0, 0, 0, 20]
-                  }
+                  ...(() => {
+                    const commentBoxes = [];
+                    const comments = pdfObject?.comments || [];
+
+                    for (let i = 0; i < comments.length; i += 3) {
+                      commentBoxes.push({
+                        columns: [0, 1, 2].map(j => {
+                          const comment = comments[i + j];
+                          return {
+                            stack: comment
+                              ? [
+                                { text: 'Field Officer/Plant Manager/Incharge:', style: 'boxLabel' },
+                                { text: `Name : ${comment?.name || '-'}`, style: 'boxContent' },
+                                { text: `Employee Code : ${comment?.employeeCode || '-'}`, style: 'boxContent' },
+                                { text: `Date : ${comment?.timestamp || '-'}`, style: 'boxContent' }
+                              ]
+                              : [],
+                            width: '33%',
+                            height: 80,
+                            style: 'box'
+                          };
+                        }),
+                        margin: [0, 0, 0, 10]
+                      });
+                    }
+
+                    return commentBoxes;
+                  })()
                 ]
               },
+
 
               // Map Image Row
               {
@@ -389,23 +345,29 @@ export class PdfService {
                 margin: [0, 20, 0, 20]
               },
 
-              { text: 'Toll Information', style: 'headerText' },
+              {
+                text: 'Toll Information',
+                style: 'tableHeading',
+                margin: [0, 0, 0, 10]
+              },
               {
                 table: {
-                  widths: [150, '*'], // Define column widths
+                  widths: [150, 150, '*'], // Define column widths
                   headerRows: 1, // Specify number of header rows
                   body: [
                     [
                       { text: 'Toll Name', style: 'tableHeader' },
+                      { text: 'Vehicle Category', style: 'tableHeader' },
                       { text: 'Document Link', style: 'tableHeader' }
                     ], // Table headers
                     ...pdfObject?.tolls?.map((toll: any) => [
                       { text: toll.name, style: 'tableCell' },
-                      { text: 'Click here', link: toll.documentLink, color: 'blue', style: 'tableCell' }
+                      { text: toll.vehicleCategory,style: 'tableCell'},
+                      { text: 'Click here', link: toll.gazetteDocument, color: 'blue', style: 'tableCell' }
                     ])
                   ]
                 },
-                margin: [0, 0, 0, 10], // Optional: Add margin around the table
+                margin: [0, 0, 0, 20], // Optional: Add margin around the table
                 layout: {
                   hLineWidth: function (i: number, node: any) { return 0.5; },
                   vLineWidth: function (i: number, node: any) { return 0.5; },
@@ -607,12 +569,12 @@ export class PdfService {
                 padding: [5, 5, 5, 5]
               },
               boxLabel: {
-                fontSize: 7,
+                fontSize: 9,
                 bold: true,
-                margin: [0, 0, 0, 2]
+                margin: [0, 2, 0, 2]
               },
               boxContent: {
-                fontSize: 7,
+                fontSize: 8,
                 margin: [0, 0, 0, 2]
               },
               mapPlaceholder: {

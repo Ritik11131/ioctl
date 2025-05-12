@@ -345,14 +345,21 @@ async handleOp46Download(): Promise<void> {
       throw new Error('No row selected');
     }
 
-    const [routeResponse, tollsResponse]: any[] = await Promise.all([
+    const [routeResponse, tollsResponse, approvalResponse]: any[] = await Promise.all([
       this.http.get('geortd/rtd/GetById', {}, selectedId),
-      this.http.get('geortd/rtdtoll/list', {}, selectedId).catch(() => ({ data: [] }))
+      this.http.get('geortd/rtdtoll/list', {}, selectedId).catch(() => ({ data: [] })),
+      this.http.get('geortd/RtdApproval/GetRtdApprovalStatusByRtdId', {},selectedId)
     ]);
 
+
+    console.log(approvalResponse,'ress');
+    
     const { source, destination, attributes, name, startDate, endDate, totalDistanceKm } = routeResponse?.data;
     const { route } = JSON.parse(attributes || '{}');
     const { StD, DtoS } = route || {};
+
+    const { comments } = approvalResponse?.data;
+    const parsedComments = JSON.parse(comments)
 
     const pdfData = {
       source,
@@ -363,8 +370,13 @@ async handleOp46Download(): Promise<void> {
       totalDistanceKm,
       startDate: new Date(startDate).toLocaleDateString('en-US'),
       endDate: new Date(endDate).toLocaleDateString('en-US'),
-      tolls: tollsResponse?.data || []
+      tolls: tollsResponse?.data || [],
+      comments: parsedComments.map((comment: any) => ({...comment,timestamp: new Date(comment.timestamp).toLocaleString('en-IN')}))
+
     };
+
+    console.log(pdfData);
+    
 
     this.pdfService.generateOpCertificate(pdfData);
   } catch (error: any) {
