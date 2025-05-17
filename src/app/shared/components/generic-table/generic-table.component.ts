@@ -108,8 +108,12 @@ import { FormsModule } from '@angular/forms';
                     @for (col of columns; track $index) {
                         <td>
                             @if (col.download) {
-                                <a [href]="rowData[col.field]" [target]="'_blank'" class="p-button p-button-text p-button-sm">
+                                <a [href]="rowData[col.field]" download class="p-button p-button-text p-button-sm">
                                     <i class="pi pi-download" style="font-size: 1rem"></i>
+                                </a>
+                            } @else if(col.view) {
+                                 <a [href]="rowData[col.field]"  target="_blank" class="p-button p-button-text p-button-sm">
+                                    <i class="pi pi-eye" style="font-size: 1rem"></i>
                                 </a>
                             } @else {
                                 {{ col.subfield ? rowData[col.field]?.[col.subfield] || '--' : col.date ? (rowData[col.field] | date) || '--' : rowData[col.field] || '--' }}

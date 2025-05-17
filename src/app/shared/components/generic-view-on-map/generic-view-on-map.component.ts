@@ -70,7 +70,7 @@ interface RouteData {
                   <div class="flex items-center gap-3">
                     <div class="w-3 h-8 rounded-full" [style.background-color]="'#2196F3'"></div>
                     <div>
-                      <div class="text-sm text-slate-600">{{option.route.routes[0].summary}}</div>
+                      <div class="text-sm text-slate-600">Route {{ $index + 1 }}</div>
                       <div class="text-xs text-slate-500">{{ option.distance }} • {{ option.duration }}</div>
                     </div>
                   </div>
@@ -105,7 +105,7 @@ interface RouteData {
                   <div class="flex items-center gap-3">
                     <div class="w-3 h-8 rounded-full" [style.background-color]="'#9C27B0'"></div>
                     <div>
-                      <div class="text-sm text-slate-600">{{option.route.routes[0].summary}}</div>
+                      <div class="text-sm text-slate-600">Route {{ $index + 1 }}</div>
                       <div class="text-xs text-slate-500">{{ option.distance }} • {{ option.duration }}</div>
                     </div>
                   </div>

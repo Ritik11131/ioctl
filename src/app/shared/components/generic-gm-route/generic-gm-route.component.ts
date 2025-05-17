@@ -58,7 +58,7 @@ export interface GeofenceOptions {
               <div class="flex items-center gap-3">
                 <div class="w-3 h-8 rounded-full" [style.background-color]="option.color"></div>
                 <div>
-                  <div class="text-sm text-slate-600">{{ option.route.summary }}</div>
+                  <div class="text-sm text-slate-600">Route {{ $index + 1 }}</div>
                   <div class="text-xs text-slate-500">{{ option.distance }} • {{ option.duration }}</div>
                 </div>
               </div>
@@ -91,7 +91,7 @@ export interface GeofenceOptions {
               <div class="flex items-center gap-3">
                 <div class="w-3 h-8 rounded-full" [style.background-color]="option.color"></div>
                 <div>
-                  <div class="text-sm text-slate-600">{{ option.route.summary }}</div>
+                  <div class="text-sm text-slate-600">Route {{ $index + 1 }}</div>
                   <div class="text-xs text-slate-500">{{ option.distance }} • {{ option.duration }}</div>
                 </div>
               </div>
@@ -481,118 +481,122 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   private async createRoutes() {
-    try {
-      this.uiService.toggleLoader(true);
-      this.clearRoute();
-
-      // If we have editRouteJson, use it to show existing routes
-      if (this.editRouteJson) {
-        await this.handleEditRouteJson(this.editRouteJson);
-        return;
-      }
-
-      // If no editRouteJson, proceed with normal route creation
-      const sourceLatLng = new google.maps.LatLng(this.sourceLat, this.sourceLng);
-      const destinationLatLng = new google.maps.LatLng(this.destinationLat, this.destinationLng);
-
-      // Source to Destination route
-      const requestStoD: google.maps.DirectionsRequest = {
-        origin: sourceLatLng,
-        destination: destinationLatLng,
-        travelMode: google.maps.TravelMode.DRIVING,
-        provideRouteAlternatives: true
-      };
-
-      // Destination to Source route
-      const requestDtoS: google.maps.DirectionsRequest = {
-        origin: destinationLatLng,
-        destination: sourceLatLng,
-        travelMode: google.maps.TravelMode.DRIVING,
-        provideRouteAlternatives: true
-      };
-
-      // Get both directions concurrently
-      const [resultStoD, resultDtoS] = await Promise.all([
-        this.directionsService.route(requestStoD),
-        this.directionsService.route(requestDtoS)
-      ]);
-
-      if (!resultStoD || !resultStoD.routes || resultStoD.routes.length === 0) {
-        throw new Error('No source to destination routes found');
-      }
-
-      if (!resultDtoS || !resultDtoS.routes || resultDtoS.routes.length === 0) {
-        throw new Error('No destination to source routes found');
-      }
-
-      // Clear existing route options
-      this.routeOptions = [];
-      this.returnRouteOptions = [];
-
-      // Create renderers for both directions
-      await Promise.all([
-        this.createRouteRenderers(resultStoD, false),
-        this.createRouteRenderers(resultDtoS, true)
-      ]);
-
-      // Create complete route objects
-      const sourceToDestinationRoutes = resultStoD.routes.map(route => ({
-        ...resultStoD,
-        routes: [route]
-      }));
-
-      const destinationToSourceRoutes = resultDtoS.routes.map(route => ({
-        ...resultDtoS,
-        routes: [route]
-      }));
-
-      // Log the routes before emitting
-      // console.log('TestingRoute: About to emit routesCreated', {
-      //   StD: {
-      //     selected: sourceToDestinationRoutes[0],
-      //     suggested: sourceToDestinationRoutes.slice(1)
-      //   },
-      //   DtoS: {
-      //     selected: destinationToSourceRoutes[0],
-      //     suggested: destinationToSourceRoutes.slice(1)
-      //   }
-      // });
-
-      // Emit the created routes
-      this.routesCreated.emit({
-        StD: {
-          selected: sourceToDestinationRoutes[0],
-          suggested: sourceToDestinationRoutes.slice(1)
-        },
-        DtoS: {
-          selected: destinationToSourceRoutes[0],
-          suggested: destinationToSourceRoutes.slice(1)
-        }
-      });
-
-      // console.log('TestingRoute: routesCreated event emitted');
-
-      // Select first routes by default
-      if (this.routeOptions.length > 0) {
-        this.selectRoute(0, false);
-      }
-      if (this.returnRouteOptions.length > 0) {
-        this.selectRoute(0, true);
-      }
-
-      // Fit map to show all routes and markers
-      const bounds = new google.maps.LatLngBounds();
-      bounds.extend(sourceLatLng);
-      bounds.extend(destinationLatLng);
-      this.map.fitBounds(bounds);
-
-    } catch (error) {
-      console.error('Error creating routes:', error);
-      alert('Error creating routes. Please check the coordinates and try again.');
-    } finally {
-      this.uiService.toggleLoader(false);
+  try {
+    this.uiService.toggleLoader(true);
+    this.clearRoute();
+    
+    // If we have editRouteJson, use it to show existing routes
+    if (this.editRouteJson) {
+      await this.handleEditRouteJson(this.editRouteJson);
+      return;
     }
+    
+    // If no editRouteJson, proceed with normal route creation
+    const sourceLatLng = new google.maps.LatLng(this.sourceLat, this.sourceLng);
+    const destinationLatLng = new google.maps.LatLng(this.destinationLat, this.destinationLng);
+    
+    // Source to Destination route
+    const requestStoD: google.maps.DirectionsRequest = {
+      origin: sourceLatLng,
+      destination: destinationLatLng,
+      travelMode: google.maps.TravelMode.DRIVING,
+      provideRouteAlternatives: true
+    };
+    
+    // Destination to Source route
+    const requestDtoS: google.maps.DirectionsRequest = {
+      origin: destinationLatLng,
+      destination: sourceLatLng,
+      travelMode: google.maps.TravelMode.DRIVING,
+      provideRouteAlternatives: true
+    };
+    
+    // Get both directions concurrently
+    const [resultStoD, resultDtoS] = await Promise.all([
+      this.directionsService.route(requestStoD),
+      this.directionsService.route(requestDtoS)
+    ]);
+    if (!resultStoD || !resultStoD.routes || resultStoD.routes.length === 0) {
+      throw new Error('No source to destination routes found');
+    }
+    
+    if (!resultDtoS || !resultDtoS.routes || resultDtoS.routes.length === 0) {
+      throw new Error('No destination to source routes found');
+    }
+    
+    // Ensure we have at least 3 routes for source to destination
+    if (resultStoD.routes.length < 3) {
+      const firstRoute = resultStoD.routes[0];
+      while (resultStoD.routes.length < 3) {
+        // Create a deep copy of the first route
+        const routeCopy = JSON.parse(JSON.stringify(firstRoute));
+        resultStoD.routes.push(routeCopy);
+      }
+    }
+    
+    // Ensure we have at least 3 routes for destination to source
+    if (resultDtoS.routes.length < 3) {
+      const firstRoute = resultDtoS.routes[0];
+      while (resultDtoS.routes.length < 3) {
+        // Create a deep copy of the first route
+        const routeCopy = JSON.parse(JSON.stringify(firstRoute));
+        resultDtoS.routes.push(routeCopy);
+      }
+    }
+    
+    // Clear existing route options
+    this.routeOptions = [];
+    this.returnRouteOptions = [];
+    
+    // Create renderers for both directions
+    await Promise.all([
+      this.createRouteRenderers(resultStoD, false),
+      this.createRouteRenderers(resultDtoS, true)
+    ]);
+    
+    // Create complete route objects
+    const sourceToDestinationRoutes = resultStoD.routes.map(route => ({
+      ...resultStoD,
+      routes: [route]
+    }));
+    
+    const destinationToSourceRoutes = resultDtoS.routes.map(route => ({
+      ...resultDtoS,
+      routes: [route]
+    }));
+    
+    // Emit the created routes
+    this.routesCreated.emit({
+      StD: {
+        selected: sourceToDestinationRoutes[0],
+        suggested: sourceToDestinationRoutes.slice(1)
+      },
+      DtoS: {
+        selected: destinationToSourceRoutes[0],
+        suggested: destinationToSourceRoutes.slice(1)
+      }
+    });
+    
+    // Select first routes by default
+    if (this.routeOptions.length > 0) {
+      this.selectRoute(0, false);
+    }
+    if (this.returnRouteOptions.length > 0) {
+      this.selectRoute(0, true);
+    }
+    
+    // Fit map to show all routes and markers
+    const bounds = new google.maps.LatLngBounds();
+    bounds.extend(sourceLatLng);
+    bounds.extend(destinationLatLng);
+    this.map.fitBounds(bounds);
+  } catch (error) {
+    console.error('Error creating routes:', error);
+    alert('Error creating routes. Please check the coordinates and try again.');
+  } finally {
+    this.uiService.toggleLoader(false);
   }
+}
 
   private async createRouteRenderers(result: google.maps.DirectionsResult, isReturn: boolean, isSelected: boolean = false) {
     const { DirectionsRenderer } = await google.maps.importLibrary("routes") as google.maps.RoutesLibrary;

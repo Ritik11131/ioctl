@@ -194,9 +194,9 @@ export class PdfService {
                   },
                   {
                     stack: [
-                      { text: pdfObject.rtdName, style: 'headerTextSmallWithoutBold', alignment: 'center' },
+                      { text: pdfObject.rtdName || '-', style: 'headerTextSmallWithoutBold', alignment: 'center' },
                       { text: 'Indian Oil Corporation Limited(Marketing Division)', style: 'headerText', alignment: 'center' },
-                      { text: `${pdfObject?.destination?.state?.name} State Office (LPG Packed)`, style: 'headerTextSmall', alignment: 'center' },
+                      { text: `${pdfObject?.destinationDept?.name || '-'} State Office (LPG Packed)`, style: 'headerTextSmall', alignment: 'center' },
                       { text: 'Round Trip Distance(TRANSPORTATION RTD)', style: 'headerTextUnderline', alignment: 'center' }
                     ],
                     width: '*',
@@ -216,16 +216,16 @@ export class PdfService {
                 stack: [
                   {
                     columns: [
-                      { text: 'Ref. No.: MAD-RTD/3385/Bulk/2018-19/1868', style: 'rowText', alignment: 'left', margin: [0, 2, 0, 2] },
-                      { text: `Effective date of implementation: ${pdfObject.startDate} ; Valid till: ${pdfObject.endDate}`, style: 'rowText', alignment: 'center', margin: [0, 2, 0, 2] },
-                      { text: `SUPPLY LOCATION : ${pdfObject?.source?.name}\nPlant Code/Location Code: ${pdfObject?.source?.exCode}`, style: 'rowText', alignment: 'right', margin: [0, 2, 0, 2] }
+                      { text: `Ref. No.: ${pdfObject?.destinationDept?.code || '-'}-RTD/${pdfObject.destination.exCode || '-'}/${pdfObject?.rtdFor || '-'}/2025-26/${pdfObject?.id}`, style: 'rowText', alignment: 'left', margin: [0, 2, 0, 2] },
+                      { text: `Effective date of implementation: ${pdfObject.startDate || '-' } ; Valid till: ${pdfObject.endDate}`, style: 'rowText', alignment: 'center', margin: [0, 2, 0, 2] },
+                      { text: `SUPPLY LOCATION : ${pdfObject?.source?.name || '-' }\nPlant Code/Location Code: ${pdfObject?.source?.exCode || '-'}`, style: 'rowText', alignment: 'right', margin: [0, 2, 0, 2] }
                     ],
                     margin: [0, 0, 0, 0]
                   },
                   {
                     columns: [
-                      { text: `Sap Code: ${pdfObject.destination.exCode} `, style: 'rowText', alignment: 'left', margin: [0, 2, 0, 2] },
-                      { text: 'Type : LPG Bulk', style: 'rowText', alignment: 'center', margin: [0, 2, 0, 2] },
+                      { text: `Sap Code: ${pdfObject.destination.exCode || '-'} `, style: 'rowText', alignment: 'left', margin: [0, 2, 0, 2] },
+                      { text: `Type : LPG ${pdfObject?.rtdFor || '-'}`, style: 'rowText', alignment: 'center', margin: [0, 2, 0, 2] },
                       { text: 'Sales Area :', style: 'rowText', alignment: 'right', margin: [0, 2, 0, 2] }
                     ],
                     margin: [0, 0, 0, 0]
@@ -243,7 +243,7 @@ export class PdfService {
                   body: [
                     [
                       { text: 'Sr No', style: 'tableHeader', alignment: 'center', rowSpan: 2, margin: [0, 2, 0, 2] },
-                      { text: 'Name and Address of LPG Bulk', style: 'tableHeader', alignment: 'center', rowSpan: 2, margin: [0, 2, 0, 2] },
+                      { text: `Name and Address of LPG ${pdfObject?.rtdFor || '-'}`, style: 'tableHeader', alignment: 'center', rowSpan: 2, margin: [0, 2, 0, 2] },
                       { text: 'SAP Reference Code', style: 'tableHeader', alignment: 'center', rowSpan: 2, margin: [0, 2, 0, 2] },
                       { text: 'Old RTD', style: 'tableHeader', alignment: 'center', colSpan: 3, margin: [0, 2, 0, 2] }, {}, {},
                       { text: 'New RTD', style: 'tableHeader', alignment: 'center', colSpan: 3, margin: [0, 2, 0, 2] }, {}, {},
@@ -252,21 +252,21 @@ export class PdfService {
                       {}, {}, {},
                       { text: 'Total Rtd(km)', style: 'tableSubHeader', alignment: 'center', margin: [0, 2, 0, 2] },
                       { text: 'Verification Date', style: 'tableSubHeader', alignment: 'center', margin: [0, 2, 0, 2] },
-                      { text: 'Toll Charges', style: 'tableSubHeader', alignment: 'center', margin: [0, 2, 0, 2] },
+                      { text: 'Toll Charges(Rs)', style: 'tableSubHeader', alignment: 'center', margin: [0, 2, 0, 2] },
                       { text: 'Total Rtd(km)', style: 'tableSubHeader', alignment: 'center', margin: [0, 2, 0, 2] },
                       { text: 'Verification Date', style: 'tableSubHeader', alignment: 'center', margin: [0, 2, 0, 2] },
-                      { text: 'Toll Charges', style: 'tableSubHeader', alignment: 'center', margin: [0, 2, 0, 2] },
+                      { text: 'Toll Charges(Rs)', style: 'tableSubHeader', alignment: 'center', margin: [0, 2, 0, 2] },
                     ],
                     [
                       { text: '1', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
-                      { text: `${pdfObject?.destination?.name}, ${pdfObject?.destination?.address1}`, style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
-                      { text: `${pdfObject.destination.exCode}`, style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
+                      { text: `${pdfObject?.destination?.name || '-'}, ${pdfObject?.destination?.address1 || '-'}`, style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
+                      { text: `${pdfObject.destination.exCode || '-'}`, style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
                       { text: '-', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
                       { text: '-', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
                       { text: '-', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
-                      { text: `${pdfObject.totalDistanceKm}`, style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
-                      { text: `${pdfObject.startDate}`, style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
-                      { text: '250', style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
+                      { text: `${pdfObject.totalDistanceKm || '-'}`, style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
+                      { text: `${pdfObject.startDate || '-'}`, style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
+                      { text: `${pdfObject?.tollPrice || '-'}`, style: 'tableCell', alignment: 'center', margin: [0, 2, 0, 2] },
                     ]
                   ]
                 },
@@ -314,39 +314,41 @@ export class PdfService {
                 style: 'bulletText',
                 margin: [20, 0, 0, 20]
               },
-              {
-                stack: [
-                  ...(() => {
-                    const commentBoxes = [];
-                    const comments = pdfObject?.comments || [];
-
-                    for (let i = 0; i < comments.length; i += 3) {
-                      commentBoxes.push({
-                        columns: [0, 1, 2].map(j => {
-                          const comment = comments[i + j];
-                          return {
-                            stack: comment
-                              ? [
-                                { text: 'Field Officer/Plant Manager/Incharge:', style: 'boxLabel' },
-                                { text: `Name : ${comment?.name || '-'}`, style: 'boxContent' },
-                                { text: `Employee Code : ${comment?.employeeCode || '-'}`, style: 'boxContent' },
-                                { text: `Date : ${comment?.timestamp || '-'}`, style: 'boxContent' }
-                              ]
-                              : [],
-                            width: '33%',
-                            height: 80,
-                            style: 'box'
-                          };
-                        }),
-                        margin: [0, 0, 0, 10]
-                      });
-                    }
-
-                    return commentBoxes;
-                  })()
-                ]
-              },
-
+           {
+  stack: [
+    ...(() => {
+      const commentBoxes = [];
+      const comments = pdfObject?.comments || [];
+      
+      // Process each comment individually (one per row)
+      for (let i = 0; i < comments.length; i++) {
+        const comment = comments[i];
+        
+        commentBoxes.push({
+          // Single column taking full width
+          stack: [
+            { text: 'Field Officer/Plant Manager/Incharge:', style: 'boxLabel' },
+            { text: `Name : ${comment?.userName || '-'}`, style: 'boxContent' },
+            { text: `Employee Code : ${comment?.employeeCode || '-'}`, style: 'boxContent' },
+            { text: `Comment : ${comment?.comment || '-'}`, style: 'boxContent' },
+            { text: `Date : ${comment?.timestamp || '-'}`, style: 'boxContent' }
+          ],
+          // Style for the box with black border
+          style: 'box',
+          // Add explicit border and width
+          margin: [0, 0, 0, 10],
+          width: '100%', // Take full width
+          border: [true, true, true, true], // Add borders on all sides
+          borderColor: '#000000', // Black border
+          borderWidth: 1,
+          padding: 5
+        });
+      }
+      
+      return commentBoxes;
+    })()
+  ]
+},
 
               // Map Image Row
               {

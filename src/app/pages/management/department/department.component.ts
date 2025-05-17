@@ -75,6 +75,13 @@ export class DepartmentComponent implements OnInit {
                     placeholder: 'Enter department name'
                 },
                 {
+                    fieldId: 'code',
+                    type: 'text',
+                    label: 'Department Code',
+                    required: true,
+                    placeholder: 'Enter department name'
+                },
+                {
                     fieldId: 'email',
                     type: 'text',
                     label: 'Department Email',

@@ -134,7 +134,7 @@ export class RoutesComponent implements OnInit {
         },
         {
             key: 'op46Download',
-            label: 'Download',
+            label: 'OP46',
             icon: 'pi pi-download',
             severity: 'primary',
             outlined: true,
@@ -212,7 +212,7 @@ export class RoutesComponent implements OnInit {
                     fieldId: 'destination_department',
                     type: 'dropdown',
                     apiType: 'department',
-                    label: 'Department Department',
+                    label: 'Destination Department',
                     required: true,
                     placeholder: 'Select a Department',
                     dependsOn: null
@@ -240,7 +240,7 @@ export class RoutesComponent implements OnInit {
                     type: 'dropdown',
                     options: [
                         { name: 'First Time Geo-RTD', id: 'First Time Geo-RTD' },
-                        { name: 'Renew of Geo-RTD', id: 'Renew of Geo-RTD' },
+                        { name: 'Reverification of Geo-RTD', id: 'Reverification of Geo-RTD' },
                         { name: 'Route Not utilized for 1 year or more', id: 'Route Not utilized for 1 year or more' },
                         { name: 'New Route Identified', id: 'New Route Identified' },
                         { name: 'Any Other', id: 'Any Other' }
@@ -318,7 +318,7 @@ export class RoutesComponent implements OnInit {
                             },
                             {
                                 fieldId: 'comment',
-                                type: 'text',
+                                type: 'textarea',
                                 label: 'Comment',
                                 required: true,
                                 placeholder: 'Enter a name'
@@ -354,7 +354,7 @@ async handleOp46Download(): Promise<void> {
 
     console.log(approvalResponse,'ress');
     
-    const { source, destination, attributes, name, startDate, endDate, totalDistanceKm } = routeResponse?.data;
+    const { source, destination, attributes, name, startDate, endDate, totalDistanceKm, destinationDept, rtdFor, id, tollPrice } = routeResponse?.data;
     const { route } = JSON.parse(attributes || '{}');
     const { StD, DtoS } = route || {};
 
@@ -367,6 +367,10 @@ async handleOp46Download(): Promise<void> {
       StD,
       DtoS,
       rtdName: name,
+      destinationDept,
+      rtdFor,
+      tollPrice,
+      id,
       totalDistanceKm,
       startDate: new Date(startDate).toLocaleDateString('en-US'),
       endDate: new Date(endDate).toLocaleDateString('en-US'),
@@ -505,7 +509,7 @@ async handleOp46Download(): Promise<void> {
                         fieldId: 'destination_department',
                         type: 'dropdown',
                         apiType: 'department',
-                        label: 'Department Department',
+                        label: 'Destination Department',
                         required: true,
                         placeholder: 'Select a Department',
                         dependsOn: null
@@ -533,12 +537,23 @@ async handleOp46Download(): Promise<void> {
                         type: 'dropdown',
                         options: [
                             { name: 'First Time Geo-RTD', id: 'First Time Geo-RTD' },
-                            { name: 'Renew of Geo-RTD', id: 'Renew of Geo-RTD' },
+                            { name: 'Reverification of Geo-RTD', id: 'Reverification of Geo-RTD' },
                             { name: 'Route Not utilized for 1 year or more', id: 'Route Not utilized for 1 year or more' },
                             { name: 'New Route Identified', id: 'New Route Identified' },
                             { name: 'Any Other', id: 'Any Other' }
                         ],
                         label: 'Reason for New RTD',
+                        required: true,
+                        placeholder: 'Select a Reason'
+                    },
+                     {
+                        fieldId: 'rtdFor',
+                        type: 'dropdown',
+                        options: [
+                            { name: 'Bulk', id: 'Bulk' },
+                            { name: 'Packed', id: 'Packed' }
+                        ],
+                        label: 'RTD For',
                         required: true,
                         placeholder: 'Select a Reason'
                     },
@@ -568,7 +583,7 @@ async handleOp46Download(): Promise<void> {
         this.uiService.toggleLoader(true);
         try {
             const response: any = await this.http.get('geortd/rtd/GetById', {}, this.selectedRowItems[0].id);
-            const { source, destination, sourceDept, destinationDept, name, attributes, startDate, endDate, reason, comment, version } = response.data;
+            const { source, destination, sourceDept, destinationDept, name, attributes, startDate, endDate, reason, rtdFor, comment, version } = response.data;
             this.selectedSource = source;
             this.selectedDestination = destination;
             const route = JSON.parse(attributes);
@@ -584,6 +599,7 @@ async handleOp46Download(): Promise<void> {
                 startDate: new Date(startDate),
                 endDate: new Date(endDate),
                 reason,
+                rtdFor,
                 comment,
                 version
             };
@@ -669,7 +685,7 @@ async handleOp46Download(): Promise<void> {
                         fieldId: 'destination_department',
                         type: 'dropdown',
                         apiType: 'department',
-                        label: 'Department Department',
+                        label: 'Destination Department',
                         required: true,
                         placeholder: 'Select a Department',
                         dependsOn: null
@@ -697,12 +713,23 @@ async handleOp46Download(): Promise<void> {
                         type: 'dropdown',
                         options: [
                             { name: 'First Time Geo-RTD', id: 'First Time Geo-RTD' },
-                            { name: 'Renew of Geo-RTD', id: 'Renew of Geo-RTD' },
+                            { name: 'Reverification of Geo-RTD', id: 'Reverification of Geo-RTD' },
                             { name: 'Route Not utilized for 1 year or more', id: 'Route Not utilized for 1 year or more' },
                             { name: 'New Route Identified', id: 'New Route Identified' },
                             { name: 'Any Other', id: 'Any Other' }
                         ],
                         label: 'Reason for New RTD',
+                        required: true,
+                        placeholder: 'Select a Reason'
+                    },
+                     {
+                        fieldId: 'rtdFor',
+                        type: 'dropdown',
+                        options: [
+                            { name: 'Bulk', id: 'Bulk' },
+                            { name: 'Packed', id: 'Packed' }
+                        ],
+                        label: 'RTD For',
                         required: true,
                         placeholder: 'Select a Reason'
                     },
@@ -805,7 +832,7 @@ async handleOp46Download(): Promise<void> {
 
         if (this.isEditMode) {
             this.uiService.toggleLoader(true);
-            const { name, startDate, endDate, destination_department, source_department, reason, comment, document } = formData;
+            const { name, startDate, endDate, destination_department, source_department, reason, rtdFor, comment, document } = formData;
             const payload = {
                 id: this.selectedRowItems[0].id,
                 name,
@@ -816,6 +843,7 @@ async handleOp46Download(): Promise<void> {
                 sourceDeptId: source_department?.id,
                 destinationDeptId: destination_department?.id,
                 reason: typeof reason === 'string' ? reason : reason?.id,
+                rtdFor: typeof rtdFor === 'string' ? rtdFor : rtdFor?.id,
                 version: this.editData.version,
                 selectedRoute: this.selectedRouteJson?.DtoS.selected?.routes[0]?.summary,
                 comment,
@@ -838,7 +866,7 @@ async handleOp46Download(): Promise<void> {
             }
         } else {
             this.uiService.toggleLoader(true);
-            const { name, startDate, endDate, destination_address, destination_department, source_address, source_department, reason, comment, document } = formData;
+            const { name, startDate, endDate, destination_address, destination_department, source_address, source_department, reason, rtdFor, comment, document } = formData;
             const payload = {
                 name,
                 startDate,
@@ -848,6 +876,7 @@ async handleOp46Download(): Promise<void> {
                 sourceDeptId: source_department?.id,
                 destinationDeptId: destination_department?.id,
                 reason: reason?.id,
+                rtdFor: rtdFor?.id,
                 selectedRoute: this.selectedRouteJson?.DtoS.selected?.routes[0]?.summary,
                 comment,
                 totalDistanceKm: totalRTDKm,

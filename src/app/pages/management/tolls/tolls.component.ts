@@ -105,7 +105,8 @@ export class TollsComponent {
             { field: 'longitude', header: 'Longitude', minWidth: '12rem' },
             { field: 'description', header: 'Description', minWidth: '12rem' },
             { field: 'rtd', header: 'Route', minWidth: '10rem', subfield: 'name' },
-            { field: 'gazetteDocument', header: 'Gazette Document', minWidth: '10rem', download: true },
+            { field: 'gazetteDocument', header: 'Gazette Download', minWidth: '10rem', download: true },
+            { field: 'gazetteDocument', header: 'Gazette View', minWidth: '10rem', view: true },
         ],
         globalFilterFields: ['name'],
         filterTableDrpdown: {
