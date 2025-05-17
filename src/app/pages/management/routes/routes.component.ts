@@ -84,7 +84,7 @@ export class RoutesComponent implements OnInit {
         },
         {
             key: 'op46Download',
-            label: 'Download',
+            label: 'OP46',
             icon: 'pi pi-download',
             severity: 'primary',
             outlined: true,
