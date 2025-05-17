@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { ToastModule } from 'primeng/toast';
 import { GenericLoaderComponent } from "./app/shared/components/generic-loader/generic-loader.component";
 import { UiService } from './app/layout/service/ui.service';
 import { GenericDrawerComponent } from './app/shared/components/generic-drawer/generic-drawer.component';
+import { TitleService } from './app/pages/service/title.service';
 
 
 @Component({
@@ -33,6 +34,10 @@ import { GenericDrawerComponent } from './app/shared/components/generic-drawer/g
 />
     `
 })
-export class AppComponent {
-    constructor( public uiService: UiService) {}
+export class AppComponent implements OnInit {
+    constructor( public uiService: UiService, private titleService: TitleService) {}
+
+    ngOnInit(): void {
+        this.titleService.init();
+    }
 }
