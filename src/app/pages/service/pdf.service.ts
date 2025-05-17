@@ -117,7 +117,7 @@ export class PdfService {
   }
 
 
-  async generateOpCertificate(pdfObject: any): Promise<void> {
+  async generateOpCertificate(pdfObject: any, view: boolean): Promise<void> {
     console.log(pdfObject);
     const image1$: any = this.httpClient.get('assets/images/MargDarshak.png', { responseType: 'blob' }).toPromise();
     // Fetch the second image and convert it to base64
@@ -621,8 +621,11 @@ export class PdfService {
               fontSize: 8
             }
           };
-
-          pdfMake.createPdf(docDefinition).download(`OP46_${pdfObject?.rtdFor}_${pdfObject.rtdName}(${new Date().toISOString().slice(0, 19).replace('T', ' ').replace(/:/g, '-')}).pdf`);
+          if(view) {
+            pdfMake.createPdf(docDefinition).open();
+          } else {
+            pdfMake.createPdf(docDefinition).download(`OP46_${pdfObject?.rtdFor}_${pdfObject.rtdName}(${new Date().toISOString().slice(0, 19).replace('T', ' ').replace(/:/g, '-')}).pdf`);
+          }
         };
         reader2.readAsDataURL(blob2); // Convert second blob to base64
       };

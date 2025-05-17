@@ -89,6 +89,14 @@ export class RoutesComponent implements OnInit {
             severity: 'primary',
             outlined: true,
             dependentOnRow: true
+        },
+        {
+            key: 'op46View',
+            label: 'OP46',
+            icon: 'pi pi-eye',
+            severity: 'primary',
+            outlined: true,
+            dependentOnRow: true
         }
     ];
     toolBarStartActions = [
@@ -136,6 +144,14 @@ export class RoutesComponent implements OnInit {
             key: 'op46Download',
             label: 'OP46',
             icon: 'pi pi-download',
+            severity: 'primary',
+            outlined: true,
+            dependentOnRow: true
+        },
+        {
+            key: 'op46View',
+            label: 'OP46',
+            icon: 'pi pi-eye',
             severity: 'primary',
             outlined: true,
             dependentOnRow: true
@@ -334,10 +350,12 @@ export class RoutesComponent implements OnInit {
             }
         } else if (event.key === 'op46Download') {
             await this.handleOp46Download();
+        } else if(event.key === 'op46View') {
+            await this.handleOp46Download(true);
         }
     }
 
-async handleOp46Download(): Promise<void> {
+async handleOp46Download(view?:any): Promise<void> {
   this.uiService.toggleLoader(true);
   try {
     const selectedId = this.selectedRowItems?.[0]?.id;
@@ -382,7 +400,7 @@ async handleOp46Download(): Promise<void> {
     console.log(pdfData);
     
 
-    this.pdfService.generateOpCertificate(pdfData);
+    this.pdfService.generateOpCertificate(pdfData,view);
   } catch (error: any) {
     console.error('Error in handleOp46Download:', error);
     this.uiService.showToast('error', 'Download Error', error?.error?.data || 'Something went wrong');
