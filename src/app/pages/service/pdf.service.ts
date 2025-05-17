@@ -329,7 +329,7 @@ export class PdfService {
           stack: [
             { text: 'Field Officer/Plant Manager/Incharge:', style: 'boxLabel' },
             { text: `Name : ${comment?.userName || '-'}`, style: 'boxContent' },
-            { text: `Employee Code : ${comment?.employeeCode || '-'}`, style: 'boxContent' },
+            { text: `Employee Code : ${comment?.refId || '-'}`, style: 'boxContent' },
             { text: `Comment : ${comment?.comment || '-'}`, style: 'boxContent' },
             { text: `Date : ${comment?.timestamp || '-'}`, style: 'boxContent' }
           ],
@@ -622,7 +622,7 @@ export class PdfService {
             }
           };
 
-          pdfMake.createPdf(docDefinition).download('Certificate.pdf');
+          pdfMake.createPdf(docDefinition).download(`OP46_${pdfObject?.rtdFor}_${pdfObject.rtdName}(${new Date().toISOString().slice(0, 19).replace('T', ' ').replace(/:/g, '-')}).pdf`);
         };
         reader2.readAsDataURL(blob2); // Convert second blob to base64
       };
