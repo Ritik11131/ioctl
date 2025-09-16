@@ -26,6 +26,7 @@ import { SelectModule } from 'primeng/select';
         (onChange)="onSelectionChange($event)"
         class="w-full"
         appendTo="body"
+        [loading]="loading"
       >
       </p-select>
   `
@@ -101,7 +102,7 @@ export class GenericDropdownComponent implements OnInit, OnChanges, OnDestroy {
     }
     
     // If selectedValue changes in edit mode
-    if (changes['selectedValue'] && this.editMode) {
+    if (changes['selectedValue']) {
       this.handleSelectedValueChange();
     }
 
@@ -203,6 +204,13 @@ export class GenericDropdownComponent implements OnInit, OnChanges, OnDestroy {
       ).subscribe({
         next: (data) => {
           this.options = data;
+
+          // If not in edit mode and no selectedValue, default to first option
+          if (!this.editMode && !this.selectedValue && this.options.length > 0) {
+            this.control.setValue(this.options[0]);
+            this.selected.emit(this.options[0]);
+          }
+
           
           // If we have a selectedValue and it's not in the control yet, set it now
           if (this.editMode && this.selectedValue && (this.control.value === null || this.control.value === undefined)) {

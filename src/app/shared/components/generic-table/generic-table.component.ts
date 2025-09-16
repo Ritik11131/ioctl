@@ -11,6 +11,7 @@ import { SplitButtonModule } from 'primeng/splitbutton';
 import { GenericDropdownComponent } from '../generic-dropdown/generic-dropdown.component';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ExportService } from '../../../pages/service/export.service';
 
 @Component({
     selector: 'app-generic-table',
@@ -36,7 +37,7 @@ import { FormsModule } from '@angular/forms';
             </ng-template>
 
             <ng-template #end>
-                <p-button label="Export" icon="pi pi-upload" severity="secondary" />
+                <p-button label="Export" icon="pi pi-upload" severity="secondary" (onClick)="handleDataExport()" />
             </ng-template>
         </p-toolbar>
 
@@ -81,6 +82,7 @@ import { FormsModule } from '@angular/forms';
                             [type]="tableConfig.filterTableDrpdown.apiType"
                             [placeholder]="tableConfig.filterTableDrpdown.placeholder || 'Select'"
                             [autoFetch]="tableConfig.filterTableDrpdown.autoFetch"
+                            [selectedValue]="selectedDropdownValue"
                             (selected)="handleTableDropdownFilter($event)"
                         />
                     </div>
@@ -108,13 +110,21 @@ import { FormsModule } from '@angular/forms';
                     @for (col of columns; track $index) {
                         <td>
                             @if (col.download) {
-                                <a [href]="rowData[col.field]" download class="p-button p-button-text p-button-sm">
-                                    <i class="pi pi-download" style="font-size: 1rem"></i>
-                                </a>
+                                @if(rowData[col.field]) {
+                                    <a [href]="rowData[col.field]" download class="p-button p-button-text p-button-sm">
+                                        <i class="pi pi-download" style="font-size: 1rem"></i>
+                                    </a>
+                                } @else {
+                                    <span>{{'-'}}</span>
+                                }
                             } @else if(col.view) {
-                                 <a [href]="rowData[col.field]"  target="_blank" class="p-button p-button-text p-button-sm">
-                                    <i class="pi pi-eye" style="font-size: 1rem"></i>
-                                </a>
+                                 @if(rowData[col.field]) {
+                                     <a [href]="rowData[col.field]"  target="_blank" class="p-button p-button-text p-button-sm">
+                                         <i class="pi pi-eye" style="font-size: 1rem"></i>
+                                        </a>
+                                } @else {
+                                    <span>{{'-'}}</span>
+                                }
                             } @else {
                                 {{ col.subfield ? rowData[col.field]?.[col.subfield] || '--' : col.date ? (rowData[col.field] | date) || '--' : rowData[col.field] || '--' }}
                             }
@@ -145,6 +155,7 @@ export class GenericTableComponent {
     @Input() tableFilterByStatusConfig: any[] = []; // Filter by status config for the table
     @Input() tableConfig!: any;
     @Input() tableData!: any[];
+    @Input() selectedDropdownValue!:any;
 
     @Output() onToolBarStartAction = new EventEmitter<any>();
     @Output() onSelectionChange = new EventEmitter<any>(); // Event emitter for row select
@@ -152,6 +163,8 @@ export class GenericTableComponent {
     @Output() onTableFilterByStatus = new EventEmitter<any>(); // Event emitter for filter by status
 
     selectedRouteStatusType: any = 'all';
+
+    constructor(private exportService: ExportService) {}
 
     onSearch(dt: Table, event: Event) {
         const input = event.target as HTMLInputElement;
@@ -163,6 +176,15 @@ export class GenericTableComponent {
     clearFilter(table: Table) {
         table.clear();
         // this.filter.nativeElement.value = '';
+    }
+
+    handleDataExport() {
+        this.exportService.exportToSpreadsheet(
+            this.tableData,
+            this.tableConfig.exportFilename,
+             this.tableConfig.columns,
+            'xlsx'
+        );
     }
 
     handleSelectionChange(event: any) {

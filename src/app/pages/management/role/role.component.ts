@@ -113,6 +113,7 @@ export class RoleComponent {
               { field: 'description', header: 'Description', minWidth: '12rem' }
   
           ],
+        exportFilename:'Roles',
           globalFilterFields: ['name']
       };
   

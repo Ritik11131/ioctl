@@ -108,6 +108,7 @@ export class TollsComponent {
             { field: 'gazetteDocument', header: 'Gazette Download', minWidth: '10rem', download: true },
             { field: 'gazetteDocument', header: 'Gazette View', minWidth: '10rem', view: true },
         ],
+        exportFilename:'Tolls',
         globalFilterFields: ['name'],
         filterTableDrpdown: {
             fieldId: 'rtd',
@@ -243,6 +244,7 @@ export class TollsComponent {
   
   // Track already assigned vehicle types to prevent duplicates
   assignedVehicleTypeIds: Set<number> = new Set();
+  selectedDropdownValue!:any;
 
     constructor(
         private uiService: UiService,
@@ -279,7 +281,8 @@ export class TollsComponent {
                 console.log(response, 'response');
                 this.uiService.showToast('success', 'Success', 'Toll updated successfully');
                 this.uiService.closeDrawer(); // Close the drawer after submission
-                await this.fetchTollsListRouteWise(this.routeId); // Refresh the department list after successful submission
+                this.selectedDropdownValue = {id: rtd?.id};
+                await this.fetchTollsListRouteWise(rtd?.id); // Refresh the department list after successful submission
             } catch (error) {
                 console.error('Error submitting form:', error);
                 this.uiService.showToast('error', 'Error', 'Failed to submit form');
@@ -305,7 +308,8 @@ export class TollsComponent {
                 console.log(response, 'response');
                 this.uiService.showToast('success', 'Success', 'Toll created successfully');
                 this.uiService.closeDrawer(); // Close the drawer after submission
-                await this.fetchTollsListRouteWise(this.routeId); // Refresh the department list after successful submission
+                this.selectedDropdownValue = {id: rtd?.id};
+                await this.fetchTollsListRouteWise(rtd?.id); // Refresh the department list after successful submission
             } catch (error) {
                 console.error('Error submitting form:', error);
                 this.uiService.showToast('error', 'Error', 'Failed to submit form');

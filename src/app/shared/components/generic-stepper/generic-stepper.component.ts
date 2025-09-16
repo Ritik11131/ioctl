@@ -681,6 +681,27 @@ export class GenericStepperComponent implements OnInit, OnChanges {
 
     onStepSubmit() {
         if (this.isStepValid()) {
+            const formValue = this.formGroup.value;
+
+            // Adjust all date fields here
+            this.currentStepFields.forEach(field => {
+                if (field.type === 'date' && formValue[field.fieldId]) {
+                    const selectedDate: Date = formValue[field.fieldId];
+                    const now = new Date();
+
+                    const correctedDate = new Date(
+                        selectedDate.getFullYear(),
+                        selectedDate.getMonth(),
+                        selectedDate.getDate(),
+                        now.getHours(),
+                        now.getMinutes(),
+                        now.getSeconds(),
+                        now.getMilliseconds()
+                    );
+
+                    formValue[field.fieldId] = correctedDate;
+                }
+            });
             if (this.isLastStep) {
                 // Form is complete, emit the final form data
                 this.formSubmit.emit(this.formGroup.value);

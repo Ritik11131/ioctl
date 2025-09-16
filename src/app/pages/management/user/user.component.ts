@@ -57,6 +57,7 @@ import { HttpService } from '../../service/http.service';
                 { field: 'emailId', header: 'Email ID', minWidth: '10rem' }
     
             ],
+            exportFilename:'Users',
             globalFilterFields: ['fName','mobileNo','employeeId']
         };
     

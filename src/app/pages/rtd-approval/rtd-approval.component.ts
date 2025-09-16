@@ -95,6 +95,7 @@ export class RtdApprovalComponent {
             { field: 'name', header: 'Name', minWidth: '12rem' },
             { field: 'description', header: 'Description', minWidth: '12rem' }
         ],
+        exportFilename:'RTD Approvals',
         globalFilterFields: ['name']
     };
 

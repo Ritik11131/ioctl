@@ -57,6 +57,7 @@ export class DepartmentComponent implements OnInit {
             { field: 'description', header: 'Description', minWidth: '12rem' }
 
         ],
+        exportFilename:'Departments',
         globalFilterFields: ['name', 'email', 'telephone', 'fax']
     };
 

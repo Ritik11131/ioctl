@@ -175,8 +175,9 @@ export class RoutesComponent implements OnInit {
             { field: 'endDate', header: 'End Date', minWidth: '15rem', date: true },
             { field: 'version', header: 'Version', minWidth: '15rem' },
             { field: 'creationTime', header: 'Created On', minWidth: '15rem', date: true },
-            { field: 'document', header: 'Document', minWidth: '10rem', download: true }
+            { field: 'document', header: 'Gazette Document', minWidth: '10rem', download: true }
         ],
+        exportFilename:'RTD',
         globalFilterFields: [],
         dataKey: 'id'
     };
