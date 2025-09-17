@@ -162,8 +162,8 @@ export class RoutesComponent implements OnInit {
         title: 'Manage RTD',
         columns: [
             { field: 'name', header: 'Route Name', minWidth: '12rem' },
-            { field: 'source', header: 'Source Address', subfield: 'name', minWidth: '15rem' },
-            { field: 'destination', header: 'Destination Address', subfield: 'name', minWidth: '15rem' },
+            { header: 'Source Address', customCol: { field: 'source', subfield: 'name', text: 'source', subtext: 'exCode',  title: 'ERP CODE - ' }, minWidth: '15rem' },
+            { header: 'Destination Address', customCol: { field: 'destination', subfield: 'name', text: 'destination', subtext: 'exCode',  title: 'ERP CODE - ' }, minWidth: '15rem' },
             { field: 'selectedRoute', header: 'Suggested Route', minWidth: '15rem' },
             { field: 'status', header: 'Status', minWidth: '15rem' },
             { field: 'tblRtdApproval', subfield: 'aprrovedBy', header: 'Approved by', minWidth: '15rem', date: true },

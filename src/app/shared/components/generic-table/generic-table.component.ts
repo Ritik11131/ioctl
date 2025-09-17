@@ -15,7 +15,7 @@ import { ExportService } from '../../../pages/service/export.service';
 
 @Component({
     selector: 'app-generic-table',
-    imports: [ToolbarModule, ButtonModule, RippleModule,FormsModule, TableModule, IconFieldModule, SelectButtonModule, InputIconModule, SplitButtonModule, InputTextModule, GenericDropdownComponent, DatePipe],
+    imports: [ToolbarModule, ButtonModule, RippleModule, FormsModule, TableModule, IconFieldModule, SelectButtonModule, InputIconModule, SplitButtonModule, InputTextModule, GenericDropdownComponent, DatePipe],
     template: `
         <p-toolbar styleClass="mb-6">
             <ng-template #start>
@@ -110,21 +110,26 @@ import { ExportService } from '../../../pages/service/export.service';
                     @for (col of columns; track $index) {
                         <td>
                             @if (col.download) {
-                                @if(rowData[col.field]) {
+                                @if (rowData[col.field]) {
                                     <a [href]="rowData[col.field]" download class="p-button p-button-text p-button-sm">
                                         <i class="pi pi-download" style="font-size: 1rem"></i>
                                     </a>
                                 } @else {
-                                    <span>{{'-'}}</span>
+                                    <span>{{ '-' }}</span>
                                 }
-                            } @else if(col.view) {
-                                 @if(rowData[col.field]) {
-                                     <a [href]="rowData[col.field]"  target="_blank" class="p-button p-button-text p-button-sm">
-                                         <i class="pi pi-eye" style="font-size: 1rem"></i>
-                                        </a>
+                            } @else if (col.view) {
+                                @if (rowData[col.field]) {
+                                    <a [href]="rowData[col.field]" target="_blank" class="p-button p-button-text p-button-sm">
+                                        <i class="pi pi-eye" style="font-size: 1rem"></i>
+                                    </a>
                                 } @else {
-                                    <span>{{'-'}}</span>
+                                    <span>{{ '-' }}</span>
                                 }
+                            } @else if (col.customCol) {
+                                <div>
+                                    <div class="font-semibold">{{ col.customCol.subfield ? (rowData[col.customCol.field]?.[col.customCol.subfield] || '--') : rowData[col.customCol.field]}}</div>
+                                    <div class="text-sm text-gray-500"><span>{{col?.customCol?.title}}</span><span>{{ col.customCol.subtext ? (rowData[col.customCol.text]?.[col.customCol.subtext] || '--') : (rowData[col.customCol.text]) }}</span></div>
+                                </div>
                             } @else {
                                 {{ col.subfield ? rowData[col.field]?.[col.subfield] || '--' : col.date ? (rowData[col.field] | date) || '--' : rowData[col.field] || '--' }}
                             }
@@ -155,7 +160,7 @@ export class GenericTableComponent {
     @Input() tableFilterByStatusConfig: any[] = []; // Filter by status config for the table
     @Input() tableConfig!: any;
     @Input() tableData!: any[];
-    @Input() selectedDropdownValue!:any;
+    @Input() selectedDropdownValue!: any;
 
     @Output() onToolBarStartAction = new EventEmitter<any>();
     @Output() onSelectionChange = new EventEmitter<any>(); // Event emitter for row select
@@ -179,12 +184,7 @@ export class GenericTableComponent {
     }
 
     handleDataExport() {
-        this.exportService.exportToSpreadsheet(
-            this.tableData,
-            this.tableConfig.exportFilename,
-             this.tableConfig.columns,
-            'xlsx'
-        );
+        this.exportService.exportToSpreadsheet(this.tableData, this.tableConfig.exportFilename, this.tableConfig.columns, 'xlsx');
     }
 
     handleSelectionChange(event: any) {
