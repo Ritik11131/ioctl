@@ -4,6 +4,7 @@ import { environment } from '../../../../environments/environment.prod';
 import { ButtonModule } from 'primeng/button';
 import { UiService } from '../../../layout/service/ui.service';
 import { GmLoaderService } from '../../../pages/service/gm-loader.service';
+import { SumDurationPipe } from '../../../core/pipes/sum-duration.pipe';
 
 // Define clear interfaces
 export interface RouteOption {
@@ -39,7 +40,7 @@ export interface GeofenceOptions {
 
 @Component({
   selector: 'app-generic-gm-route',
-  imports: [FormsModule, ButtonModule],
+  imports: [FormsModule, ButtonModule, SumDurationPipe],
   template: `
    <div class="flex flex-col lg:flex-row gap-6 p-4 bg-slate-50 rounded-xl shadow-sm">
   <!-- Left Panel: Route Controls -->
@@ -135,6 +136,27 @@ export interface GeofenceOptions {
         }
       </div>
     </div>
+
+
+
+    <div class="bg-green-50 rounded-lg p-4">
+  <h4 class="text-sm font-medium text-green-800 flex items-center mb-3">
+    <i class="pi pi-compass mr-2 text-green-600"></i>
+    Route Summary
+  </h4>
+  <div class="grid grid-cols-2 gap-3">
+    <div>
+      <p class="text-xs text-gray-500">Total Distance</p>
+      <p class="text-sm text-gray-700">{{totalDistance }}</p>
+    </div>
+    <div>
+      <p class="text-xs text-gray-500">Total Time</p>
+      <p class="text-sm text-gray-700">{{ [routeOptions[selectedRouteIndex]?.duration, returnRouteOptions[selectedReturnRouteIndex]?.duration] | sumDuration }}</p>
+    </div>
+  </div>
+</div>
+
+
   </div>
   
   <!-- Right Section: Map Container -->
@@ -1235,4 +1257,16 @@ export class GenericGmRouteComponent implements OnInit, AfterViewInit, OnDestroy
            this.routeOptions.some(option => option.isCustom) ||
            this.returnRouteOptions.some(option => option.isCustom);
   }
+
+  get totalDistance(): string {
+  const StD = this.routeOptions?.[this.selectedRouteIndex]?.distance; // e.g., "5.1 km"
+  const DtoS = this.returnRouteOptions?.[this.selectedReturnRouteIndex]?.distance; // e.g., "5.1 km"
+  const distances = [StD, DtoS]
+    .filter(Boolean)
+    .map(str => parseFloat(str.split(' ')[0]));
+  if (distances.length === 0) return 'N/A';
+  const sum = distances.reduce((a, b) => a + b, 0);
+  return sum.toFixed(1) + ' km';
+}
+
 }

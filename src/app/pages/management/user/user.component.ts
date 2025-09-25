@@ -51,10 +51,11 @@ import { HttpService } from '../../service/http.service';
             title: 'Manage User',
             dataKey: 'id',
             columns: [
+              { field: 'employeeId', header: 'Employee ID', minWidth: '10rem' },
                 { field: 'fName', header: 'Name', minWidth: '8rem' },
-                { field: 'employeeId', header: 'Employee ID', minWidth: '10rem' },
+                { field: 'roles', header: 'User Role', subfield: 'name'},
                 { field: 'mobileNo', header: 'Mobile No.', minWidth: '8rem' },
-                { field: 'emailId', header: 'Email ID', minWidth: '10rem' }
+                { field: 'emailId', header: 'Email ID', minWidth: '10rem' },
     
             ],
             exportFilename:'Users',

@@ -72,13 +72,13 @@ export class AddressComponent implements OnInit {
             // { field: 'formattedCity', header: 'Formatted City', minWidth: '12rem' },
             // { field: 'addressStatus', header: 'Status', minWidth: '10rem' },
             // { field: 'geofenceImage', header: 'Geofence Image', minWidth: '12rem' },
-            // { field: 'latitude', header: 'Latitude', minWidth: '12rem' },
-            // { field: 'longitude', header: 'Longitude', minWidth: '12rem' },
+            { field: 'latitude', header: 'Latitude', minWidth: '12rem' },
+            { field: 'longitude', header: 'Longitude', minWidth: '12rem' },
             // { field: 'geofenceCenterLatitude', header: 'Geofence Latitude', minWidth: '15rem' },
             // { field: 'geofenceCenterLongitude', header: 'Geofence Longitude', minWidth: '15rem' }
         ],
         exportFilename:'Address',
-        globalFilterFields: ['address1', 'address2', 'address3', 'city', 'geofenceName', 'zipCode'],
+        globalFilterFields: ['address1', 'address2', 'address3', 'city', 'geofenceName', 'zipCode','exCode'],
         dataKey: 'id'
     };
 
