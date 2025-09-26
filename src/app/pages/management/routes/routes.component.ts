@@ -168,7 +168,6 @@ export class RoutesComponent implements OnInit {
             { field: 'status', header: 'Status', minWidth: '15rem' },
             { field: 'tblRtdApproval', subfield: 'aprrovedBy', header: 'Approved by', minWidth: '15rem', date: true },
             { field: 'tblRtdApproval', subfield: 'nextApprovedBy', header: 'Next To Approved By', minWidth: '15rem', date: true },
-            // { field: 'endDate', header: 'Toll Price', minWidth: '15rem', date: true },
             { field: 'totalDistanceKm', header: 'Total RTD (Km)', minWidth: '15rem' },
             { field: 'tollPrice', header: 'Toll Price (Rs)', minWidth: '15rem' },
             { field: 'startDate', header: 'Start Date', minWidth: '15rem', date: true },
@@ -310,10 +309,17 @@ export class RoutesComponent implements OnInit {
                 const parsedAttributes = JSON.parse(attributes);
                 console.log(parsedAttributes);
 
+                const tollsResponse: any = await this.http.get('geortd/rtdtoll/list', {}, this.selectedRowItems[0]?.id).catch((error) => {
+                console.error('Error fetching tolls data:', error);
+                // Return an object with empty data array instead of failing
+                return { data: [] };
+            });
+
                 this.mapObject = {
                     source: routes.data.source,
                     destination: routes.data.destination,
-                    routeData: parsedAttributes?.route
+                    routeData: parsedAttributes?.route,
+                    tolls: tollsResponse?.data || [],
                 };
 
                 this.formSteps = [
