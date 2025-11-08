@@ -16,6 +16,7 @@ import { FormsModule } from '@angular/forms';
 import { ExportService } from '../../../pages/service/export.service';
 import { ParseJsonPipe } from '../../../core/pipes/parse-json.pipe';
 import { FormatTimestampPipe } from '../../../core/pipes/format-timestamp.pipe';
+import { UiService } from '../../../layout/service/ui.service';
 
 @Component({
     selector: 'app-generic-table',
@@ -218,7 +219,7 @@ export class GenericTableComponent {
 
     selectedRouteStatusType: any = 'all';
 
-    constructor(private exportService: ExportService) {}
+    constructor(private exportService: ExportService, private uiService:UiService) {}
 
     onSearch(dt: Table, event: Event) {
         const input = event.target as HTMLInputElement;
@@ -249,6 +250,7 @@ export class GenericTableComponent {
     }
     async downloadFile(url: string) {
     try {
+        this.uiService.toggleLoader(true);
         const response = await fetch(url, { mode: 'cors' });
         const blob = await response.blob();
         const blobUrl = window.URL.createObjectURL(blob);
@@ -267,6 +269,8 @@ export class GenericTableComponent {
         window.URL.revokeObjectURL(blobUrl);
     } catch (error) {
         console.error('Download failed:', error);
+    } finally {
+        this.uiService.toggleLoader(false);
     }
 }
 
