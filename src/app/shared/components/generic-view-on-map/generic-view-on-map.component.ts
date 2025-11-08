@@ -55,7 +55,7 @@ interface RouteData {
     <!-- Left Panel: Route Controls -->
     <div class="lg:w-80 flex-shrink-0 bg-white rounded-xl shadow-md overflow-hidden border border-slate-200">
       <!-- Source to Destination Routes -->
-      @if (routeData && routeData.StD.suggested.length) {
+      @if (routeData && (routeData.StD.selected || routeData.StD.suggested?.length)) {
         <div class="route-panel">
           <div class="px-5 py-4 border-b border-slate-100">
             <h3 class="text-lg font-medium text-slate-800">Source to Destination</h3>
@@ -86,7 +86,7 @@ interface RouteData {
       }
       
       <!-- Destination to Source Routes -->
-      @if (routeData && routeData.DtoS.suggested.length) {
+      @if (routeData && (routeData.DtoS.selected || routeData.DtoS.suggested?.length)) {
         <div class="route-panel mt-4">
           <div class="px-5 py-4 border-b border-slate-100">
             <h3 class="text-lg font-medium text-slate-800">
@@ -116,6 +116,16 @@ interface RouteData {
                 </div>
               </div>
             }
+          </div>
+        </div>
+      }
+      
+      <!-- Route Change Warning (Approval Mode) -->
+      @if (isApprovalMode && hasRouteChanged()) {
+        <div class="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div class="flex items-center">
+            <i class="pi pi-exclamation-triangle text-red-600 mr-2"></i>
+            <p class="text-sm text-red-800 font-medium">You are not allowed to change the route. Please select the original route to proceed.</p>
           </div>
         </div>
       }
@@ -171,9 +181,12 @@ export class GenericViewOnMapComponent implements AfterViewInit {
   @Input() destinationGeofenceColor = '#EA4335';
   @Input() tolls: Toll[] = [];
   @Input() routeData: RouteData | null = null;
+  @Input() originalRouteData: RouteData | null = null; // Original route for comparison in approval mode
+  @Input() isApprovalMode: boolean = false; // Flag to enable route change restriction
   
   @Output() mapReady = new EventEmitter<google.maps.Map>();
   @Output() emitSelectedRoute = new EventEmitter<any>();
+  @Output() routeChanged = new EventEmitter<boolean>(); // Emit when route changes from original
   
   map!: google.maps.Map;
   sourceMarker!: google.maps.marker.AdvancedMarkerElement;
@@ -191,6 +204,8 @@ export class GenericViewOnMapComponent implements AfterViewInit {
 
   public selectedRouteIndex = 0;
   public selectedReturnRouteIndex = 0;
+  private originalSelectedRouteIndex = 0; // Store original selected route index
+  private originalSelectedReturnRouteIndex = 0; // Store original selected return route index
 
   async ngAfterViewInit() {
     await this.initMap();
@@ -250,35 +265,54 @@ export class GenericViewOnMapComponent implements AfterViewInit {
 
     // Clear existing renderers
     this.clearRouteRenderers();
+    
+    // Reset selection indices
+    this.selectedRouteIndex = 0;
+    this.selectedReturnRouteIndex = 0;
 
     // Display source to destination routes
-    if (this.routeData.StD?.suggested?.length) {
+    if (this.routeData.StD?.selected || this.routeData.StD?.suggested?.length) {
       // First display the selected route
       if (this.routeData.StD.selected) {
         await this.createRouteRenderers(this.routeData.StD.selected, false, true);
       }
       
-      // Then display all suggested routes
-      for (const route of this.routeData.StD.suggested) {
-        if (route && route !== this.routeData.StD.selected) {
-          await this.createRouteRenderers(route, false, false);
+      // Then display all suggested routes (if they exist and are different from selected)
+      if (this.routeData.StD.suggested?.length) {
+        for (const route of this.routeData.StD.suggested) {
+          if (route && route !== this.routeData.StD.selected) {
+            await this.createRouteRenderers(route, false, false);
+          }
         }
       }
     }
 
     // Display destination to source routes
-    if (this.routeData.DtoS?.suggested?.length) {
+    if (this.routeData.DtoS?.selected || this.routeData.DtoS?.suggested?.length) {
       // First display the selected route
       if (this.routeData.DtoS.selected) {
         await this.createRouteRenderers(this.routeData.DtoS.selected, true, true);
       }
       
-      // Then display all suggested routes
-      for (const route of this.routeData.DtoS.suggested) {
-        if (route && route !== this.routeData.DtoS.selected) {
-          await this.createRouteRenderers(route, true, false);
+      // Then display all suggested routes (if they exist and are different from selected)
+      if (this.routeData.DtoS.suggested?.length) {
+        for (const route of this.routeData.DtoS.suggested) {
+          if (route && route !== this.routeData.DtoS.selected) {
+            await this.createRouteRenderers(route, true, false);
+          }
         }
       }
+    }
+    
+    // Find and store the original selected route indices in approval mode
+    if (this.isApprovalMode && this.originalRouteData) {
+      this.findOriginalRouteIndices();
+    }
+    
+    // Emit initial route change status if in approval mode
+    if (this.isApprovalMode) {
+      const changed = this.hasRouteChanged();
+      this.routeChanged.emit(changed);
     }
   }
 
@@ -409,7 +443,7 @@ export class GenericViewOnMapComponent implements AfterViewInit {
       .filter((route): route is google.maps.DirectionsResult => route !== null);
 
     // Emit the selected and suggested routes
-    this.emitSelectedRoute.emit({
+    const selectedRouteData = {
       StD: {
         selected: allStDRoutes[this.selectedRouteIndex],
         suggested: allStDRoutes.filter((_, i) => i !== this.selectedRouteIndex)
@@ -418,7 +452,15 @@ export class GenericViewOnMapComponent implements AfterViewInit {
         selected: allDtoSRoutes[this.selectedReturnRouteIndex],
         suggested: allDtoSRoutes.filter((_, i) => i !== this.selectedReturnRouteIndex)
       }
-    });
+    };
+    
+    this.emitSelectedRoute.emit(selectedRouteData);
+    
+    // Check and emit route change status in approval mode
+    if (this.isApprovalMode) {
+      const changed = this.hasRouteChanged();
+      this.routeChanged.emit(changed);
+    }
 
     // Update map bounds to show all routes
     const bounds = new google.maps.LatLngBounds();
@@ -660,4 +702,80 @@ export class GenericViewOnMapComponent implements AfterViewInit {
   const sum = distances.reduce((a, b) => a + b, 0);
   return sum.toFixed(1) + ' km';
 }
+
+  private findOriginalRouteIndices(): void {
+    // Find the index of the original selected route in the current routeOptions array
+    if (this.originalRouteData?.StD?.selected) {
+      const originalStDSummary = this.originalRouteData.StD.selected.routes?.[0]?.summary;
+      const originalStDOverviewPolyline = this.originalRouteData.StD.selected.routes?.[0]?.overview_polyline;
+      
+      // Find matching route by comparing summary and polyline
+      const stDIndex = this.routeOptions.findIndex(option => {
+        const routeSummary = option.route?.routes?.[0]?.summary;
+        const routePolyline = option.route?.routes?.[0]?.overview_polyline;
+        
+        // Compare summary first (faster)
+        if (originalStDSummary && routeSummary && originalStDSummary === routeSummary) {
+          // If summaries match, also compare polyline to ensure it's the exact same route
+          // overview_polyline is a string, so compare directly
+          if (originalStDOverviewPolyline && routePolyline) {
+            return originalStDOverviewPolyline === routePolyline;
+          }
+          return true; // If no polyline, assume match based on summary
+        }
+        return false;
+      });
+      
+      this.originalSelectedRouteIndex = stDIndex >= 0 ? stDIndex : 0;
+    } else {
+      this.originalSelectedRouteIndex = 0;
+    }
+
+    // Find the index of the original selected return route in the current returnRouteOptions array
+    if (this.originalRouteData?.DtoS?.selected) {
+      const originalDtoSSummary = this.originalRouteData.DtoS.selected.routes?.[0]?.summary;
+      const originalDtoSOverviewPolyline = this.originalRouteData.DtoS.selected.routes?.[0]?.overview_polyline;
+      
+      // Find matching route by comparing summary and polyline
+      const dtoSIndex = this.returnRouteOptions.findIndex(option => {
+        const routeSummary = option.route?.routes?.[0]?.summary;
+        const routePolyline = option.route?.routes?.[0]?.overview_polyline;
+        
+        // Compare summary first (faster)
+        if (originalDtoSSummary && routeSummary && originalDtoSSummary === routeSummary) {
+          // If summaries match, also compare polyline to ensure it's the exact same route
+          // overview_polyline is a string, so compare directly
+          if (originalDtoSOverviewPolyline && routePolyline) {
+            return originalDtoSOverviewPolyline === routePolyline;
+          }
+          return true; // If no polyline, assume match based on summary
+        }
+        return false;
+      });
+      
+      this.originalSelectedReturnRouteIndex = dtoSIndex >= 0 ? dtoSIndex : 0;
+    } else {
+      this.originalSelectedReturnRouteIndex = 0;
+    }
+  }
+
+  hasRouteChanged(): boolean {
+    // If not in approval mode or no original route data, consider unchanged
+    if (!this.isApprovalMode || !this.originalRouteData) {
+      return false;
+    }
+
+    // If no current route data or route options not loaded yet, consider unchanged
+    if (!this.routeData || this.routeOptions.length === 0) {
+      return false;
+    }
+
+    // Compare by index: if the currently selected route index doesn't match
+    // the original selected route index, the route has changed
+    // This works even if all routes are identical (same summary)
+    const stDChanged = this.selectedRouteIndex !== this.originalSelectedRouteIndex;
+    const dtoSChanged = this.selectedReturnRouteIndex !== this.originalSelectedReturnRouteIndex;
+
+    return stDChanged || dtoSChanged;
+  }
 }

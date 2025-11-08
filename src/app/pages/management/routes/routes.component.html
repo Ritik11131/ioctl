@@ -205,7 +205,11 @@
           [source]="mapObject.source" 
           [destination]="mapObject.destination" 
           [tolls]="mapObject.tolls"
-          [routeData]="mapObject.routeData">
+          [routeData]="mapObject.routeData"
+          [originalRouteData]="originalApprovalRouteData"
+          [isApprovalMode]="true"
+          (routeChanged)="onRouteChanged($event)"
+          (emitSelectedRoute)="onViewRouteSelected($event)">
         </app-generic-view-on-map>
       </div>
       

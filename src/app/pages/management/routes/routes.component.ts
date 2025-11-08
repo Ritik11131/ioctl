@@ -32,6 +32,8 @@ export class RoutesComponent implements OnInit {
     selectedSource: any = null;
     selectedDestination: any = null;
     currentSelectedTableFilterStatus: any = 'all';
+    originalApprovalRouteData: any = null; // Store original route when approve is clicked
+    isRouteChanged: boolean = false; // Track if route has been changed
     googleMapsApiKey = environment.googleMapsApiKey;
     allToolBarActions = [
         {
@@ -309,6 +311,10 @@ export class RoutesComponent implements OnInit {
                 const { attributes } = routes.data;
                 const parsedAttributes = JSON.parse(attributes);
                 console.log(parsedAttributes);
+
+                // Store original route data for comparison (deep clone)
+                this.originalApprovalRouteData = parsedAttributes?.route ? JSON.parse(JSON.stringify(parsedAttributes.route)) : null;
+                this.isRouteChanged = false; // Reset route change flag
 
                 const tollsResponse: any = await this.http.get('geortd/rtdtoll/list', {}, this.selectedRowItems[0]?.id).catch((error) => {
                 console.error('Error fetching tolls data:', error);
@@ -812,6 +818,13 @@ async handleOp46Download(view?:any): Promise<void> {
     }
 
     async onApproveRtdFormSubmit(formData: any): Promise<void> {
+        
+        // Check if route has been changed
+        if (this.isRouteChanged) {
+            this.uiService.showToast('error', 'Error', 'You are not allowed to change the route. Please select the original route to proceed.');
+            return;
+        }
+
         this.uiService.toggleLoader(true);
         const { comment, next_available_steps } = formData;
         const payload = {
@@ -825,12 +838,19 @@ async handleOp46Download(view?:any): Promise<void> {
             this.uiService.showToast('success', 'Success', 'Route approved successfully');
             this.uiService.closeDrawer(); // Close the drawer after submission
             await this.fetchRtdList(this.currentSelectedTableFilterStatus); // Refresh the department list after successful submission
+            // Reset approval tracking
+            this.originalApprovalRouteData = null;
+            this.isRouteChanged = false;
         } catch (error: any) {
             console.error('Error submitting form:', error);
             this.uiService.showToast('error', 'Error', error?.error?.data);
         } finally {
             this.uiService.toggleLoader(false);
         }
+    }
+
+    onRouteChanged(changed: boolean): void {
+        this.isRouteChanged = changed;
     }
 
     parseDurationToMinutes(durationText: string): number {
