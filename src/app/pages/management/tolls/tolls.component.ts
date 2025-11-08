@@ -160,7 +160,9 @@ export class TollsComponent {
                     options: [
                         { name: 'Car/Jeep/Van', id: 'Car/Jeep/Van' },
                         { name: 'LCV', id: 'LCV' },
-                        { name: 'Bus/truck', id: 'BBus/truckus' },
+                        { name: 'Truck', id: 'truck' },
+                        { name: 'Bus', id: 'Bus' },
+                        { name: 'Trailer', id: 'trailer' },
                         { name: 'Upto 3 Axle Vehicle', id: 'Upto 3 Axle Vehicle' },
                         { name: '4 to 6 Axle', id: '4 to 6 Axle' },
                         { name: 'HCM/EME', id: 'HCM/EME' },
