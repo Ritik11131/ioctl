@@ -54,6 +54,7 @@ import { HttpService } from '../../service/http.service';
               { field: 'employeeId', header: 'Employee ID', minWidth: '10rem' },
                 { field: 'fName', header: 'Name', minWidth: '8rem' },
                 { field: 'roles', header: 'User Role', subfield: 'name'},
+                { field: 'department', header: 'Department', subfield: 'name'},
                 { field: 'mobileNo', header: 'Mobile No.', minWidth: '8rem' },
                 { field: 'emailId', header: 'Email ID', minWidth: '10rem' },
     

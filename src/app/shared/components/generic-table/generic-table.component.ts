@@ -111,9 +111,10 @@ import { ExportService } from '../../../pages/service/export.service';
                         <td>
                             @if (col.download) {
                                 @if (rowData[col.field]) {
-                                    <a [href]="rowData[col.field]" download class="p-button p-button-text p-button-sm">
-                                        <i class="pi pi-download" style="font-size: 1rem"></i>
-                                    </a>
+                                 <p-button text (onClick)="downloadFile(rowData[col.field])">
+                                    <i class="pi pi-download" style="font-size: 1rem"></i>
+                                    </p-button>
+
                                 } @else {
                                     <span>{{ '-' }}</span>
                                 }
@@ -198,4 +199,27 @@ export class GenericTableComponent {
     handleTableFilterByStatusChange(event: any) {
         this.onTableFilterByStatus.emit(event.value);
     }
+    async downloadFile(url: string) {
+    try {
+        const response = await fetch(url, { mode: 'cors' });
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = blobUrl;
+
+        // Extract filename or use default
+        const fileName = url.split('/').pop() || 'download';
+        a.download = fileName;
+
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+        console.error('Download failed:', error);
+    }
+}
+
 }
