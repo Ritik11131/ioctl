@@ -1,4 +1,5 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChildren, QueryList } from '@angular/core';
+import { Popover } from 'primeng/popover';
 import { ButtonModule } from 'primeng/button';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
@@ -8,14 +9,17 @@ import { Table, TableModule } from 'primeng/table';
 import { ToolbarModule } from 'primeng/toolbar';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { SplitButtonModule } from 'primeng/splitbutton';
+import { PopoverModule } from 'primeng/popover';
 import { GenericDropdownComponent } from '../generic-dropdown/generic-dropdown.component';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ExportService } from '../../../pages/service/export.service';
+import { ParseJsonPipe } from '../../../core/pipes/parse-json.pipe';
+import { FormatTimestampPipe } from '../../../core/pipes/format-timestamp.pipe';
 
 @Component({
     selector: 'app-generic-table',
-    imports: [ToolbarModule, ButtonModule, RippleModule, FormsModule, TableModule, IconFieldModule, SelectButtonModule, InputIconModule, SplitButtonModule, InputTextModule, GenericDropdownComponent, DatePipe],
+    imports: [ToolbarModule, ButtonModule, RippleModule, FormsModule, TableModule, IconFieldModule, SelectButtonModule, InputIconModule, SplitButtonModule, InputTextModule, GenericDropdownComponent, DatePipe, PopoverModule, ParseJsonPipe, FormatTimestampPipe],
     template: `
         <p-toolbar styleClass="mb-6">
             <ng-template #start>
@@ -131,6 +135,48 @@ import { ExportService } from '../../../pages/service/export.service';
                                     <div class="font-semibold">{{ col.customCol.subfield ? (rowData[col.customCol.field]?.[col.customCol.subfield] || '--') : rowData[col.customCol.field]}}</div>
                                     <div class="text-sm text-gray-500"><span>{{col?.customCol?.title}}</span><span>{{ col.customCol.subtext ? (rowData[col.customCol.text]?.[col.customCol.subtext] || '--') : (rowData[col.customCol.text]) }}</span></div>
                                 </div>
+                            } @else if (col.jsonString) {
+                                @if (col.subfield ? rowData[col.field]?.[col.subfield] : rowData[col.field]) {
+                                    @let commentData = col.subfield ? rowData[col.field]?.[col.subfield] : rowData[col.field];
+                                    @let comments = commentData | parseJson;
+                                    @let buttonId = 'commentBtn_' + rowData[tableConfig.dataKey] + '_' + col.field;
+                                    <div>
+                                        <p-button 
+                                            #commentButton
+                                            [id]="buttonId"
+                                            [label]="'View Comments (' + comments.length + ')'" 
+                                             
+                                            severity="primary"
+                                            size="small"
+                                            (onClick)="toggleCommentPopover(commentButton, $event)">
+                                        </p-button>
+                                        <p-popover 
+                                            #commentPopover
+                                            [style]="{ width: '400px', maxWidth: '400px' }">
+                                            <div class="p-2">
+                                                <h6 class="mb-3 font-semibold">Comment History</h6>
+                                                <div class="max-h-[300px] overflow-y-auto">
+                                                    @for (comment of (commentData | parseJson); track $index) {
+                                                        <div class="p-3 mb-3 last:mb-0 border-l-[3px] border-l-[var(--p-primary-color)] bg-gray-100 rounded">
+                                                            <div class="flex justify-between items-center mb-2">
+                                                                <span class="font-semibold text-sm text-gray-700">{{ comment.userName || '--' }}</span>
+                                                                <span class="text-xs text-gray-500">{{ comment.timestamp | formatTimestamp }}</span>
+                                                            </div>
+                                                            <div class="text-sm text-gray-900 mb-1 break-words">{{ comment.comment || '--' }}</div>
+                                                            @if (comment.refId) {
+                                                                <div class="text-xs text-gray-500 italic">Ref: {{ comment.refId }}</div>
+                                                            }
+                                                        </div>
+                                                    } @empty {
+                                                        <div class="text-gray-400 text-center py-2">No comments</div>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </p-popover>
+                                    </div>
+                                } @else {
+                                    <span>{{ '-' }}</span>
+                                }
                             } @else {
                                 {{ col.subfield ? rowData[col.field]?.[col.subfield] || '--' : col.date ? (rowData[col.field] | date) || '--' : rowData[col.field] || '--' }}
                             }
@@ -167,6 +213,8 @@ export class GenericTableComponent {
     @Output() onSelectionChange = new EventEmitter<any>(); // Event emitter for row select
     @Output() onTableDropdownFilter = new EventEmitter<any>();
     @Output() onTableFilterByStatus = new EventEmitter<any>(); // Event emitter for filter by status
+
+    @ViewChildren('commentPopover') commentPopovers!: QueryList<Popover>;
 
     selectedRouteStatusType: any = 'all';
 
@@ -221,5 +269,22 @@ export class GenericTableComponent {
         console.error('Download failed:', error);
     }
 }
+
+    toggleCommentPopover(button: any, event: Event) {
+        const popovers = this.commentPopovers.toArray();
+        const buttonElement = button.el?.nativeElement || button;
+        const parent = buttonElement.parentElement;
+        if (parent) {
+            const popoverElement = Array.from(parent.children).find(
+                (child: any) => child.tagName === 'P-POPOVER'
+            ) as HTMLElement;
+            if (popoverElement) {
+                const popover = popovers.find(p => p.el.nativeElement === popoverElement);
+                if (popover) {
+                    popover.toggle(event);
+                }
+            }
+        }
+    }
 
 }

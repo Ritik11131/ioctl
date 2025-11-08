@@ -159,6 +159,7 @@ export class RtdApprovalComponent {
                 label: user.roles.name + ' - ' + user.name,
                 value: user.id,
                 userName: user.name,
+                userRole: user.roles.name
             }));
             console.log(this.users);
         } catch (error) {}
@@ -461,7 +462,8 @@ export class RtdApprovalComponent {
             const user: any = this.users.find((user) => user.value === step.user);
             return {
                 ...step,
-                userName: user ? user.userName : step.user // Use label if user is found
+                userName: user ? user.userName : step.user,
+                userRole: user? user.userRole: step.user // Use label if user is found
             };
         }
         );

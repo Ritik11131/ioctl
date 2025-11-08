@@ -52,7 +52,7 @@ import { HttpService } from '../../service/http.service';
             dataKey: 'id',
             columns: [
               { field: 'employeeId', header: 'Employee ID', minWidth: '10rem' },
-                { field: 'fName', header: 'Name', minWidth: '8rem' },
+                { field: 'name', header: 'Username', minWidth: '8rem' },
                 { field: 'roles', header: 'User Role', subfield: 'name'},
                 { field: 'department', header: 'Department', subfield: 'name'},
                 { field: 'mobileNo', header: 'Mobile No.', minWidth: '8rem' },
@@ -60,7 +60,7 @@ import { HttpService } from '../../service/http.service';
     
             ],
             exportFilename:'Users',
-            globalFilterFields: ['fName','mobileNo','employeeId']
+            globalFilterFields: ['name','mobileNo','employeeId']
         };
     
         tableData = [];
